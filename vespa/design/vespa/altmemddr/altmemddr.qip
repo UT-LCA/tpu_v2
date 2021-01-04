@@ -1,0 +1,14 @@
+set_global_assignment -name IP_TOOL_NAME "DDR2 High Performance Controller"
+set_global_assignment -name IP_TOOL_VERSION "8.1"
+set_global_assignment -name VERILOG_FILE [file join $::quartus(qip_path) "altmemddr_auk_ddr_hp_controller_wrapper.v"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "auk_ddr_hp_controller.vhd"]
+set_global_assignment -name SEARCH_PATH  [file join $::quartus(qip_path) "." ]
+set_global_assignment -name SEARCH_PATH C:/altera/81/ip/altera/ddr2_high_perf/lib
+set_global_assignment -name MISC_FILE [file join $::quartus(qip_path) altmemddr.v ]
+set_global_assignment -name MISC_FILE [file join $::quartus(qip_path) altmemddr_auk_ddr_hp_controller_wrapper.vo ]
+set_global_assignment -name MISC_FILE [file join $::quartus(qip_path) altmemddr.qip ]
+set_global_assignment -name MISC_FILE [file join $::quartus(qip_path) altmemddr.html ]
+set_global_assignment -name MISC_FILE [file join $::quartus(qip_path) testbench/altmemddr_example_top_tb.v ]
+set_global_assignment -name MISC_FILE [file join $::quartus(qip_path) testbench/altmemddr_mem_model.v ]
+set_global_assignment -name IPA_FILE altmemddr_advisor.ipa
+set_global_assignment -name IPA_FILE altmemddr_advisor.ipa

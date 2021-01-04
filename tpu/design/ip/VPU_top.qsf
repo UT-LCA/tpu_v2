@@ -1,0 +1,121 @@
+# Copyright (C) 1991-2006 Altera Corporation
+# Your use of Altera Corporation's design tools, logic functions 
+# and other software and tools, and its AMPP partner logic 
+# functions, and any output files any of the foregoing 
+# (including device programming or simulation files), and any 
+# associated documentation or information are expressly subject 
+# to the terms and conditions of the Altera Program License 
+# Subscription Agreement, Altera MegaCore Function License 
+# Agreement, or other applicable license agreement, including, 
+# without limitation, that your use is for the sole purpose of 
+# programming logic devices manufactured by Altera and sold by 
+# Altera or its authorized distributors.  Please refer to the 
+# applicable agreement for further details.
+
+
+# The default values for assignments are stored in the file
+#		VPU_top_assignment_defaults.qdf
+# If this file doesn't exist, and for assignments not listed, see file
+#		assignment_defaults.qdf
+
+# Altera recommends that you do not modify this file. This
+# file is updated automatically by the Quartus II software
+# and any changes you make may be lost or overwritten.
+
+
+set_global_assignment -name FAMILY "Stratix III"
+set_global_assignment -name DEVICE EP3SL340F1517C3
+set_global_assignment -name TOP_LEVEL_ENTITY VectCPU
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION "6.0 SP1"
+set_global_assignment -name PROJECT_CREATION_TIME_DATE "17:43:28  APRIL 17, 2007"
+set_global_assignment -name LAST_QUARTUS_VERSION "7.2 SP2"
+set_global_assignment -name PHYSICAL_SYNTHESIS_COMBO_LOGIC ON
+set_global_assignment -name PHYSICAL_SYNTHESIS_EFFORT FAST
+set_global_assignment -name ENABLE_ADVANCED_IO_TIMING ON
+set_global_assignment -name USE_TIMEQUEST_TIMING_ANALYZER OFF
+set_global_assignment -name HDL_MESSAGE_LEVEL LEVEL3
+set_global_assignment -name NUMBER_OF_REMOVED_REGISTERS_REPORTED 500
+set_global_assignment -name ALLOW_ANY_RAM_SIZE_FOR_RECOGNITION OFF
+set_global_assignment -name FMAX_REQUIREMENT "110 MHz"
+set_global_assignment -name EDA_SIMULATION_TOOL "<None>"
+set_global_assignment -name EDA_INCLUDE_VHDL_CONFIGURATION_DECLARATION OFF -section_id eda_simulation
+set_global_assignment -name EDA_TIME_SCALE "1 ps" -section_id eda_simulation
+set_global_assignment -name EDA_OUTPUT_DATA_FORMAT NONE -section_id eda_simulation
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/VLane_loadstoreDataQ.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/lanemult_mf.v
+set_global_assignment -name SDC_FILE vectcpu.sdc
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/Control_Unit.v
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/Adder_w_Comparator.v
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/ALU_Logic.v
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/Branch_Logic.v
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/Control_Registers.v
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/Datapath.v
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/Decoder_Logic.v
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/Instr_Register.v
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/Instruction_Fetch_Unit.v
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/Logic_Unit.v
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/Memory_Address_Align.v
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/Memory_Byteenable.v
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/Memory_Data_In_Align.v
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/Memory_Data_Out_Align.v
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/Next_PC_Shifter_Selection.v
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/OpA_Selection.v
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/OpB_Imm_Selection.v
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/Pipeline_Reg.v
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/Pipeline_S2_Regs.v
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/Pipeline_S3_Regs.v
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/Program_Counter.v
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/Reg_Write_Addr_Mux.v
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/Reg_Write_Data_Mux.v
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/Reg_Write_Enable.v
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/Register_File.v
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/Shifter_Unit.v
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/Stage_Four.v
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/Stage_One.v
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/Stage_Three.v
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/Stage_Two.v
+set_global_assignment -name VERILOG_FILE utiie_cpu/hdl/UT_II_Economy_cpu.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/altMultAccum.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/ALU.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/components.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/config_def.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/define.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/flagunit.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/isa_def.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/loadAddrGenerator.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/loadstoreController.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/MACunit.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/memIF.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/memreadIF.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/memwriteIF.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/memxbar.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/scalarToVectorQ.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/shiftdecode.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/shifter.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/storeAddrGen.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/storeCtr_fillreg.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/storeCtr_writemem.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/varMult.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/VectCPU.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/vectorToScalarQ_data_sel.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/VLane_controller.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/VLane_datapath.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/vlane_enable_decode.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/VLane_group.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/VLane_storeFlagQ.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/VLane_top.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/VPU_controller.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/VPU_controlreg.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/VPU_decode.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/VPU_decode_s3.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/VPU_decode_s4.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/VPU_hazard_detection.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/VPU_pipeline_regs.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/VPU_predecode.v
+set_global_assignment -name VERILOG_FILE vect_cpu/hdl/VPU_top.v
+set_global_assignment -name MIF_FILE control_reg_other.mif
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_COLOR 2147039 -section_id Top
+set_global_assignment -name LL_ROOT_REGION ON -section_id "Root Region"
+set_global_assignment -name LL_MEMBER_STATE LOCKED -section_id "Root Region"
+set_instance_assignment -name PARTITION_HIERARCHY no_file_for_top_partition -to | -section_id Top

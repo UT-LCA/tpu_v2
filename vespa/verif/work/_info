@@ -1,0 +1,2392 @@
+m255
+K4
+z2
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+dC:/Modeltech_pe_edu_10.4a/win32pe_edu
+vaddersub
+Z0 !s110 1609767947
+!i10b 1
+!s100 MILcPZX5BlPYRWlinkQ`@1
+I`oRE11gV][AeZY3]4BbeS2
+Z1 VDg1SIo80bB@j0V0VzS_@n1
+Z2 dZ:/Users/sangramkate/Library/tpu_v2/vespa/verif
+Z3 w1609766894
+8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\addersub_slt.v
+FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\addersub_slt.v
+L0 15
+Z4 OP;L;10.4a;61
+r1
+!s85 0
+31
+Z5 !s108 1609767946.000000
+Z6 !s107 Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\isa.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\components.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\ifetch_pipe_bpred_bus_int.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\reg_file_pipe.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\signext16.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\pcadder.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\branchresolve.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\merge26lo.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\addersub_slt.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\logic_unit.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\mul_shift_stall.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\divider.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\data_mem_bus_int.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\hi_reg.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\lo_reg.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\cop2.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\cop0.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\bpred_1bittable.v|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/spree/system.v|
+Z7 !s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/spree/system.v|
+!s101 -O0
+!i113 1
+Z8 o-work work -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact -O0
+valtmemddr
+!s110 1609767935
+!i10b 1
+!s100 2<aAiRJQz7`e]ADMYF@^=2
+IL^1mUOaH6``KLgHm`4GfA0
+R1
+R2
+R3
+8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr.v
+FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr.v
+Z9 L0 33
+R4
+r1
+!s85 0
+31
+Z10 !s108 1609767935.000000
+!s107 Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr.v|
+!s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr.v|
+!s101 -O0
+!i113 1
+R8
+valtmemddr_auk_ddr_hp_controller_wrapper
+!s110 1609767936
+!i10b 1
+!s100 E]YB>Ki1^K8@lfk=nQUlX2
+IOk1YkMB[Xolc1G9>2FJQV3
+R1
+R2
+R3
+8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_auk_ddr_hp_controller_wrapper.vo
+FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_auk_ddr_hp_controller_wrapper.vo
+Z11 L0 27
+R4
+r1
+!s85 0
+31
+R10
+!s107 Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_auk_ddr_hp_controller_wrapper.vo|
+!s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_auk_ddr_hp_controller_wrapper.vo|
+!s101 -O0
+!i113 1
+R8
+valtmemddr_controller_phy
+Z12 !s110 1609767937
+!i10b 1
+!s100 1?H9LD8CGZ7N^H>CebhUA3
+Ilm_n2MAnJY=R5BZd>ZHdK1
+R1
+R2
+R3
+8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_controller_phy.v
+FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_controller_phy.v
+Z13 L0 21
+R4
+r1
+!s85 0
+31
+!s108 1609767936.000000
+!s107 Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_controller_phy.v|
+!s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_controller_phy.v|
+!s101 -O0
+!i113 1
+R8
+valtmemddr_ex_lfsr8
+R12
+!i10b 1
+!s100 Q@@Ojo04ZXCfS:YzIMB0:2
+IN>C>_kH>X5L678N9R[Vfo0
+R1
+R2
+R3
+8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_ex_lfsr8.v
+FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_ex_lfsr8.v
+L0 2
+R4
+r1
+!s85 0
+31
+Z14 !s108 1609767937.000000
+!s107 Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_ex_lfsr8.v|
+!s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_ex_lfsr8.v|
+!s101 -O0
+!i113 1
+R8
+valtmemddr_example_driver
+R12
+!i10b 1
+!s100 gZ34JQ@UE1lWA[8;f@9gz3
+I;YEaWkKh8MPa9H7Fn6h=L0
+R1
+R2
+R3
+8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_example_driver.v
+FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_example_driver.v
+R13
+R4
+r1
+!s85 0
+31
+R14
+!s107 Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_example_driver.v|
+!s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_example_driver.v|
+!s101 -O0
+!i113 1
+R8
+valtmemddr_example_top
+Z15 !s110 1609767938
+!i10b 1
+!s100 [W]A:RFN27_1WJlDR4MH<0
+Ibg>2HBH8=GN<JSdnKIO^`0
+R1
+R2
+R3
+8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_example_top.v
+FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_example_top.v
+L0 30
+R4
+r1
+!s85 0
+31
+R14
+!s107 Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_example_top.v|
+!s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_example_top.v|
+!s101 -O0
+!i113 1
+R8
+valtmemddr_example_top_tb
+R0
+!i10b 1
+!s100 f5ecM?D>:;03FS@PMiDdK2
+IM0E>9J46>Sg^28N]iX3@D2
+R1
+R2
+R3
+8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/testbench/altmemddr_example_top_tb.v
+FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/testbench/altmemddr_example_top_tb.v
+L0 63
+R4
+r1
+!s85 0
+31
+Z16 !s108 1609767947.000000
+!s107 Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/testbench/altmemddr_example_top_tb.v|
+!s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/testbench/altmemddr_example_top_tb.v|
+!s101 -O0
+!i113 1
+R8
+valtmemddr_mem_model
+R0
+!i10b 1
+!s100 <<^cGmIV^hWH54XFZ?alI2
+I7F=ZY5a^?[N^8TKAL7WB62
+R1
+R2
+R3
+Z17 8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/testbench/altmemddr_mem_model.v
+Z18 FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/testbench/altmemddr_mem_model.v
+L0 131
+R4
+r1
+!s85 0
+31
+R16
+Z19 !s107 Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/testbench/altmemddr_mem_model.v|
+Z20 !s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/testbench/altmemddr_mem_model.v|
+!s101 -O0
+!i113 1
+R8
+valtmemddr_mem_model_ram_module
+R0
+!i10b 1
+!s100 jJiYE5`NA=YCf<S]S9`<Z1
+Ico`I3=D;1Hz3CLjf?MznZ1
+R1
+R2
+R3
+R17
+R18
+R13
+R4
+r1
+!s85 0
+31
+R16
+R19
+R20
+!s101 -O0
+!i113 1
+R8
+valtmemddr_phy
+R15
+!i10b 1
+!s100 RBD=81z:Ie]hKYnacUdWS2
+IVjEfl0jZFWz8B5WJWTHT80
+R1
+R2
+R3
+8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_phy.v
+FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_phy.v
+R9
+R4
+r1
+!s85 0
+31
+Z21 !s108 1609767938.000000
+!s107 Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_phy.v|
+!s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_phy.v|
+!s101 -O0
+!i113 1
+R8
+valtmemddr_phy_alt_mem_phy
+R15
+!i10b 1
+!s100 3YBJOF384N:hM]B2:N8I73
+IU^j5DzPV^VDDVe49mWPz23
+R1
+R2
+R3
+Z22 8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_phy_alt_mem_phy.v
+Z23 FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_phy_alt_mem_phy.v
+L0 11
+R4
+r1
+!s85 0
+31
+R21
+Z24 !s107 Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\altmemddr\alt_mem_phy_defines.v|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_phy_alt_mem_phy.v|
+Z25 !s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_phy_alt_mem_phy.v|
+!s101 -O0
+!i113 1
+R8
+valtmemddr_phy_alt_mem_phy_ac
+R15
+!i10b 1
+!s100 mP?gJ3nf9S0V0>hKg>]WK0
+I3gz3CKO>A9MWDfCLBB]B42
+R1
+R2
+R3
+R22
+R23
+L0 2186
+R4
+r1
+!s85 0
+31
+R21
+R24
+R25
+!s101 -O0
+!i113 1
+R8
+valtmemddr_phy_alt_mem_phy_addr_cmd
+R15
+!i10b 1
+!s100 f_h;f0Y=zXCWaEbU:7_7k2
+Ijaf7PefJ?PJzYFZ@zLBPK0
+R1
+R2
+R3
+R22
+R23
+L0 2613
+R4
+r1
+!s85 0
+31
+R21
+R24
+R25
+!s101 -O0
+!i113 1
+R8
+valtmemddr_phy_alt_mem_phy_clk_reset
+R15
+!i10b 1
+!s100 ;CZDQOJJJI2fU:ZE:0]132
+I>?>MT1T^EhR]JE?FSoY>g1
+R1
+R2
+R3
+R22
+R23
+L0 5105
+R4
+r1
+!s85 0
+31
+R21
+R24
+R25
+!s101 -O0
+!i113 1
+R8
+valtmemddr_phy_alt_mem_phy_delay
+Z26 !s110 1609767939
+!i10b 1
+!s100 fkRJz<5[cL8DJoc=Ulb^f3
+I6:KTVeS`3QMPk8GYHHgV33
+R1
+R2
+R3
+R22
+R23
+L0 7932
+R4
+r1
+!s85 0
+31
+R21
+R24
+R25
+!s101 -O0
+!i113 1
+R8
+valtmemddr_phy_alt_mem_phy_dm
+R26
+!i10b 1
+!s100 FWAohiYKGA[fTVAADhkIJ1
+Ii0O?XKD1F7ackZadTBbK_1
+R1
+R2
+R3
+R22
+R23
+L0 8576
+R4
+r1
+!s85 0
+31
+R21
+R24
+R25
+!s101 -O0
+!i113 1
+R8
+valtmemddr_phy_alt_mem_phy_dp_io
+R15
+!i10b 1
+!s100 ez47`j@o^>n]94]S3C8@[0
+I7I9;med@AOlz8:1mbLSPz2
+R1
+R2
+R3
+R22
+R23
+L0 3121
+R4
+r1
+!s85 0
+31
+R21
+R24
+R25
+!s101 -O0
+!i113 1
+R8
+valtmemddr_phy_alt_mem_phy_dq_io
+R15
+!i10b 1
+!s100 ]C1a;z62j76OOBT:@[JhP0
+I^WL<65S0]WlC]K[=BAik61
+R1
+R2
+R3
+R22
+R23
+L0 4077
+R4
+r1
+!s85 0
+31
+R21
+R24
+R25
+!s101 -O0
+!i113 1
+R8
+valtmemddr_phy_alt_mem_phy_dqs_ip
+R26
+!i10b 1
+!s100 IC5;W6eXAk=[aImXT0>P10
+IcZI:F4Uh]dIQ^h7`0n1?B0
+R1
+R2
+R3
+R22
+R23
+L0 7959
+R4
+r1
+!s85 0
+31
+R21
+R24
+R25
+!s101 -O0
+!i113 1
+R8
+valtmemddr_phy_alt_mem_phy_dqs_op
+R26
+!i10b 1
+!s100 XK<XMD;;oc4ToabSbfJW_0
+I_THYZb9_0aQcVLWDRhi<i2
+R1
+R2
+R3
+R22
+R23
+L0 7271
+R4
+r1
+!s85 0
+31
+R21
+R24
+R25
+!s101 -O0
+!i113 1
+R8
+valtmemddr_phy_alt_mem_phy_mimic
+R26
+!i10b 1
+!s100 D=;TJPFEaQkSRH^Ck_7zD3
+IBAK;RCNJjbEIUK6RIn`>C3
+R1
+R2
+R3
+R22
+R23
+L0 9145
+R4
+r1
+!s85 0
+31
+R21
+R24
+R25
+!s101 -O0
+!i113 1
+R8
+valtmemddr_phy_alt_mem_phy_mimic_debug
+R26
+!i10b 1
+!s100 X4ZQRl5T:5Sg:A96@MKig0
+Ikn>W63Bb2HG_45S46JRc00
+R1
+R2
+R3
+R22
+R23
+L0 9400
+R4
+r1
+!s85 0
+31
+R21
+R24
+R25
+!s101 -O0
+!i113 1
+R8
+valtmemddr_phy_alt_mem_phy_mux
+R26
+!i10b 1
+!s100 0oL[Ydn1J@7_lB5KAaX[10
+IhOAe;W?E@6cIin8^9i`K33
+R1
+R2
+R3
+R22
+R23
+L0 8869
+R4
+r1
+!s85 0
+31
+R21
+R24
+R25
+!s101 -O0
+!i113 1
+R8
+valtmemddr_phy_alt_mem_phy_oct_delay
+R15
+!i10b 1
+!s100 kd>f]A9D_@0^0IG=JdcRZ3
+IgGKc>>4_8feoeQmTV5FS13
+R1
+R2
+R3
+R22
+R23
+L0 2033
+R4
+r1
+!s85 0
+31
+R21
+R24
+R25
+!s101 -O0
+!i113 1
+R8
+valtmemddr_phy_alt_mem_phy_pll
+R26
+!i10b 1
+!s100 F0zJM8JgO<`fgQ<Hlz[301
+IA4Ud`1@X]I1]Y7?m=>V?10
+R1
+R2
+R3
+8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_phy_alt_mem_phy_pll.v
+FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_phy_alt_mem_phy_pll.v
+Z27 L0 39
+R4
+r1
+!s85 0
+31
+!s108 1609767939.000000
+!s107 Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_phy_alt_mem_phy_pll.v|
+!s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_phy_alt_mem_phy_pll.v|
+!s101 -O0
+!i113 1
+R8
+valtmemddr_phy_alt_mem_phy_postamble
+R26
+!i10b 1
+!s100 nQC=589EHD[Xz05UYL?Bz3
+IMbznSaET6c;Bj=iQdFEX]1
+R1
+R2
+R3
+R22
+R23
+L0 6179
+R4
+r1
+!s85 0
+31
+R21
+R24
+R25
+!s101 -O0
+!i113 1
+R8
+valtmemddr_phy_alt_mem_phy_read_dp_group
+R26
+!i10b 1
+!s100 R1EzQQO_C1OjIh<FnCLkL1
+IMS?4ibSMH_EU>@;PUkI?M3
+R1
+R2
+R3
+R22
+R23
+L0 6524
+R4
+r1
+!s85 0
+31
+R21
+R24
+R25
+!s101 -O0
+!i113 1
+R8
+valtmemddr_phy_alt_mem_phy_reset_pipe
+R26
+!i10b 1
+!s100 R<]cTFhg6G>1OnO8GA[=a2
+Ib51A0^BD^aY:jb470NLKl2
+R1
+R2
+R3
+R22
+R23
+L0 9632
+R4
+r1
+!s85 0
+31
+R21
+R24
+R25
+!s101 -O0
+!i113 1
+R8
+valtmemddr_phy_alt_mem_phy_sequencer_wrapper
+!s110 1609767940
+!i10b 1
+!s100 fFVIahMM[:4;0C>::hEjB3
+IRGAla^oaa4Ybf6ooCcz5>0
+R1
+R2
+R3
+8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_phy_alt_mem_phy_sequencer_wrapper.vo
+FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_phy_alt_mem_phy_sequencer_wrapper.vo
+R11
+R4
+r1
+!s85 0
+31
+!s108 1609767940.000000
+!s107 Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_phy_alt_mem_phy_sequencer_wrapper.vo|
+!s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/altmemddr/altmemddr_phy_alt_mem_phy_sequencer_wrapper.vo|
+!s101 -O0
+!i113 1
+R8
+valtmemddr_phy_alt_mem_phy_write_dp_fr
+R26
+!i10b 1
+!s100 ;@JlK_>XXz^?o3iY0a7kY1
+IDP^?1_lO8cKWMN6^Mbz163
+R1
+R2
+R3
+R22
+R23
+L0 6806
+R4
+r1
+!s85 0
+31
+R21
+R24
+R25
+!s101 -O0
+!i113 1
+R8
+vbranch_detector
+R0
+!i10b 1
+!s100 NGj;R7OlJn1eGoDDcFZ4^3
+IL`g3MI>?R^FzVT]9R:XjG3
+R1
+R2
+R3
+Z28 8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\components.v
+Z29 FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\components.v
+L0 258
+R4
+r1
+!s85 0
+31
+R5
+R6
+R7
+!s101 -O0
+!i113 1
+R8
+vbranchpredict
+R0
+!i10b 1
+!s100 4h2`lHN0kWUVX3;jkhnU=2
+INMgJ:_Y<T[:8Dn;Sj`fb@3
+R1
+R2
+R3
+8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\bpred_1bittable.v
+FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\bpred_1bittable.v
+L0 2
+R4
+r1
+!s85 0
+31
+R5
+R6
+R7
+!s101 -O0
+!i113 1
+R8
+vbranchresolve
+R0
+!i10b 1
+!s100 X]JQbjChDZFFW^@gk:bZb2
+Id24>Z?_2`59k:Hf1i8n4A0
+R1
+R2
+R3
+8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\branchresolve.v
+FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\branchresolve.v
+L0 2
+R4
+r1
+!s85 0
+31
+R5
+R6
+R7
+!s101 -O0
+!i113 1
+R8
+vclkx2_pll
+Z30 !s110 1609767922
+!i10b 1
+!s100 a:5oZRjj_5Kd;]61ZbL3i2
+ILAkdNZ6c`]WmGi3`F>Clf1
+R1
+R2
+R3
+8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\clkx2_pll.v
+FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\clkx2_pll.v
+R27
+R4
+r1
+!s85 0
+31
+Z31 !s108 1609767922.000000
+Z32 !s107 Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\clkx2_pll.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\trace.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\mem_port.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\mem_hierarchy.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\mem_wbbuffer.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\mem_dcache_wb.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\mem_icache.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\visa.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\isa.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\options.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\core.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\processor.v|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/de3.v|
+Z33 !s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/de3.v|
+!s101 -O0
+!i113 1
+R8
+vconst
+R0
+!i10b 1
+!s100 69HW]R2:Lm3hQk6B3E`kk0
+IN@8R:=IFQ=Ib7I22GlHh>2
+R1
+R2
+R3
+R28
+R29
+L0 244
+R4
+r1
+!s85 0
+31
+R5
+R6
+R7
+!s101 -O0
+!i113 1
+R8
+vcop0
+R0
+!i10b 1
+!s100 P^14DoX;DHPJ:@9lW5NPh3
+IZ:DSf=J9GMkS0?:]GBcXY1
+R1
+R2
+R3
+8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\cop0.v
+FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\cop0.v
+Z34 L0 10
+R4
+r1
+!s85 0
+31
+R5
+R6
+R7
+!s101 -O0
+!i113 1
+R8
+vcop2
+R0
+!i10b 1
+!s100 9B>QTH^L:MYQbYa1?jz2Y2
+IGJhFB>E@FY5cXbK:D]Kin1
+R1
+R2
+R3
+8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\cop2.v
+FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\cop2.v
+R34
+R4
+r1
+!s85 0
+31
+R5
+R6
+R7
+!s101 -O0
+!i113 1
+R8
+vcore
+Z35 !s110 1609767925
+!i10b 1
+!s100 iSRCbPYUNkY[;NL@A1VV33
+I5DV:I4Tg[?EGN:j_TEiJ@0
+R1
+R2
+R3
+FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\core.v
+Z36 FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\isa.v
+Z37 FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\visa.v
+L0 6
+R4
+r1
+!s85 0
+31
+Z38 !s108 1609767925.000000
+Z39 !s107 Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\mem_wbbuffer.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\mem_dcache_wb.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\mem_icache.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\visa.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\isa.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\options.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\core.v|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/processor.v|
+Z40 !s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/processor.v|
+!s101 -O0
+!i113 1
+R8
+vdata_mem
+R0
+!i10b 1
+!s100 <Mk09ImZ@UkNO1Mlg1ZLI2
+IIY>8DU=Z=T0J0W7Pa=nHa0
+R1
+R2
+R3
+Z41 8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\data_mem_bus_int.v
+Z42 FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\data_mem_bus_int.v
+L0 18
+R4
+r1
+!s85 0
+31
+R5
+R6
+R7
+!s101 -O0
+!i113 1
+R8
+vde3
+R30
+!i10b 1
+!s100 XSHeoWYE25Eo[2lo:1`mI2
+I3h=^Z86?E0PT1KhCZMnKI2
+R1
+R2
+R3
+8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/de3.v
+FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/de3.v
+L0 7
+R4
+r1
+!s85 0
+31
+R31
+R32
+R33
+!s101 -O0
+!i113 1
+R8
+Edevread
+R3
+Z43 DPx4 ieee 18 std_logic_unsigned 0 22 ;eZjO2D4ZDz<]0>8AL<ne1
+Z44 DPx4 ieee 15 std_logic_arith 0 22 [G314=:2zXJ`VORJe1J@Z1
+Z45 DPx3 std 6 textio 0 22 zE1`LPoLg^DX3Oz^4Fj1K3
+Z46 DPx4 ieee 14 std_logic_1164 0 22 eNV`TJ_GofJTzYa?f<@Oe1
+R2
+Z47 8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/devread.vhd
+Z48 FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/devread.vhd
+l0
+L43
+VPNRj`:dAOO8>@MG?hPW>K0
+!s100 F<[0]mjTJJ;8G]QRmJVLP2
+Z49 OP;C;10.4a;61
+32
+Z50 !s110 1609767948
+!i10b 1
+Z51 !s108 1609767948.000000
+Z52 !s90 -reportprogress|300|-work|work|-2002|-explicit|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/devread.vhd|
+Z53 !s107 Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/devread.vhd|
+!i113 1
+Z54 o-work work -2002 -explicit -O0
+Z55 tExplicit 1
+Artl
+R43
+R44
+R45
+R46
+DEx4 work 7 devread 0 22 PNRj`:dAOO8>@MG?hPW>K0
+l69
+L65
+VZ20`U48DcHBifDaDT=F=;2
+!s100 UUhi;1Po_4cKMQQ:3zFG43
+R49
+32
+R50
+!i10b 1
+R51
+R52
+R53
+!i113 1
+R54
+R55
+Edevreadburst
+R3
+R43
+R44
+R45
+R46
+R2
+Z56 8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/devreadburst.vhd
+Z57 FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/devreadburst.vhd
+l0
+L39
+V=QdGmGjTGhodEze5Y`l0U2
+!s100 g?i71S[fFQ0CS@2IJ1med0
+R49
+32
+R50
+!i10b 1
+R51
+Z58 !s90 -reportprogress|300|-work|work|-2002|-explicit|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/devreadburst.vhd|
+Z59 !s107 Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/devreadburst.vhd|
+!i113 1
+R54
+R55
+Artl
+R43
+R44
+R45
+R46
+DEx4 work 12 devreadburst 0 22 =QdGmGjTGhodEze5Y`l0U2
+l112
+L63
+V^VJLQ<:8NWN]ShKQ5T:d;2
+!s100 ;_GCDgW9Mdi3_]QVgmOLH1
+R49
+32
+R50
+!i10b 1
+R51
+R58
+R59
+!i113 1
+R54
+R55
+Edevwrite
+R3
+R43
+R44
+R45
+R46
+R2
+Z60 8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/devwrite.vhd
+Z61 FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/devwrite.vhd
+l0
+L60
+V=6QANYeF_<R6@zPOdCTb^1
+!s100 AWB:`KbPm32gSj]QSIo]62
+R49
+32
+R50
+!i10b 1
+R51
+Z62 !s90 -reportprogress|300|-work|work|-2002|-explicit|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/devwrite.vhd|
+Z63 !s107 Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/devwrite.vhd|
+!i113 1
+R54
+R55
+Artl
+R43
+R44
+R45
+R46
+DEx4 work 8 devwrite 0 22 =6QANYeF_<R6@zPOdCTb^1
+l89
+L83
+VEn<6SL]ab8kYchnULMPUE0
+!s100 VYOPzVCOHVZSY6KIC8zae2
+R49
+32
+R50
+!i10b 1
+R51
+R62
+R63
+!i113 1
+R54
+R55
+Edevwriteack
+R3
+R43
+R44
+R45
+R46
+R2
+Z64 8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/devwriteack.vhd
+Z65 FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/devwriteack.vhd
+l0
+L79
+V9`h>lMJ=TTI4WLHDikjlh2
+!s100 NYMOLR;i_UThzBX[RUZHE3
+R49
+32
+Z66 !s110 1609767949
+!i10b 1
+Z67 !s108 1609767949.000000
+Z68 !s90 -reportprogress|300|-work|work|-2002|-explicit|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/devwriteack.vhd|
+Z69 !s107 Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/devwriteack.vhd|
+!i113 1
+R54
+R55
+Artl
+R43
+R44
+R45
+R46
+DEx4 work 11 devwriteack 0 22 9`h>lMJ=TTI4WLHDikjlh2
+l108
+L103
+VPP80eDj[3<]RbmB2KEKRY1
+!s100 Z5XVMmJ8LjY7ngG1Ub=_h3
+R49
+32
+R66
+!i10b 1
+R67
+R68
+R69
+!i113 1
+R54
+R55
+vdiv
+R0
+!i10b 1
+!s100 Voe15WU:hez[]O3oR:0_V0
+IW:kJ_FYKh<XDz9?i@GC;L2
+R1
+R2
+R3
+8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\divider.v
+FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\divider.v
+L0 3
+R4
+r1
+!s85 0
+31
+R5
+R6
+R7
+!s101 -O0
+!i113 1
+R8
+vfakedelay
+R0
+!i10b 1
+!s100 Rg<kGH85b?V^``]]]bP1`0
+IiA4`k[^UYdNhQ`_;i?fS=2
+R1
+R2
+R3
+R28
+R29
+L0 205
+R4
+r1
+!s85 0
+31
+R5
+R6
+R7
+!s101 -O0
+!i113 1
+R8
+vhazardchecker
+Z70 !s110 1609767931
+!i10b 1
+!s100 [iCkmW68D_D>`5d5IA>063
+I4;I[ThD2WkaMMj_o?4Th41
+R1
+R2
+R3
+Z71 8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vcomponents.v
+Z72 FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vcomponents.v
+L0 53
+R4
+r1
+!s85 0
+31
+Z73 !s108 1609767931.000000
+Z74 !s107 Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\visa.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vlane_flagalu.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vmem_crossbar.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\velmshifter_serial.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vmem_unit.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vlane_barrelshifter.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vlane_mulshift.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vmul_unit.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vlane_saturate.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vlane_alu.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vdispatcher.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vlanes.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vcomponents.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vregfile_vector.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vregfile_stride.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vregfile_scalar.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vregfile_inc.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vregfile_flag.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vregfile_control.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vregfile_base.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\options.v|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vpu.v|
+Z75 !s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vpu.v|
+!s101 -O0
+!i113 1
+R8
+vhi_reg
+R0
+!i10b 1
+!s100 TVo5nj21O`c^a7GIY20Vc0
+Ik^on[oHm[UF5aEX3=oR1b2
+R1
+R2
+R3
+8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\hi_reg.v
+FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\hi_reg.v
+L0 4
+R4
+r1
+!s85 0
+31
+R5
+R6
+R7
+!s101 -O0
+!i113 1
+R8
+vifetch
+R0
+!i10b 1
+!s100 NXm;^bbXSLidGiEV0nD5W0
+Ijd`3JeHfNR0XaY0M;4lVo0
+R1
+R2
+R3
+8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\ifetch_pipe_bpred_bus_int.v
+FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\ifetch_pipe_bpred_bus_int.v
+L0 13
+R4
+r1
+!s85 0
+31
+R5
+R6
+R7
+!s101 -O0
+!i113 1
+R8
+vlo_reg
+R0
+!i10b 1
+!s100 XJ^HVMdSP=lWL`CE@=BFe3
+IRe2za^Ib0MYIJACPdVZoY2
+R1
+R2
+R3
+8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\lo_reg.v
+FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\lo_reg.v
+L0 4
+R4
+r1
+!s85 0
+31
+R5
+R6
+R7
+!s101 -O0
+!i113 1
+R8
+vload_data_translator
+R0
+!i10b 1
+!s100 TFD_jS4WDnd=cQb69LhCk1
+IYoLCa00?fCn4DT;hQncNh1
+R1
+R2
+R3
+R41
+R42
+L0 240
+R4
+r1
+!s85 0
+31
+R5
+R6
+R7
+!s101 -O0
+!i113 1
+R8
+vlogic_unit
+R0
+!i10b 1
+!s100 NP<dg54PS;:oLMQ4G:>R>2
+I7h<O8FDUja=oeYo5D8bM52
+R1
+R2
+R3
+8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\logic_unit.v
+FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\logic_unit.v
+Z76 L0 12
+R4
+r1
+!s85 0
+31
+R5
+R6
+R7
+!s101 -O0
+!i113 1
+R8
+vmem_dcache_wb
+R35
+!i10b 1
+!s100 dMNW55iEUN1c2:@10_O3E3
+IK^:f=QlHNlibn?O?A]B@O2
+R1
+R2
+R3
+8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\mem_dcache_wb.v
+FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\mem_dcache_wb.v
+Z77 L0 17
+R4
+r1
+!s85 0
+31
+R38
+R39
+R40
+!s101 -O0
+!i113 1
+R8
+vmem_hierarchy
+!s110 1609767923
+!i10b 1
+!s100 14[`0HEH2K_@MT@<n1gM<1
+IBa1Wn=5M6lJlE[kZ2:UDB1
+R1
+R2
+R3
+8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/mem_hierarchy.v
+FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/mem_hierarchy.v
+Z78 L0 19
+R4
+r1
+!s85 0
+31
+!s108 1609767923.000000
+!s107 Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\options.v|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/mem_hierarchy.v|
+!s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/mem_hierarchy.v|
+!s101 -O0
+!i113 1
+R8
+vmem_icache
+R35
+!i10b 1
+!s100 EAX>]9FHeczj^N2eP87L_3
+I>IeOmoz]G20eo;_GfXeP00
+R1
+R2
+R3
+8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\mem_icache.v
+FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\mem_icache.v
+L0 7
+R4
+r1
+!s85 0
+31
+R38
+R39
+R40
+!s101 -O0
+!i113 1
+R8
+vmem_port
+!s110 1609767924
+!i10b 1
+!s100 FO:oQmLA0R=kT>jA6]g?01
+Iz:Za2CNYY:hRmF9_]LgVH2
+R1
+R2
+R3
+8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/mem_port.v
+FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/mem_port.v
+L0 5
+R4
+r1
+!s85 0
+31
+!s108 1609767924.000000
+!s107 Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/mem_port.v|
+!s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/mem_port.v|
+!s101 -O0
+!i113 1
+R8
+vmem_wbbuffer
+R35
+!i10b 1
+!s100 7c6>1kC`d3]<U^@ZnhezA0
+Ik5AFW]jG?WAFFBP<J;dRb2
+R1
+R2
+R3
+8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\mem_wbbuffer.v
+FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\mem_wbbuffer.v
+L0 6
+R4
+r1
+!s85 0
+31
+R38
+R39
+R40
+!s101 -O0
+!i113 1
+R8
+vmerge26lo
+R0
+!i10b 1
+!s100 JkdN_ndA_TWWdQFJMOU<U0
+IoJ]M0598n`dZW`TLVAklz1
+R1
+R2
+R3
+8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\merge26lo.v
+FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\merge26lo.v
+L0 2
+R4
+r1
+!s85 0
+31
+R5
+R6
+R7
+!s101 -O0
+!i113 1
+R8
+vmul
+R0
+!i10b 1
+!s100 B30Y0b[m5Z5I]487lIWhF0
+I6;F:3mJ7oBIcKUeLKmRKA2
+R1
+R2
+R3
+8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\mul_shift_stall.v
+FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\mul_shift_stall.v
+L0 14
+R4
+r1
+!s85 0
+31
+R5
+R6
+R7
+!s101 -O0
+!i113 1
+R8
+vmulticyclestall
+R0
+!i10b 1
+!s100 kcb?kcKJLYkd_ZW`jMM@d0
+I_02:JM`TeA?=eZdIhV:;i2
+R1
+R2
+R3
+R28
+R29
+L0 142
+R4
+r1
+!s85 0
+31
+R5
+R6
+R7
+!s101 -O0
+!i113 1
+R8
+vnop
+R0
+!i10b 1
+!s100 Mj9YNRRn78fdCcMBL70TK2
+IHgG]O8iHk^FmMNObdU_;Z0
+R1
+R2
+R3
+R28
+R29
+L0 231
+R4
+r1
+!s85 0
+31
+R5
+R6
+R7
+!s101 -O0
+!i113 1
+R8
+vonecyclestall
+R0
+!i10b 1
+!s100 JZccV6z[H_HbfO_o;I2=60
+I9VzfXDW?lTLJSAll:D29k3
+R1
+R2
+R3
+R28
+R29
+L0 112
+R4
+r1
+!s85 0
+31
+R5
+R6
+R7
+!s101 -O0
+!i113 1
+R8
+vpcadder
+R0
+!i10b 1
+!s100 XA:gk:IQleKn@W4S1HTXX1
+I40KS67kb2_2bdTR^9kzN;0
+R1
+R2
+R3
+8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\pcadder.v
+FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\pcadder.v
+L0 2
+R4
+r1
+!s85 0
+31
+R5
+R6
+R7
+!s101 -O0
+!i113 1
+R8
+vpipe
+R70
+!i10b 1
+!s100 ZNL<zLZKKl?Ra60L@Lz7k0
+I7;hgFZ[Gi<Z=cPk]U7H_60
+R1
+R2
+R3
+R71
+R72
+L0 6
+R4
+r1
+!s85 0
+31
+R73
+R74
+R75
+!s101 -O0
+!i113 1
+R8
+vpipedelayreg
+R0
+!i10b 1
+!s100 61GBMS`m0EK;L[6TWI9[n2
+IHP;0V8_A=b4dj2MVKO3gH3
+R1
+R2
+R3
+R28
+R29
+L0 163
+R4
+r1
+!s85 0
+31
+R5
+R6
+R7
+!s101 -O0
+!i113 1
+R8
+vpipereg
+R0
+!i10b 1
+!s100 @Nc`N8ZWhDT6]Oj2=kBAk2
+IMVkY?9XFMW`02HBk;jEch3
+R1
+R2
+R3
+R28
+R29
+Z79 L0 54
+R4
+r1
+!s85 0
+31
+R5
+R6
+R7
+!s101 -O0
+!i113 1
+R8
+vprocessor
+R35
+!i10b 1
+!s100 L4zSP`5:Nk1>M<nZ0F:8H0
+IUmUd@R<kS8E4B6QSd6L8X3
+R1
+R2
+R3
+8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/processor.v
+FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/processor.v
+L0 6
+R4
+r1
+!s85 0
+31
+R38
+R39
+R40
+!s101 -O0
+!i113 1
+R8
+vreg_file
+R0
+!i10b 1
+!s100 QGS<i^6NiC;PkEobF^SB`1
+I0_S@YklO4z6m<KMSO1=1I0
+R1
+R2
+R3
+8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\reg_file_pipe.v
+FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\reg_file_pipe.v
+L0 7
+R4
+r1
+!s85 0
+31
+R5
+R6
+R7
+!s101 -O0
+!i113 1
+R8
+vregister
+R0
+!i10b 1
+!s100 W:@@M[nNzCL24k>_EnIE]0
+I=5:WV_NI<f]96k2P>BdC?3
+R1
+R2
+R3
+R28
+R29
+L0 4
+R4
+r1
+!s85 0
+31
+R5
+R6
+R7
+!s101 -O0
+!i113 1
+R8
+vregister_sync
+R0
+!i10b 1
+!s100 XF:3SFJY5?eokXBV7ZCfL3
+I2M>LoYlFnjA[VkBoJ2jCk1
+R1
+R2
+R3
+R28
+R29
+R11
+R4
+r1
+!s85 0
+31
+R5
+R6
+R7
+!s101 -O0
+!i113 1
+R8
+vsignext16
+R0
+!i10b 1
+!s100 R3PNR<nbWe5EaXcLnUD0D0
+I>hiiY<^[>j7@ZiXbzj1041
+R1
+R2
+R3
+8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\signext16.v
+FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\spree\signext16.v
+L0 2
+R4
+r1
+!s85 0
+31
+R5
+R6
+R7
+!s101 -O0
+!i113 1
+R8
+vstore_data_translator
+R0
+!i10b 1
+!s100 :l84^ndEP<KZ=d[majKm`3
+IcL0V_MPIfmdY43;injQ`g0
+R1
+R2
+R3
+R41
+R42
+L0 170
+R4
+r1
+!s85 0
+31
+R5
+R6
+R7
+!s101 -O0
+!i113 1
+R8
+vsystem
+R0
+!i10b 1
+!s100 XmjcR[2bcb=JnMOaYZ6;W3
+IPOb@MQ3OBEY4EORB0>B[m3
+R1
+R2
+R3
+8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/spree/system.v
+FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/spree/system.v
+R36
+L0 20
+R4
+r1
+!s85 0
+31
+R5
+R6
+R7
+!s101 -O0
+!i113 1
+R8
+Etm4_portmux
+R3
+R43
+R44
+R45
+R46
+R2
+Z80 8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/tm4_portmux.vhd
+Z81 FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/tm4_portmux.vhd
+l0
+L10
+VnOS_n[aN596i4V]M:V_zS1
+!s100 JLLfS:lK`]`:_be^CTjH_2
+R49
+32
+R66
+!i10b 1
+R67
+Z82 !s90 -reportprogress|300|-work|work|-2002|-explicit|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/tm4_portmux.vhd|
+Z83 !s107 Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/tm4_portmux.vhd|
+!i113 1
+R54
+R55
+Aarch_portmux
+R43
+R44
+R45
+R46
+DEx4 work 11 tm4_portmux 0 22 nOS_n[aN596i4V]M:V_zS1
+l158
+L43
+V:HCEmj9?R``_=3Y`H]GU_1
+!s100 5^EJVOTigmf8iM0:88QRc1
+R49
+32
+R66
+!i10b 1
+R67
+R82
+R83
+!i113 1
+R54
+R55
+vtmj_portmux
+R35
+!i10b 1
+!s100 z^e:gHET=Uben=>lRWjYN2
+ITHcG7VaCGBO;<k1Jk>[bW0
+R1
+R2
+R3
+8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/tmj_portmux.v
+FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/tmj_portmux.v
+L0 1
+R4
+r1
+!s85 0
+31
+R38
+!s107 Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/tmj_portmux.v|
+!s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/tmj_portmux.v|
+!s101 -O0
+!i113 1
+R8
+vtrace
+!s110 1609767926
+!i10b 1
+!s100 g5RdX_6h>Za16?LEg4ZWg3
+Ia^YmdXXV^al7h30o8cXIC2
+R1
+R2
+R3
+8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/trace.v
+FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/trace.v
+L0 7
+R4
+r1
+!s85 0
+31
+!s108 1609767926.000000
+!s107 Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/trace.v|
+!s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/trace.v|
+!s101 -O0
+!i113 1
+R8
+vvbitshifter
+Z84 !s110 1609767934
+!i10b 1
+!s100 P3zX_jPgzhlY1FeTzNamj0
+IkO_HSSgI<@TIg><7D@A6=0
+R1
+R2
+R3
+8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vshifter_serial.v
+FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vshifter_serial.v
+R76
+R4
+r1
+!s85 0
+31
+Z85 !s108 1609767934.000000
+!s107 Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vshifter_serial.v|
+!s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vshifter_serial.v|
+!s101 -O0
+!i113 1
+R8
+vvdispatcher
+Z86 !s110 1609767954
+!i10b 1
+!s100 7n0AfME3T<gXUW@3akAjF2
+IZ]<zXToJ?o=6dXoS6lWXC0
+R1
+R2
+R3
+Z87 8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vdispatcher.v
+Z88 FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vdispatcher.v
+L0 3
+R4
+r1
+!s85 0
+31
+Z89 !s108 1609767954.000000
+Z90 !s107 Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\visa.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vlane_flagalu.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vmem_crossbar.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\velmshifter_serial.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vmem_unit.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vlane_barrelshifter.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vlane_mulshift.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vmul_unit.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vlane_saturate.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vlane_alu.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vdispatcher.v|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vlanes.v|
+Z91 !s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vlanes.v|
+!s101 -O0
+!i113 1
+R8
+vvdispatcher_add
+R86
+!i10b 1
+!s100 VWHmcLF`Uhf5?m>GiUeQk3
+Ij2@>c:U;a`Uhoo_FHbKEL1
+R1
+R2
+R3
+R87
+R88
+L0 184
+R4
+r1
+!s85 0
+31
+R89
+R90
+R91
+!s101 -O0
+!i113 1
+R8
+vvdispatcher_shift
+R86
+!i10b 1
+!s100 oI<eA9j;9[H]Z99SU:DVE3
+I7=eniZZLcLB9dG:aWIeDg1
+R1
+R2
+R3
+R87
+R88
+L0 126
+R4
+r1
+!s85 0
+31
+R89
+R90
+R91
+!s101 -O0
+!i113 1
+R8
+vvelmrotator
+Z92 !s110 1609767955
+!i10b 1
+!s100 OomEE5j44o7M]=_PPUh=U2
+IYKTLm<IXl4Nih=mjHkEHZ3
+R1
+R2
+R3
+Z93 8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\velmshifter_serial.v
+Z94 FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\velmshifter_serial.v
+R77
+R4
+r1
+!s85 0
+31
+Z95 !s108 1609767955.000000
+Z96 !s107 Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vmem_crossbar.v|Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\velmshifter_serial.v|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vmem_unit.v|
+Z97 !s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vmem_unit.v|
+!s101 -O0
+!i113 1
+R8
+vvelmshifter
+R92
+!i10b 1
+!s100 z:ZO3fZ]K5OJ0F<YSn:4]3
+I[C8@D<1CR^mOW=OCkKQ0A3
+R1
+R2
+R3
+R93
+R94
+L0 138
+R4
+r1
+!s85 0
+31
+R95
+R96
+R97
+!s101 -O0
+!i113 1
+R8
+vvelmshifter_jump
+R92
+!i10b 1
+!s100 S0g97>iViIzQHZdk1`][Z2
+I7=oeM:X9>[60]P^Ob2Lff2
+R1
+R2
+R3
+R93
+R94
+L0 76
+R4
+r1
+!s85 0
+31
+R95
+R96
+R97
+!s101 -O0
+!i113 1
+R8
+vvelmshifter_laneunit
+R92
+!i10b 1
+!s100 Qd8l=`AQ>H0W8N^B7X:PV2
+I6[Lc4[1<HIPo]i>fbOijJ3
+R1
+R2
+R3
+R93
+R94
+L0 224
+R4
+r1
+!s85 0
+31
+R95
+R96
+R97
+!s101 -O0
+!i113 1
+R8
+vvirtual1
+!s110 1609767927
+!i10b 1
+!s100 inD382K8I_P_`mO0X8a=i1
+I[3YGX^d8nz<D>E:1MUTj13
+R1
+R2
+R3
+8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/virtual1.v
+FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/virtual1.v
+R27
+R4
+r1
+!s85 0
+31
+!s108 1609767927.000000
+!s107 Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/virtual1.v|
+!s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/virtual1.v|
+!s101 -O0
+!i113 1
+R8
+vvlane_alu
+R86
+!i10b 1
+!s100 _8beC>`][om2=Yn4Nem2D0
+IoFO=EHPM;Q<^<CafGHDXD2
+R1
+R2
+R3
+8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vlane_alu.v
+FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vlane_alu.v
+L0 59
+R4
+r1
+!s85 0
+31
+R89
+R90
+R91
+!s101 -O0
+!i113 1
+R8
+vvlane_barrelshifter
+R86
+!i10b 1
+!s100 ?_ND1degZlhJ_hJ<DFShN3
+IPic]PXP[9ClXjS8G:dkUd0
+R1
+R2
+R3
+8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vlane_barrelshifter.v
+FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vlane_barrelshifter.v
+R76
+R4
+r1
+!s85 0
+31
+R89
+R90
+R91
+!s101 -O0
+!i113 1
+R8
+vvlane_flagalu
+R86
+!i10b 1
+!s100 gOhJdEmhi6>fjn7@@L7SN2
+IjBC5c:Q8;HjmNJN=^ej:R0
+R1
+R2
+R3
+8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vlane_flagalu.v
+FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vlane_flagalu.v
+Z98 L0 22
+R4
+r1
+!s85 0
+31
+R89
+R90
+R91
+!s101 -O0
+!i113 1
+R8
+vvlane_mulshift
+R86
+!i10b 1
+!s100 Gb2DhDB96lX>aOSQ]QMR93
+IhRAOL1Na7F[4:oU^_X3F30
+R1
+R2
+R3
+8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vlane_mulshift.v
+FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vlane_mulshift.v
+L0 23
+R4
+r1
+!s85 0
+31
+R89
+R90
+R91
+!s101 -O0
+!i113 1
+R8
+vvlane_saturatesize
+R86
+!i10b 1
+!s100 O3=6;V5<0`4lHVfHRI6m`2
+IMWcF9XW]R_CgRZ>>V;RXd1
+R1
+R2
+R3
+Z99 8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vlane_saturate.v
+Z100 FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vlane_saturate.v
+L0 102
+R4
+r1
+!s85 0
+31
+R89
+R90
+R91
+!s101 -O0
+!i113 1
+R8
+vvlane_saturatesum
+R86
+!i10b 1
+!s100 Jj?0Kc9AGgcO_Q=lG[K1f3
+Ilbo680IRRd6=3j8bXGC;?3
+R1
+R2
+R3
+R99
+R100
+R78
+R4
+r1
+!s85 0
+31
+R89
+R90
+R91
+!s101 -O0
+!i113 1
+R8
+vvlanes
+R92
+!i10b 1
+!s100 gzeljOoYbVXgZaXNVGJ0l2
+IdXlRaii@L=]P;B>bA3Snc3
+R1
+R2
+R3
+8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vlanes.v
+FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vlanes.v
+R37
+R98
+R4
+r1
+!s85 0
+31
+R89
+R90
+R91
+!s101 -O0
+!i113 1
+R8
+vvload_data_translator
+R92
+!i10b 1
+!s100 U`GBz3]z09GDoOFPXIhl30
+IRV6K<i[9KYk0[U7Z@j^4b1
+R1
+R2
+R3
+Z101 8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vmem_unit.v
+Z102 FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vmem_unit.v
+L0 806
+R4
+r1
+!s85 0
+31
+R95
+R96
+R97
+!s101 -O0
+!i113 1
+R8
+vvmem_busmux
+R92
+!i10b 1
+!s100 m;zDbWISVfiaW>[P`S]8B2
+IdRQjKo6Hh=o@7<Ek]X:@`3
+R1
+R2
+R3
+Z103 8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vmem_crossbar.v
+Z104 FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vmem_crossbar.v
+L0 47
+R4
+r1
+!s85 0
+31
+R95
+R96
+R97
+!s101 -O0
+!i113 1
+R8
+vvmem_crossbar
+R92
+!i10b 1
+!s100 3HEHMfA=GRl86b03dzC7Y0
+IYHGFkAZS;z234F;SaE>;>0
+R1
+R2
+R3
+R103
+R104
+L0 5
+R4
+r1
+!s85 0
+31
+R95
+R96
+R97
+!s101 -O0
+!i113 1
+R8
+vvmem_unit
+R70
+!i10b 1
+!s100 dN[m;V^NgKA_VV0XOP=2_3
+IoJ>NZ0jGHcF6ALJUAOQ1G1
+R1
+R2
+R3
+8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vmem_unit.v
+FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vmem_unit.v
+R79
+R4
+r1
+!s85 0
+31
+R73
+R74
+R75
+!s101 -O0
+!i113 1
+R8
+vvmul_unit
+R86
+!i10b 1
+!s100 g9oK<A76=oV@T@K[JDI:J0
+IUg?^^H:GMM6_^j2YMUS2n1
+R1
+R2
+R3
+8Z:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vmul_unit.v
+FZ:\Users\sangramkate\Library\tpu_v2\vespa\design\vespa\vmul_unit.v
+L0 25
+R4
+r1
+!s85 0
+31
+R89
+R90
+R91
+!s101 -O0
+!i113 1
+R8
+vvpu
+R70
+!i10b 1
+!s100 ZYjCORDP;VJ9lm8i?e`aW0
+ICd:lbWJXd3<RP_j?`jN4f3
+R1
+R2
+R3
+8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vpu.v
+FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vpu.v
+R37
+L0 26
+R4
+r1
+!s85 0
+31
+R73
+R74
+R75
+!s101 -O0
+!i113 1
+R8
+vvregfile_base
+Z105 !s110 1609767932
+!i10b 1
+!s100 YLLU7Edb]i8o>?FN4AV]?2
+IOB^c@QPLU1PG9gYO8dA[g0
+R1
+R2
+R3
+8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vregfile_base.v
+FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vregfile_base.v
+L0 6
+R4
+r1
+!s85 0
+31
+Z106 !s108 1609767932.000000
+!s107 Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vregfile_base.v|
+!s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vregfile_base.v|
+!s101 -O0
+!i113 1
+R8
+vvregfile_control
+R105
+!i10b 1
+!s100 enlU]cGZG4Y1;kGn`[^@Y1
+I[BBEK_fVITHRdA28Bl_<z1
+R1
+R2
+R3
+8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vregfile_control.v
+FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vregfile_control.v
+L0 7
+R4
+r1
+!s85 0
+31
+R106
+!s107 Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vregfile_control.v|
+!s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vregfile_control.v|
+!s101 -O0
+!i113 1
+R8
+vvregfile_flag
+R105
+!i10b 1
+!s100 gQOz75NJi36[j?lM_JF_I1
+IDjViC;ENRQ_2C]9SVMneG0
+R1
+R2
+R3
+8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vregfile_flag.v
+FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vregfile_flag.v
+L0 7
+R4
+r1
+!s85 0
+31
+R106
+!s107 Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vregfile_flag.v|
+!s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vregfile_flag.v|
+!s101 -O0
+!i113 1
+R8
+vvregfile_inc
+Z107 !s110 1609767933
+!i10b 1
+!s100 VgiOY[eC=8O4M;IPA92@A0
+I_DUWdiT[E?;A^`BUF][UI1
+R1
+R2
+R3
+8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vregfile_inc.v
+FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vregfile_inc.v
+L0 7
+R4
+r1
+!s85 0
+31
+Z108 !s108 1609767933.000000
+!s107 Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vregfile_inc.v|
+!s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vregfile_inc.v|
+!s101 -O0
+!i113 1
+R8
+vvregfile_scalar
+R107
+!i10b 1
+!s100 Jm>:4TAgghIm9N:`5LnOj0
+I:TVNKe@RjiS[[`H<hKdZ42
+R1
+R2
+R3
+8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vregfile_scalar.v
+FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vregfile_scalar.v
+L0 7
+R4
+r1
+!s85 0
+31
+R108
+!s107 Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vregfile_scalar.v|
+!s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vregfile_scalar.v|
+!s101 -O0
+!i113 1
+R8
+vvregfile_stride
+R107
+!i10b 1
+!s100 BJW>Qj2e]7hTgi?RhfV0a3
+IeN^b58WEI74knobB4BD7:2
+R1
+R2
+R3
+8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vregfile_stride.v
+FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vregfile_stride.v
+L0 6
+R4
+r1
+!s85 0
+31
+R108
+!s107 Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vregfile_stride.v|
+!s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vregfile_stride.v|
+!s101 -O0
+!i113 1
+R8
+vvregfile_vector
+R84
+!i10b 1
+!s100 JWb7hN]=80XiM@l@ESYbz1
+IT^Sd92U]ne?AAlQl<?JHC1
+R1
+R2
+R3
+8Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vregfile_vector.v
+FZ:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vregfile_vector.v
+L0 7
+R4
+r1
+!s85 0
+31
+R85
+!s107 Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vregfile_vector.v|
+!s90 -reportprogress|300|-work|work|Z:/Users/sangramkate/Library/tpu_v2/vespa/design/vespa/vregfile_vector.v|
+!s101 -O0
+!i113 1
+R8
+vvstore_data_translator
+R92
+!i10b 1
+!s100 ]2N<8>U@^@7dXW3Dfa3mg1
+ISEV2fOdbzE^KDKcLEGTHj2
+R1
+R2
+R3
+R101
+R102
+L0 753
+R4
+r1
+!s85 0
+31
+R95
+R96
+R97
+!s101 -O0
+!i113 1
+R8
+vzeroer
+R0
+!i10b 1
+!s100 BAOQX9HT2R8A2VSjcPNCK3
+I:A6m@k9[Yb;Qi;fzf<=P21
+R1
+R2
+R3
+R28
+R29
+L0 218
+R4
+r1
+!s85 0
+31
+R5
+R6
+R7
+!s101 -O0
+!i113 1
+R8

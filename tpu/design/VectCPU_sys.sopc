@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<system name="VectCPU_sys">
+    <parameter valueString="2448687123" name="systemHash"/>
+    <parameter name="quartusRootDir">c:\altera\72\quartus</parameter>
+    <parameter valueString="1209919491218" name="timeStamp"/>
+    <parameter valueString="false" name="generateLegacySDK"/>
+    <parameter name="bonusData">bonusData 
+{
+   element pio.s1
+   {
+      datum baseAddress
+      {
+         value = "32768";
+         type = "long";
+      }
+   }
+   element dmem.s1
+   {
+      datum baseAddress
+      {
+         value = "0";
+         type = "long";
+      }
+   }
+   element imem.s1
+   {
+      datum _lockedAddress
+      {
+         value = "0";
+         type = "boolean";
+      }
+      datum baseAddress
+      {
+         value = "0";
+         type = "long";
+      }
+   }
+   element VectCPU_sys
+   {
+   }
+   element dmem
+   {
+      datum _sortIndex
+      {
+         value = "2";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{memorySize=KBytes}";
+         type = "String";
+      }
+   }
+   element pio
+   {
+      datum _sortIndex
+      {
+         value = "3";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{}";
+         type = "String";
+      }
+   }
+   element Soft_Vector_Processor_inst
+   {
+      datum _sortIndex
+      {
+         value = "0";
+         type = "int";
+      }
+   }
+   element clk
+   {
+   }
+   element imem
+   {
+      datum _sortIndex
+      {
+         value = "1";
+         type = "int";
+      }
+      datum megawizard_uipreferences
+      {
+         value = "{memorySize=KBytes}";
+         type = "String";
+      }
+   }
+}
+</parameter>
+    <parameter valueString="false" name="hardcopyCompatible"/>
+    <parameter valueString="STRATIXIII" name="deviceFamily"/>
+    <parameter valueString="false" name="generateLegacySim"/>
+    <parameter valueString="VectCPU_sys.qpf" name="projectName"/>
+    <parameter valueString="VERILOG" name="hdlLanguage"/>
+    <parameter valueString="C:\jasony\VectCPU" name="projectDirectory"/>
+    <module version="7.2" name="clk" kind="clock_source">
+        <parameter valueString="true" name="clockFrequencyKnown"/>
+        <parameter valueString="50000000" name="clockFrequency"/>
+    </module>
+    <module version="1.0" name="Soft_Vector_Processor_inst" kind="Soft_Vector_Processor">
+        <parameter valueString="" name="sharedPorts"/>
+        <parameter valueString="3" name="CPU_ID"/>
+        <parameter valueString="128" name="MEM_WIDTH"/>
+        <parameter valueString="32" name="VPU_WIDTH"/>
+        <parameter valueString="0" name="BREAK_ADDRESS"/>
+        <parameter valueString="32" name="MINDATAWIDTH"/>
+        <parameter valueString="0" name="RESET_ADDRESS"/>
+        <parameter valueString="8" name="NUMLANES"/>
+        <parameter valueString="32" name="EXCEPTION_ADDRESS"/>
+    </module>
+    <module version="7.2" name="imem" kind="altera_avalon_onchip_memory2">
+        <parameter valueString="32" name="dataWidth"/>
+        <parameter valueString="false" name="dualPort"/>
+        <parameter valueString="true" name="writable"/>
+        <parameter valueString="1" name="slave1Latency"/>
+        <parameter valueString="true" name="initMemContent"/>
+        <parameter valueString="imem" name="initializationFileName"/>
+        <parameter valueString="false" name="useNonDefaultInitFile"/>
+        <parameter valueString="false" name="allowInSystemMemoryContentEditor"/>
+        <parameter valueString="1" name="slave2Latency"/>
+        <parameter valueString="false" name="simAllowMRAMContentsFile"/>
+        <parameter valueString="false" name="useShallowMemBlocks"/>
+        <parameter valueString="AUTO" name="blockType"/>
+        <parameter valueString="NONE" name="instanceID"/>
+        <parameter valueString="32768" name="memorySize"/>
+    </module>
+    <module version="7.2" name="dmem" kind="altera_avalon_onchip_memory2">
+        <parameter valueString="128" name="dataWidth"/>
+        <parameter valueString="false" name="dualPort"/>
+        <parameter valueString="true" name="writable"/>
+        <parameter valueString="1" name="slave1Latency"/>
+        <parameter valueString="true" name="initMemContent"/>
+        <parameter valueString="dmem" name="initializationFileName"/>
+        <parameter valueString="false" name="useNonDefaultInitFile"/>
+        <parameter valueString="false" name="allowInSystemMemoryContentEditor"/>
+        <parameter valueString="1" name="slave2Latency"/>
+        <parameter valueString="false" name="simAllowMRAMContentsFile"/>
+        <parameter valueString="NONE" name="instanceID"/>
+        <parameter valueString="32768" name="memorySize"/>
+        <parameter valueString="false" name="useShallowMemBlocks"/>
+        <parameter valueString="AUTO" name="blockType"/>
+    </module>
+    <module version="7.2" name="pio" kind="altera_avalon_pio">
+        <parameter valueString="RISING" name="edgeType"/>
+        <parameter valueString="32" name="width"/>
+        <parameter valueString="Output" name="direction"/>
+        <parameter valueString="LEVEL" name="irqType"/>
+        <parameter valueString="false" name="captureEdge"/>
+        <parameter valueString="false" name="simDoTestBenchWiring"/>
+        <parameter valueString="false" name="generateIRQ"/>
+        <parameter valueString="false" name="bitClearingEdgeCapReg"/>
+        <parameter valueString="0" name="simDrivenValue"/>
+    </module>
+    <connection version="7.2" start="clk.clk" kind="clock" end="Soft_Vector_Processor_inst.clockreset"/>
+    <connection version="7.2" start="clk.clk" kind="clock" end="imem.clk1"/>
+    <connection version="7.2" start="clk.clk" kind="clock" end="dmem.clk1"/>
+    <connection version="7.2" start="Soft_Vector_Processor_inst.data_master" kind="avalon" end="dmem.s1">
+        <parameter valueString="1" name="arbitrationPriority"/>
+        <parameter valueString="0x0000" name="baseAddress"/>
+    </connection>
+    <connection version="7.2" start="Soft_Vector_Processor_inst.instruction_master" kind="avalon" end="imem.s1">
+        <parameter valueString="1" name="arbitrationPriority"/>
+        <parameter valueString="0x0000" name="baseAddress"/>
+    </connection>
+    <connection version="7.2" start="clk.clk" kind="clock" end="pio.clk"/>
+    <connection version="7.2" start="Soft_Vector_Processor_inst.data_master" kind="avalon" end="pio.s1">
+        <parameter valueString="1" name="arbitrationPriority"/>
+        <parameter valueString="0x8000" name="baseAddress"/>
+    </connection>
+</system>
+

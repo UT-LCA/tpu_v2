@@ -1,0 +1,20 @@
+--------------------
+- Assembler
+--------------------
+
+
+
+--------------------
+- VectCPU
+--------------------
+
+
+
+---------------
+- Future Work -
+---------------
+
+4/23/08
+- add a configuration bit to configure whether vccacc/vcczacc instruction modifies VL
+(vccacc/vcczacc currently stalls pipeline due to VL update;
+most of the time the reduction chain does span all lanes, so the VL modification for the next vccacc/vcczacc would be unnecessary)

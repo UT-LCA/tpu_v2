@@ -1,0 +1,74 @@
+#!/bin/sh
+
+#******************************************************************************
+#**************************** dooptionset function ****************************
+#******************************************************************************
+dooptionset()
+{
+# ARG1 - option
+# ARG2 - value
+
+option=$1
+value=$2
+
+if [ $# -ne 2 ] || [ ${#option} -eq 0 ]
+then
+  echo "Usage: dooptionset <option> <value>"
+  echo "         option can be SUBSET and value can be benchmark"
+  exit 255
+fi
+
+if [ "$option" = SUBSET ]
+then
+
+  make vdecoder
+  ./vdecoder $value >visa.v
+
+else
+  tmpfile=`mktemp`
+  sed -e "s/define "$option' .*$/'"define $option $value/g" options.v >>$tmpfile
+  mv $tmpfile options.v
+
+  if [ "$option" = LGMVL ]
+  then
+    hexvalue=`echo "obase=16; 2^$value" |bc -q`
+    hexlogvalue=`echo "obase=16; $value" | bc -q`
+    sed -r -e "s/24 : [0-9]+/24 : 0$hexvalue/g" vregfile_control.mif >tmp.mif
+    sed -r -e "s/25 : [0-9]+/25 : 0$hexlogvalue/g" tmp.mif >vregfile_control.mif
+    rm -f tmp.mif
+  fi
+fi
+
+}
+
+
+#***********************************************************************
+#**************************** MAIN function ****************************
+#***********************************************************************
+
+if [ $# -lt 2 ]
+then
+  echo "Usage: optionset <option> <value> <option> <value> ..."
+  echo
+  echo "  Examples"
+  echo "    Set Lanes to 4:              ./setoption LGL 2"
+  echo "    Set Dcache to 8KB:           ./setoption LGDD 13"
+  echo "    Subset for application fir:  ./setoption SUBSET <path to instr.dat>"
+  echo
+  echo "Current Configuration:"
+  echo "======================"
+
+  grep define options.v |cut -f2- -d' '
+  exit 255
+fi
+
+maxcnt=`expr $# / 2`
+
+for i in `seq 1 1 $maxcnt`
+do
+  dooptionset $1 $2
+  shift
+  shift
+done 
+
+

@@ -1,0 +1,555 @@
+/************************* THIS TEST_BENCH NO LONGER USED *******************/
+
+// This test_bench is stale and simulates only the processor module.  It has
+// been replaced with de3_test_bench.v which simulates the board.
+
+
+`define NO_PLI 1
+`define TEST_BENCH 1
+
+`timescale 1ns / 1ns
+
+`include "altera_mf.v"
+`include "220model.v"
+
+`include "processor.v"
+
+
+module test_bench ;
+parameter I_DATAWIDTH=32;
+parameter I_ADDRESSWIDTH=18;            //Byte-Addressable
+parameter I_SIZE=65536;                 //in I_DATAWIDTH size words
+
+parameter D_DATAWIDTH=32;
+parameter D_BYTEENAWIDTH=D_DATAWIDTH/8; 
+parameter D_ADDRESSWIDTH=25;            //For Byte-addressable address
+parameter D_SIZE=33554432/4;            //in D_DATAWIDTH size words
+
+parameter D_DATAWIDTH_128=128;
+parameter D_ADDRESSWIDTH_128=D_ADDRESSWIDTH-2;
+parameter D_SIZE_128=D_SIZE/4;
+
+parameter COUNTER_SIZE=38; //must be >=32
+
+    reg              clk;
+    reg              resetn;
+    wire [31:0]      rt_dataout;
+
+    integer trace;
+    integer store_trace;
+    integer exception_trace;
+    integer fs;
+    integer vector_trace;
+
+
+    wire ibus_en;             // Instruction bus signals
+    wire [31:0] ibus_address;
+    wire [31:0] ibus_readdata;
+   wire ibus_wait;
+
+    wire [31:0] dbus_address;    // Generic BUS signals
+    wire [31:0] dbus_readdata;
+    wire [31:0] dbus_writedata;
+    wire [3:0] dbus_byteen;
+    wire dbus_en;
+    wire dbus_wren;
+    wire dbus_wait;
+
+    wire [31:0] dmem_readdata;
+    wire [127:0] _dbus_readdata_128;
+
+    // Mem fill
+    wire  [31:0]  dmem_filladdr;
+    wire  [127:0] dmem_filldata;
+    wire          dmem_fillwe;
+    wire [31:0]   dmem_wbaddr;
+    wire [127:0]  dmem_wbdata;
+    wire          dmem_wbwe;
+    wire          _dmem_wbwe;
+
+    reg [COUNTER_SIZE-1:0] count_r;
+    wire [32-1:0] count;
+
+    processor p (
+      .clk(clk),
+      .resetn(resetn),
+      .rt_dataout(rt_dataout),
+
+      .ibus_en(ibus_en),
+      .ibus_address(ibus_address),
+      .ibus_readdata(ibus_readdata),
+      .ibus_wait(ibus_wait),
+
+      .dbus_address(dbus_address),
+      .dbus_readdata(dbus_readdata),
+      .dbus_writedata(dbus_writedata),
+      .dbus_byteen(dbus_byteen),
+      .dbus_en(dbus_en),
+      .dbus_wren(dbus_wren),
+      .dbus_wait(dbus_wait),
+
+      .mem_clk(clk),
+      .dmem_filladdr(dmem_filladdr),
+      .dmem_filldata(dmem_filldata),
+      .dmem_fillwe(dmem_fillwe),
+      .dmem_wbaddr(dmem_wbaddr),
+      .dmem_wbdata(dmem_wbdata),
+      .dmem_wbwe(_dmem_wbwe)
+      );
+
+
+      // Requires data_mem.d_write signal to be present
+    wire [32-1:0] pc;
+    wire [32-1:0] instr;
+    wire reg_file_we;
+    wire [5-1:0] reg_file_dst;
+    wire [32-1:0] reg_file_data;
+    wire data_mem_we;
+    wire data_mem_write;
+    wire [32-1:0] data_mem_addr;
+    wire [32-1:0] data_mem_data;
+
+    assign pc=p.c.p.ifetch_next_pc ;
+    assign instr= p.c.p.ifetch_instr ;
+    assign reg_file_we= p.c.p.ctrl_reg_file_c_we ;
+    assign reg_file_dst= p.c.p.pipereg5_q ;
+    assign reg_file_data= p.c.p.nop13_q ;
+    assign data_mem_we= p.c.p.ctrl_data_mem_en ;
+    assign data_mem_write= p.c.p.data_mem.d_write ;
+    assign data_mem_addr= p.c.p.addersub_result ;
+    assign data_mem_data= p.c.p.nop10_q ;
+
+
+    //Moved dcache into processor - Feb16,2008
+    //assign dbus_readdata=(dbus_address==32'h8000_0100)? count : dmem_readdata;
+    assign dbus_readdata=count;
+
+    /**************** Reset and stimulate clock ********************/
+
+    initial
+      clk = 1'b1;
+    always
+      #10000 clk <= ~clk;
+    
+    initial 
+      begin
+        resetn <= 0;
+          #50000 resetn <= 1;
+      end
+
+    /**************** Trace of Write Backs ********************/
+    initial
+    begin
+        trace=$fopen("/tmp/modelsim_trace.txt","w");
+        store_trace=$fopen("/tmp/modelsim_store_trace.txt","w");
+        fs=$fopen("/tmp/modelsim_filesystem.txt","w");
+        vector_trace=$fopen("/tmp/modelsim_vector_trace.txt","w");
+    end
+
+    always@(posedge clk)
+    begin
+        if (reg_file_we && (|reg_file_dst) && resetn)
+            $fwrite(trace,"%d | PC=%h | IR=%h | %h: %h\n",
+                    $time,
+                    pc,
+                    instr,
+                    reg_file_dst,
+                    reg_file_data);
+    end
+
+    /**************** Trace of Stores to Memory ********************/
+
+    always@(posedge clk)
+    begin
+      if (data_mem_we && data_mem_write && resetn &&
+              ((p.dcpu_en&~p.dcpu_wait) || p.dcache_wren))
+        $fwrite(store_trace,"%d | PC=%h | IR=%h | %h: %h\n",
+          $time,
+          pc,
+          instr,
+          data_mem_addr,
+          data_mem_data);
+    end
+
+    /**************** Clean up & close files ********************/
+
+    always@(data_mem_data && data_mem_we )
+      if (data_mem_data==32'hdeaddead && data_mem_we)
+      begin
+      $fclose(trace);
+      $fclose(store_trace);
+      $fclose(fs);
+      $fclose(vector_trace);
+      end
+
+    /**************** User inserted code ********************/
+wire [6:0] D_pipe1_instr;
+wire D_pipe1_stall;
+wire D_pipe1_squash;
+wire [6:0] D_pipe2_instr;
+wire D_pipe2_stall;
+wire D_pipe2_squash;
+wire [6:0] D_pipe3_instr;
+wire D_pipe3_stall;
+wire D_pipe3_squash;
+
+assign D_pipe1_instr = {!(|p.c.p.ifetch_opcode), (|p.c.p.ifetch_opcode) ? p.c.p.ifetch_opcode : p.c.p.ifetch_func};
+assign D_pipe1_stall = p.c.p.stall_out_stage1;
+assign D_pipe1_squash = p.c.p.squash_stage1|p.c.p.branch_mispred;
+
+assign D_pipe2_instr = {!(|p.c.p.pipereg14_q), (|p.c.p.pipereg14_q) ? p.c.p.pipereg14_q : p.c.p.pipereg15_q};
+assign D_pipe2_stall = p.c.p.stall_out_stage2;
+assign D_pipe2_squash = p.c.p.squash_stage2;
+
+assign D_pipe3_instr = {!(|p.c.p.pipereg17_q), (|p.c.p.pipereg17_q) ? p.c.p.pipereg17_q : p.c.p.pipereg18_q};
+assign D_pipe3_stall = p.c.p.stall_out_stage3;
+assign D_pipe3_squash = p.c.p.squash_stage3;
+
+  /**************** Filesystem writes ********************/
+  always@(posedge clk)
+    begin
+    if (dbus_en && dbus_wren && (dbus_address==32'h8000_0000) && 
+        ~dbus_wait && resetn)
+      $fwrite(fs,"%d\n", dbus_writedata[31:24]);
+    end
+
+  /**************** Vector Trace ********************/
+  reg read_vector_next;
+  reg vector_modified;
+  reg [p.c.v.vlanes.REGIDWIDTH-1:0] dst_vector_next;
+  reg [p.c.v.MVL*32-1:0] readdata_vector_next;
+  reg [p.c.v.MVL*32-1:0] readdata_vector_next_tmp;
+  integer i,k,m;
+  always@(posedge clk)
+  begin
+    read_vector_next<=p.c.v.vlanes.vr_c_we && 
+      ((~p.c.v.vlanes.stall_memunit && p.c.v.vlanes.last_subvector_done[5] && ~p.c.v.vlanes.ctrl_mulpipe_en[5]) ||
+       (p.c.v.vlanes.last_subvector_done[6] && p.c.v.vlanes.ctrl_mulpipe_en[6])) ;
+    //Zero out Elm ID part of destination
+    dst_vector_next<={
+      p.c.v.vlanes.vr_c_reg[p.c.v.vlanes.REGIDWIDTH-1 : p.c.v.vlanes.VELMIDWIDTH], 
+      {p.c.v.vlanes.VELMIDWIDTH{1'b0}}
+      };
+    if (read_vector_next)
+    begin
+      readdata_vector_next=0;
+
+      //Get all subvectors, shift them down, and OR them into result
+      for (i=0; i<p.c.v.MVL/p.c.v.NUMLANES; i=i+1)
+      begin
+        readdata_vector_next_tmp=0;
+        for (k=0; k<p.c.v.NUMLANES; k=k+1)  //Loop to expand VPW to 32-bits
+          readdata_vector_next_tmp[k*32+:32]=
+            {{32-p.c.v.VPW*8+1{p.c.v.vlanes.vregfile_vector.reg_file1.mem_data[
+                       dst_vector_next+i][(k+1)*p.c.v.VPW*8-1]}}, //sign-extend
+            p.c.v.vlanes.vregfile_vector.reg_file1.mem_data[dst_vector_next+i][
+                (k+1)*p.c.v.VPW*8-2 -: p.c.v.VPW*8-1]}; 
+
+        readdata_vector_next=readdata_vector_next| 
+         (readdata_vector_next_tmp << (p.c.v.NUMLANES*32*i));
+      end
+
+      $fwrite(vector_trace,"%d | PC=%h | IR=%h | vr%h: %h\n",
+            $time,
+            pc,
+            p.c.v.vlanes.D_instr[6],
+            dst_vector_next[p.c.v.vlanes.REGIDWIDTH-1 : p.c.v.vlanes.VELMIDWIDTH],
+            readdata_vector_next);
+    end
+  end
+
+  /**************** Vector Flag Trace ********************/
+  reg read_vf_next;
+  reg [p.c.v.vlanes.REGIDWIDTH-1:0] dst_vf_next;
+  reg [p.c.v.MVL-1:0] readdata_vf_next;
+  integer j;
+  always@(posedge clk)
+  begin
+    read_vf_next<=p.c.v.vlanes.vf_c_we && p.c.v.vlanes.last_subvector_done[5] ;
+    //Zero out Elm ID part of destination
+    dst_vf_next<={
+      p.c.v.vlanes.dst_s5[p.c.v.vlanes.REGIDWIDTH-1 : p.c.v.vlanes.VELMIDWIDTH], 
+      {p.c.v.vlanes.VELMIDWIDTH{1'b0}}
+      };
+    if (read_vf_next)
+    begin
+      //a) Get first subvector
+      readdata_vf_next= 
+          p.c.v.vlanes.vregfile_flag.reg_file1.mem_data[dst_vf_next]; 
+
+      //b) Get rest subvectors, shift them down, and OR them into result
+      for (j=1; j<p.c.v.MVL/p.c.v.NUMLANES; j=j+1)
+        readdata_vf_next=readdata_vf_next| 
+          (p.c.v.vlanes.vregfile_flag.reg_file1.mem_data[ dst_vf_next+j ]<<
+            (p.c.v.NUMLANES*j));
+
+      $fwrite(vector_trace,"%d | PC=%h | IR=%h | vf%h: %b\n",
+            $time,
+            pc,
+            p.c.v.vlanes.D_instr[6],
+            dst_vf_next[p.c.v.vlanes.REGIDWIDTH-1 : p.c.v.vlanes.VELMIDWIDTH],
+            readdata_vf_next);
+    end
+  end
+
+  /**************** Vector Scalar Trace ********************/
+  reg read_vs_next;
+  reg [p.c.v.LOG2NUMVSREGS-1:0] dst_vs_next;
+  reg [p.c.v.VSWIDTH-1:0] readdata_vs_next;
+  always@(posedge clk)
+  begin
+    read_vs_next<=p.c.v.vs_c_we && (|p.c.v.vs_c_reg);
+    dst_vs_next<=p.c.v.vs_c_reg;
+    if (read_vs_next)
+    begin
+      readdata_vs_next=p.c.v.vregfile_scalar.reg_file1.mem_data[dst_vs_next]; 
+
+      $fwrite(vector_trace,"%d | PC=%h | IR=%h | vs%h: %h\n",
+            $time,
+            pc,
+            p.c.v.vlanes.D_instr[6],
+            dst_vs_next,
+            readdata_vs_next);
+    end
+  end
+
+  /**************** Vector Control Trace ********************
+  reg read_vc_next;
+  reg read_vc_next2;
+  reg [p.c.v.LOG2NUMVCREGS-1:0] dst_vc_next;
+  reg [p.c.v.VCWIDTH-1:0] readdata_vc_next;
+  always@(posedge clk)
+  begin
+    read_vc_next<= p.c.v.vc_c_we || 
+                   p.c.v.vbase_c_we ||
+                   p.c.v.vinc_c_we && (|p.c.v.vinc_c_reg) ||
+                   p.c.v.vstride_c_we;
+    dst_vc_next<= (p.c.v.vc_c_we) ? p.c.v.vc_c_reg :
+                   (p.c.v.vbase_c_we) ? p.c.v.vbase_c_reg +32 :
+                   (p.c.v.vinc_c_we && (|p.c.v.vinc_c_reg)) ? p.c.v.vinc_c_reg + 48 :
+                   p.c.v.vstride_c_reg+56; 
+    read_vc_next2<=read_vc_next;
+  end
+
+  //Write vc before vr - for loads/stores to match MINT trace
+  always@(posedge clk)
+  begin
+    if (read_vc_next)
+    begin
+      readdata_vc_next=(dst_vc_next[5]==0) ?
+                  p.c.v.vregfile_control.reg_file1.mem_data[dst_vc_next[4:0]] :
+               (dst_vc_next[5:4]==2'b10) ?
+                  p.c.v.vregfile_base.reg_file1.mem_data[dst_vc_next[3:0]] : 
+               (dst_vc_next[5:3]==3'b110) ?
+                  p.c.v.vregfile_inc.reg_file1.mem_data[dst_vc_next[2:0]] : 
+                  p.c.v.vregfile_stride.reg_file1.mem_data[dst_vc_next[2:0]]; 
+
+      $fwrite(vector_trace,"%d | PC=%h | IR=%h | vc%h: %h\n",
+            $time,
+            pc,
+            p.c.v.vlanes.D_instr[6],
+            dst_vc_next,
+            readdata_vc_next);
+    end
+  end
+  */
+
+  /*************** EEMBC timer/counter ***************/
+  always@(posedge clk)
+    if (!resetn)
+      count_r<=0;
+    else if ((dbus_address==32'h8000_0100) && dbus_wren && dbus_en)
+    begin
+      count_r[COUNTER_SIZE-1:COUNTER_SIZE-32]<=dbus_writedata;
+    end
+    else if (!(&count_r))   // Saturate counter
+      count_r<=count_r+1;
+  assign count=count_r[COUNTER_SIZE-1:COUNTER_SIZE-32];
+
+
+  /**************** Profiling of certain events  ********************/
+  wire evt_lanesstalled;
+  wire evt_memstalled;
+  wire evt_cachemiss;
+  wire evt_memsubvector;
+
+  reg [31:0] count_lanesstalled;
+  reg [31:0] count_memstalled;
+  reg [31:0] count_cachemiss;
+  reg [31:0] count_memsubvector;
+
+  assign evt_lanesstalled=p.c.v.instr_wait;
+  assign evt_memstalled=evt_lanesstalled && p.c.v.vlanes.stall_memunit && p.c.v.vlanes.vmem_unit.op_memop;
+  assign evt_cachemiss=evt_memstalled && p.c.v.vlanes.vmem_unit.dmem_valid && p.dcpu_wait && (p.dcache_state==p.DCACHE_TAGLOOKUP);
+  assign evt_memsubvector=p.c.v.vlanes.vmem_unit.op_memop && p.c.v.vlanes.vmem_unit.enable && ~p.c.v.vlanes.vmem_unit.stall;
+
+  always@(posedge clk)
+    if (!resetn)
+      count_lanesstalled<=0;
+    else if (evt_lanesstalled)
+      count_lanesstalled<=count_lanesstalled+1;
+
+  always@(posedge clk)
+    if (!resetn)
+      count_memstalled<=0;
+    else if (evt_memstalled)
+      count_memstalled<=count_memstalled+1;
+
+  always@(posedge clk)
+    if (!resetn)
+      count_cachemiss<=0;
+    else if (evt_cachemiss)
+      count_cachemiss<=count_cachemiss+1;
+
+  always@(posedge clk)
+    if (!resetn)
+      count_memsubvector<=0;
+    else if (evt_memsubvector)
+      count_memsubvector<=count_memsubvector+1;
+
+      //Dump results
+  always@(data_mem_data && data_mem_we )
+    if (data_mem_data==32'hdeaddead && data_mem_we)
+    begin
+      $display("count_lanesstalled_cycles=%d",count_lanesstalled);
+      $display("count_memstall_cycles=%d",count_memstalled);
+      $display("count_cachemisses=%d",count_cachemiss);
+      $display("count_memsubvector=%d",count_memsubvector);
+    end
+
+
+    /**************** On-Chip Memory system ********************/
+assign ibus_wait=0;
+altsyncram  imem (
+    .clock0 (clk),
+    .clocken0 (ibus_en|~resetn),
+    .clock1 (clk),                              // changed
+    .clocken1 (),                       // changed
+    .aclr0(~resetn), 
+    .address_a (ibus_address[I_ADDRESSWIDTH-2+2-1:2]),
+    .wren_b (), .data_b (), .address_b (), //changed
+    // synopsys translate_off
+    .wren_a (), .rden_b (), .data_a (), 
+    .aclr1 (), .byteena_a (), .byteena_b (),
+    .addressstall_a (), .addressstall_b (), .q_b (),
+    // synopsys translate_on
+    .q_a (ibus_readdata)
+    );
+    defparam
+        imem.intended_device_family = "Stratix",
+        imem.width_a = I_DATAWIDTH, 
+        imem.widthad_a = I_ADDRESSWIDTH-2,
+        imem.numwords_a = I_SIZE,
+        imem.operation_mode = "BIDIR_DUAL_PORT",    // changed
+        imem.width_b = I_DATAWIDTH,                 // new
+        imem.widthad_b = I_ADDRESSWIDTH-2,            // new
+        imem.numwords_b = I_SIZE,                   // new
+        imem.outdata_reg_b = "UNREGISTERED",
+        imem.outdata_reg_a = "UNREGISTERED",
+        imem.address_reg_b = "CLOCK1",              // new
+        imem.wrcontrol_wraddress_reg_b = "CLOCK1",  // new
+        imem.width_byteena_a = 1,
+        `ifdef TEST_BENCH
+        imem.address_aclr_a = "CLEAR0",
+        imem.outdata_aclr_a = "CLEAR0",
+        imem.init_file = "instr.rif",
+        `endif
+        `ifdef QUARTUS_SIM
+          imem.init_file = "instr.mif",
+          imem.ram_block_type = "AUTO",
+        `else
+          imem.ram_block_type = "MEGARAM",
+        `endif
+        imem.lpm_type = "altsyncram";
+
+
+  //Stall 1 clock cycle on every bus access however need to accomodate:
+  //   1) Back-to-back mem operations in scalar pipeline
+  //   2) Blind-issuing of vmem_unit
+
+  parameter MISSPENALTY=7;
+
+  reg T;
+  reg [5:0] delay;
+  always@(posedge clk)
+    if (!resetn)
+    begin
+      T<=0;
+      delay<=0;
+    end
+    else if ( (T==0) && dbus_en)
+    begin
+      T<=1;
+      delay<=(~dbus_address[31]) ? {6{1'b1}} : 1;
+    end
+    else
+    begin
+      T<=(delay>1);
+      delay<= (dbus_en) ? delay>>1 : 0;
+    end
+
+  assign dbus_wait=dbus_en&(delay!=1);
+
+  assign dmem_filladdr = dbus_address;
+  assign dmem_filldata = (delay>MISSPENALTY) ? {128{1'b1}} : _dbus_readdata_128;
+  assign dmem_fillwe = (delay==MISSPENALTY) & ~dbus_address[31];
+
+  assign dmem_wbwe=_dmem_wbwe && (delay==MISSPENALTY);
+
+  altsyncram  dmem (
+            .clock0 (clk),
+            .clocken0 (),
+            .clock1 (clk),
+            .clocken1 (),
+            `ifdef TEST_BENCH
+            .aclr0(~resetn), 
+            `endif
+            .wren_a (),
+            .byteena_a (-1),
+            .address_a (dmem_wbaddr[D_ADDRESSWIDTH-2+4-1:4]),
+            .data_a (),
+            .q_a (),
+            // synopsys translate_off
+            .rden_b (), 
+            .aclr1 (), .byteena_b (),
+            .addressstall_a (), .addressstall_b (),
+            // synopsys translate_on
+            .address_b ((dmem_wbwe) ? dmem_wbaddr[D_ADDRESSWIDTH-2+4-1:4] : 
+                                      dbus_address[D_ADDRESSWIDTH-2+4-1:4]),
+            .wren_b (dmem_wbwe),
+            .data_b (dmem_wbdata),
+            .q_b (_dbus_readdata_128) 
+            );  
+    defparam
+        dmem.intended_device_family = "Stratix",
+        dmem.width_a = D_DATAWIDTH,
+        dmem.widthad_a = D_ADDRESSWIDTH,
+        dmem.numwords_a = D_SIZE,
+        dmem.width_byteena_a = 1,
+        dmem.operation_mode = "BIDIR_DUAL_PORT",
+        dmem.width_b = D_DATAWIDTH_128,
+        dmem.widthad_b = D_ADDRESSWIDTH_128,
+        dmem.numwords_b = D_SIZE_128,
+        dmem.width_byteena_b = 1,
+        dmem.outdata_reg_a = "UNREGISTERED",
+        dmem.address_reg_b = "CLOCK0",
+        dmem.wrcontrol_wraddress_reg_b = "CLOCK0",
+        dmem.wrcontrol_aclr_a = "NONE",
+        dmem.address_aclr_a = "NONE",
+        dmem.outdata_aclr_a = "NONE",
+        dmem.byteena_aclr_a = "NONE",
+        dmem.byte_size = 8,
+        `ifdef TEST_BENCH
+          dmem.indata_aclr_a = "CLEAR0",
+          dmem.init_file = "data.rif",
+        `endif
+        `ifdef QUARTUS_SIM
+          dmem.init_file = "data.mif",
+          dmem.ram_block_type = "M4K",
+        `else
+          dmem.ram_block_type = "MEGARAM",
+        `endif
+        dmem.lpm_type = "altsyncram";
+
+endmodule
+

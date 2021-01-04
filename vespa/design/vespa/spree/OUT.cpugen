@@ -1,0 +1,73 @@
+ADDI:2
+ADDIU:2
+SLTI:2
+SLTIU:2
+ANDI:2
+ORI:2
+XORI:2
+LUI:2
+LB:2
+LH:2
+LW:2
+LBU:2
+LHU:2
+SB:2
+SH:2
+SW:2
+SLL:2
+SRL:2
+SRA:2
+SLLV:2
+SRLV:2
+SRAV:2
+MFHI:2
+MFLO:2
+MULT:2
+MULTU:2
+DIV:2
+DIVU:2
+ADD:2
+ADDU:2
+SUB:2
+SUBU:2
+AND:2
+OR:2
+XOR:2
+NOR:2
+SLT:2
+SLTU:2
+J:2
+JAL:2
+JR:3
+JALR:3
+BEQ:3
+BNE:3
+BLEZ:3
+BGTZ:3
+BLTZ:3
+BGEZ:3
+CFC2:2
+CTC2:2
+MTC2:2
+MFC0:2
+MTC0:2
+Removed unused component pipereg
+Removed unused component pipereg
+Added stall to stage 2 from LUI node mul_shift_stall:SHIFTLEFT
+Added stall to stage 2 from LB node data_mem_bus_int:LOADBYTE
+Added stall to stage 2 from DIV node div:DIV
+Added stall to stage 2 from CFC2 node cop2:COP2_INPUT
+Added stall to stage 2 from MFC0 node cop0:COP0_INPUT
+3-stage pipe; hazard window=1; branch penalty=1
+Added pipereg14 to cycle 1
+Added pipereg15 to cycle 1
+Added pipereg16 to cycle 1
+Added pipereg17 to cycle 1
+Added pipereg18 to cycle 2
+Added pipereg19 to cycle 2
+Added pipereg20 to cycle 2
+Added pipereg21 to cycle 2
+Inserting branch prediction hooks for bpred_1bittable.v
+Inserted Bypass Mux mux2to1_nop_d to stage 2
+Inserted Bypass Mux mux2to1_nop10_d to stage 2
+Added flush on branch mispredict for stage 1
