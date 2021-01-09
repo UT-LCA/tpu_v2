@@ -1,0 +1,14 @@
+
+Changed qsf to Standard fit
+
+Memory Hierarchy
+================
+
+Registered dbus_address so that it doesn't have to be stable until hit confirmed
+
+Fixed mem_dcache_wb.v and mem_hierarchy.v to register bus_en/dbus_en before feeding it back to the wait signal.  Based on _FIXEDME version
+
+Made dbus arbitration between cpu and bootloader happen below cache
+
+This should allow for write allocate
+

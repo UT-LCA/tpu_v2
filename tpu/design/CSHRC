@@ -1,0 +1,17 @@
+
+# Set to directory that contains applications/ vespa/ etc.
+setenv SPE_HOME /jayar/b/b0/yiannac/vespa_release
+
+setenv SPE_COMPILER ${SPE_HOME}/compiler-vector
+setenv SPE_COMPILER_LIBPATH ${SPE_COMPILER}/lib/gcc/mips-mips-elf/4.2.0/soft-float
+
+### ModelSim ### - Uncomment and fill in if you don't have in your environment
+#setenv MODEL_TECH /mentor/modelsim-6.3c/modeltech/bin
+#set path=($MODEL_TECH $path)
+#setenv MGLS_LICENSE_FILE port@licenseserver
+
+### Quartus ### - Uncomment and fill in if you don't have in your environment
+# Note: LM_LICENSE_FILE points to 2 things: the Quartus Licence and DE3 license
+#setenv QUARTUS_ROOTDIR /pkgs/altera/quartus/quartus8.1/linux/quartus
+#setenv PATH $QUARTUS_ROOTDIR/bin:$PATH
+#setenv LM_LICENSE_FILE "port@licenseserver:fullpathto_license_de3_regulator.dat"

@@ -1,0 +1,459 @@
+BUGs:
+======
+- autcor fails when chaining and non-full multiplier lanes (works for half full)
+- rgbcmyk, rgbyiq fail intermittently for large prefetch (7 or 8*VL) - since DE3.  Seems like only happens for 8 or more lanes.
+- rgbcmyk fails with different answers each run for some configs (4 full lanes, small cache, MVL of 16, no chaining)
+- Multiple instructions stalling - unsupported.  So if banking is enabled multiplier lanes should be full so that only memory instructions stall.
+- SPREE: if delay slot stalled 1 cycle and branch mispredicted, need to protect delay slot even though it's delayed.  Problem is ibus_wait was separated from SPREE pipeline, so pipeline doesn't know about the stall.  SOLUTION: make ifetch emit a flag with each instr which tells pipe if it's protected.  Example problem: BNE LBU(stalled vpu_hasmem) -> BNE NOP LBU -> BNE NOP NOP
+- flag register file - writes are subject to vector length in VIRAM.  Temporary solution: assume entire flag register is clobbered on any write to it.  This is not an issue in our benchmarks - and it's probably rare.
+
+TODOS:
+======
+- Relax vector issuing logic when scalar is stalled
+- fix MVL==NUMLANES, ELMRANGE and all nets declared with it need to be tolerant of a null range and zero-width net, also must fix vmem_unit shifting which modifies the element part of the destination - now there is no element part!
+- Add store buffer and move up load access same time as mem_unit load instr
+- Duplicate dcache tags so dmem_address can go in 1 cycle early, compute parhits and hit/miss early
+- Get shift operations to "jump" as well
+- Pipeline cache accesses by shifting queue back and forth (relevant for M<L)
+- Make wbbuffer a single register if prefetching disabled (use USE_EAB flag)
+- even smarter prefetcher - track last value written into vl BEFORE vsatvl
+- Testbench should model new tmj portmux, unify this and stop being lazy
+
+
+CHANGELOG 
+=========
+
+Version 1.8.9
+Aug 14, 2008
+- Release
+
+Version 1.8.8
+June 24, 2008
+- Fixed chaining + half multiplier lanes bug for autcor
+
+Version 1.8.7
+Apr 27, 2008
+- Made qsf un-disable RAM recognition (new tmj mux requires RAM inference)
+
+Version 1.8.6
+Apr 9, 2008
+- Made stores not stall pipeline if nothing waiting for vmemunit 
+- DE3-340
+- Added hardware trace circuit into scalar
+
+Version 1.8.5
+Apr 7, 2008
+- Stopped feeding local_ready back into DDR2 controller through local_*_req
+- Registered dirtyaddr to t_mem_fillwe since we have an extra cycle there
+- Fixed LGX parameter, vmul_unit wasn't stalling correctly
+- Made all vector register files use single clock and rden_b signal, this enables 32-bit wide block RAM configurations instead of just 16 bits.
+
+Version 1.8.4
+Apr 2, 2008
+- Prefetching still buggy
+- Banking now LGB_2_APB_1_LGMVL_7_LGL_4_LGM_4_LGDD_14_LGDW_6_DPV_65532 won't run! where before it was 2-1-6-4-4 that wouldn't on the TM4 (1S80)
+
+Version 1.8.3
+Mar 30, 2008
+- Prefetching still buggy
+- Support DDR2 block transfers for long cache lines and prefetching
+- use local_size to get full DDR2 bandwidth
+
+Version 1.8.2
+Mar 26, 2008
+- Changed a lot of mem_hierarchy
+
+Version 1.8.1
+Mar 24, 2008
+- Working on DE3!!! Uses full-rate 266MHz memory clock, need to test prefetching
+
+Version 1.7.8
+Jan 31, 2008
+- Port to DE3, got it flakily working for autcor in Modelsim only
+- Port to DDR2 only working for cache line size = 256 bits
+
+Version 1.7.7
+Jan 31, 2008
+- Fixed bug in 1 lane, (0 replication -> treated weirdly in Modelsim?)
+- Fixed bug in multiplier: control signals were not stalling with pipe
+
+Version 1.7.6
+Jan 31, 2008
+- Added ALUPERBANK capability
+
+Version 1.7.5
+Jan 28, 2008
+- Drop rshift from multiplier (no fixed-point multiplies)
+
+Version 1.7.4
+Jan 27, 2008
+- Made 1 bank work
+
+Version 1.7.3
+Jan 27, 2008
+- Allowed mul instructions to pair with stores or other non-writeback instrs
+
+Version 1.7.2
+Jan 25, 2008
+- Got 2 register banks working, only loads & adds can pair up (longer multiplier pipeline conflicts on bank)
+- Hazard checking done in stage 2
+- Any instruction not starting to read from element 0 stalls 1 cycle
+- Stage 3 is dispatcher (can only shift in instructions)
+
+Version 1.7.1
+Jan 5, 2008
+- Gave register file multiple banks, but still single-issue. Works.
+
+Version 1.7.0
+Dec 5, 2008
+- Individual lane control for multiplier FUs (X) parameter
+
+Version 1.6.10
+Sep 1, 2008
+- Added more aggressiveness to smart vector prefetching (65534, 65533, ...)
+
+Version 1.6.9
+Aug 25, 2008
+- Fixed bug in less MEMLANES than LANES in vmem_unit issue state machine
+
+Version 1.6.8
+Aug 21, 2008
+- Fixed bugs in WB to support all dcache configurations
+
+Version 1.6.7
+Aug 13, 2008
+- Fixed VECPREFETCHES - was waiting for two shifter_loads in vmemunit
+- Note 16 byte cache line no longer works!
+
+Version 1.6.6
+Aug 1, 2008
+- Added VECPREFETCHES parameter to prefetch constant/vector length
+
+Version 1.6.5
+Jul 28, 2008
+- Added LANEWIDTH parameter to enable any lane width (instead of multiples of 8)
+- Kept VPW to set vector register file size (must have minimum of 8)
+
+Version 1.6.4
+Jul 21, 2008
+- Prefetch by a constant, prefetch hint sent to mem_hierarchy but not used!
+- Protected dirty cache lines from being prefetched over
+- Updated quartus_top - too many pins
+- Timing problems!!! Doesn't work for less than 64byte lines
+- Protected DRAM row boundary
+
+Version 1.6.3
+Jul 18, 2008
+- Moved wbbuf into mem_dcache_wb.v
+- Fixed many bugs with wbbuf - verified works for all scalar EEMBC as well
+
+Version 1.6.2
+Jul 14, 2008
+- Added prefetch ability into mem_port (is slow and also needs more work in
+mem_hierarchy arbiter => hence we're abandoning this approach, not worth the
+effort)
+- Created options.v and collected all parameters
+- Added parameterizing of Icache line size as well
+
+Version 1.6.1
+Jul 12, 2008
+- Added store buffer to store to DDR controller
+- Need to read dirty bit from cache first - and if same address don't fill
+
+Version 1.6.0
+Jul 9, 2008
+- Registered dmem_address in vmem_unit since was critical thru write Xbar
+- Made test_bench use .dat files - eliminated use of .rif
+
+Version 1.5.9
+Jun 25, 2008
+- Merged cop0 and exception stuff into processor
+
+Version 1.5.8
+Jun 24, 2008
+- Modified scalar MIPS so that _next_pc not dependent on pc_advance (low fmax)
+- fixed plifs: tm4fsexit would crash if tm4fs was never initialized
+
+Version 1.5.7
+Jun 18, 2008
+- PLI interface to filesystem
+
+Version 1.5.6
+Jun 18, 2008
+- Fix critical path from cache miss to addr_offset using /*synthesis keep*/
+
+Version 1.5.5
+Jun 16, 2008
+- Rearrange and put icache into processor.v
+
+Version 1.5.4
+Jun 8, 2008
+- Issue control instructions even when vlanes is stalled
+
+Version 1.5.3
+May 30, 2008
+- Fully parameterized cache line size - verified 32B and 64B lines sizes on TM4
+
+Version 1.5.2
+May 30, 2008
+- Made mem_hierarchy parameterized cacheline - verified 16B line works still
+
+Version 1.5.1
+May 28, 2008
+
+Version 1.5.0
+May 20, 2008
+- added profiling in tm4_test_bench.v
+
+Version 1.4.0d
+May 7, 2008
+- Made processor move on when cache is done
+
+Version 1.4.0c
+May 3, 2008
+- Registered writes in processor.v since first cycle spent looking up tags
+
+Version 1.4.0b
+May 1, 2008
+- Pipeline cache for vector cache accesses - speculate that a cache access hits, if not, rewind your stride.
+- Delayed issuing of cache misses to bus to make time for vmem_unit to rewind
+- Added tm4_test_bench.v allowing us to simulate the complete tm4 system including DDR
+
+Version 1.4.0a
+Apr 26, 2008
+- Eliminate last stall stage of vmem_unit for consecutive memory operations only
+- Note that the pipeline still stalls everything, just the vmem_unit knows not to re-issue the same operation twice (see the quickload signals)
+
+Version 1.4.1
+Apr 26, 2008
+- Made cache line vary - but requires OLD_DATA to appear on same port read/write
+. Unfortunately this is only on Stratix III, earlier FPGAs always show new data.
+- This branch was abandoned!!!
+
+Version 1.3.15
+Mar 23, 2008
+- Eliminate first load stage of vmem_unit
+
+Version 1.3.14
+Mar 23, 2008
+- Spread adder-saturate over two pipe stages (is consistently critical path)
+- Added default case to flagalu - was turning into comb loop/latch
+
+Version 1.3.13
+Mar 23, 2008
+- Made stride*laneid precomputed since was limiting scaling past 8 lanes (clk previously went from 135MHz to 125, to 102 to 86 for 16,32,and 64 lanes respectively; now goes 135MHz up until 64 which does 122).
+
+
+Version 1.3.12
+Mar 23, 2008
+- Nothing? Something?
+
+Version 1.3.11
+Mar 23, 2008
+- Fixed tm4.v to accommodate faster bootloading
+
+Version 1.3.10
+Mar 18, 2008
+- created vgen_mvl
+- Fixed vmem_unit from checking only 1st mask bit for loads/stores
+
+Version 1.3.9
+Mar 15, 2008
+- Added counter for memunit overhead
+
+Version 1.3.8
+Mar 9, 2008
+- Added subsetting into vdecoder
+
+Version 1.3.7
+Mar 3, 2008
+- Fixed vpw=1 support
+
+Version 1.3.6
+Feb 28, 2008
+- Changed decoder & virtualtype to read from file: decode_mem_opcode.txt
+- Changed lanesweep script to take lane values as inputs, and to cleanup more
+- Added vpw sweep
+
+Version 1.3.5
+Feb 22, 2008
+- Fixed issuing logic to execute scalar instrs when vpu is stalled or if vpu
+has a memop in flight but next instr is not a scalar memop
+
+Version 1.3.4
+Feb 21, 2008
+- Fixing support for VPW=1,2 - works
+
+Version 1.3.3
+Feb 20, 2008
+- Fixed support for 1 lane - works
+
+Version 1.3.2
+Feb 20, 2008
+- Fixed support for 2 lanes - works
+
+Version 1.3.1
+Feb 19, 2008
+- Added store parallel lanes - looks good in simulation
+- Works on TM4, tested M=1, M=2, M=L
+
+Version 1.3.0
+Feb 18, 2008
+- Working for variable PARLANES for loads of strided accesses!
+
+Version 1.2.8
+Feb 17, 2008
+- Fixed vmem_unit by adding wastedcache variable
+- Fixed hazard with 6th stage of mulpipe instructions
+
+Version 1.2.7
+Feb 17, 2008
+- Moved dcache into processor.v, changed hierarchy
+- confirmed all scalar benchmarks still work
+- problems with vector
+
+Version 1.2.6
+Feb 15, 2008
+- 3SC3 Auto fit w/ retime/duplicate: 94MHz normal; 111MHz 2-stagemul; 120MHz no barshift - critical path becomes replicate stall line to scalar zeroer and regfile; 127MHz 2-stage mul + 2-stage barshift
+IC(0.0)+CELL(0.0)=0.000;DSPMULT_X39_Y28_N1; mac_mult1~OBSERVABLEDATAA_REGOUT17'
+IC(0.000)+CELL(1.913)=1.913;DSPMULT_X39_Y28_N1; mac_mult1~DATAOUT35'
+IC(0.000)+CELL(2.615)=4.528;DSPOUT_X39_Y28_N2; result[54]'
+IC(0.438)+CELL(0.262)=5.228;MLABCELL_X40_Y29_N16; WideOr1~100'
+IC(0.130)+CELL(0.409)=5.767;MLABCELL_X40_Y29_N34; WideOr1~105'
+IC(0.378)+CELL(0.080)=6.225;MLABCELL_X37_Y29_N16; result[1]~1175'
+IC(0.139)+CELL(0.409)=6.773;MLABCELL_X37_Y29_N0; result[11]~1204'
+IC(0.148)+CELL(0.256)=7.177;MLABCELL_X37_Y29_N28; lpm_clshift:shifter_inst
+IC(0.452)+CELL(0.256)=7.885;LABCELL_X36_Y28_N22; lpm_clshift:shifter_inst
+IC(0.131)+CELL(0.236)=8.252;LABCELL_X36_Y28_N18; lpm_clshift:shifter_inst
+IC(0.441)+CELL(0.080)=8.773;MLABCELL_X37_Y29_N8; vr_c_writedatain[2]~8041'
+IC(0.186)+CELL(0.080)=9.039;MLABCELL_X37_Y29_N30; vr_c_writedatain[2]~8042'
+IC(0.220)+CELL(0.080)=9.339;MLABCELL_X37_Y29_N14; vr_c_writedatain[2]~8043'
+IC(0.120)+CELL(0.080)=9.539;MLABCELL_X37_Y29_N4; vr_c_writedatain[2]~8044'
+IC(0.925)+CELL(0.104)=10.568;M9K_X50_Y30_N0; ram_block1a0~porta_datain_reg2'
+- Made multiplier pipeline 1 stage deeper with 1 cycle dead time
+- Back to all working for 4 lanes, but 8 and 16 fails because of vmem_unit
+
+Version 1.2.5
+Feb 11, 2008
+- Works completely in simulation, cache misses are making it err in HW
+- Made vmem_unit take advantage of 2nd cycle data from cache is valid for strided accesses
+- Made test_bench have random 7 cycle delays
+- Fixed problems with stores - test_bench stores right away, in real hardware the store happens in the last cycle (once a hit occurs) in the cache.
+- Everything works in TM4 - but fails for 8 and 16 lanes (numparlanes=2)
+- timing violations exist
+
+Version 1.2.4
+Feb 11, 2008
+- Reverted to 1.2.2
+- Got parallel lanes loading from mem_unit working on autcor
+
+Version 1.2.3
+Feb 1, 2008
+- Tried to pipeline vector loads - stopped because I don't think it will work:
+  * mem_hierarchy monitors cache hit line which affects dcache state machine
+  * tm4.v multicycle staller assumes a request will stall
+  * stores need 2 cycles, they write in the 2nd cycle when a hit is confirmed
+
+Version 1.2.2
+January 31, 2008
+- Fixed saturating multiply bugs found visually
+- Made mulop default to be 0 so it can be synthesized away - it's not
+  * Made mulshifter's result mux zero out instead
+  * => Apparently synthesis doesn't know 0 * 0 = 0.
+- Fixed barrelshift's op field (forgot to flip the signed bit on it too - it mooches off the mulshifter's op code and I inverted that to make ZERO = 0).
+- subsetting out complete vpu works!
+- Made rshiftzero have default value of 0 to help subset barrelshift
+- Frequency dropped to 89MHz on 3SC3!
+
+Version 1.2.1
+January 27, 2008
+- Fixed SPREE division generation (was generating only divu)
+- Everything works! see vec-1.2.0.xls file for data
+
+Version 1.2.0
+January 27, 2008
+- Ported new scalar processor: with divider + with Jalr proper usage
+- Scalar is: pipe3_forwardAB_mulshift_stall_bpred1B_external_div_vec.cc
+- Checksums good for: autcor, conven, fbital, viterb, and rgbcmyk on TM4
+- Duration reported for autcor and rgbcmyk5 is messed (?)
+
+Version 1.1.4
+January 21, 2008
+- Fixed mem_unit storing to wrong address on last element of subvector
+- Scalar/vector instruction bit causing scalars to be used for vst!
+
+Version 1.1.3
+January 17, 2008
+- TOFIX: Merge mem_unit as pipe register (maybe this is design tradeoff)
+- TOFIX: Self-hazards!!!!
+- TOFIX: autcor00data_2 fails in hardware while 1,1_lite, and 2_lite all work.  But once _2 fails none of them work. Am I forgetting some state?
+- TOFIX: fbital and others require 16-bit vpw
+- propagated scalar to all lanes
+- hooked cmp results up to flag RF too (forgot)
+- Flag stuff - ALU gets vf_a_readdataout instead of vmask
+- vld/st weren't getting masked - I set ismasked flag for them
+- autcor works, fbital CRC fails but traces match!
+- Ran into memory consistency in conven!  Support in next revision
+- 3SC2: 128.6 MHz, 4725 ALUTs
+- 3SC3: 120.7 MHz, 4725 ALUTs
+
+Version 1.1.2
+January 17, 2008
+- Fixing many bugs - pipe sync between vpu & scalar cpu
+- Ported counter & filesystem to test_bench
+- Added vecto trace capability
+- Coordinate instr_squash to vector processor
+- Forbid vector instr in Delay Slot (perhaps don't need squash for vpu now)
+- Fixed ALU - regular adds with -ve sums would saturate to 0
+- Got autcor working!
+
+Version 1.1.1
+January 7, 2008
+- Grow lanes to 8
+- 1S 10407 LEs, 53.92 MHz (mul->barrelshift->reg)
+- Grow lanes to 16
+- 1S 16822 LEs, 52.5 MHz (mul->barrelshift->reg)
+- 3S 12069 LEs, 124.47 MHz (ref_file->alu->saturate->loadresultreg)
+
+Version 1.1.0
+January 7, 2008
+- Added support for vf[and/or/xor/nor/set/clr]
+- 1S 7470 LEs, 55.63 MHz (mul->barrelshift->reg)
+- 3S 4767 ALUTs, 128.5 MHz (ref_file->alu->saturate->loadresultreg)
+
+Version 1.0.4
+January 5, 2008
+- Added scalar-vector hookup between vlanes and vpu
+- Added support for ins.sv and ext.sv
+
+Version 1.0.3
+December 21, 2007
+- Fixed: register identifiers were incrementing by number of lanes instead of 1
+- Added pipeline support for adjusting src/dest for element shift operations
+- Added support for ins,ext,half,halfdn/up in mem_unit and pipeline
+
+Version 1.0.2
+December 21, 2007
+- Added saturating sum, and saturating size units to ALU
+- 1S 6776 LEs, 58.2 MHz, CritPath: reg_file->adder->saturator->resultreg
+    (reg->file->addsub 10.3ns out of 17.2ns)
+- 3S 4278 ALUTs, 129 MHz, CritPath: reg_file->adder->saturator->resultreg
+    (reg->file->addsub 3.864ns, out of 7.735ns)
+
+Version 1.0.1
+December 20, 2007
+- Extended multiply to 2 stages (still running at 55MHz 1S, 139MHz 3S)
+      NOTE: without vpu, processor does 1S 81 MHz, 3S 168MHz
+      tried 3rd stage to multiply: on 3S 155MHz on 150 MHz constraint
+- Added ALU unit, no saturation
+
+Version 1.0.0
+December 18, 2007
+- Memory unit & multiplier incorporated into vector pipeline
+- First design that can execute an instruction sequence: vld,vmul,vst
+- missing ALU, flags, and vector operations
+
+Version 0.0.0
+November 15, 2007
+- Began construction of vector components
+

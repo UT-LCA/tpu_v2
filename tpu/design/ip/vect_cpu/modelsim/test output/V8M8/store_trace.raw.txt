@@ -1,7 +1,0 @@
-time	opcode	address	data
-t=                 270 | OP=0c00087f | 00000000: 00000008000000060000000400000002
-t=                 600 | OP=08000cff | 00000000: xxxxxxxxxxxxxxxxxxxxxxxxaaaaaaaa
-t=                 840 | OP=0620c97f | 00000010: xxxxxxxxxxxxxxxxxxxxxxxx00000001
-t=                 850 | OP=0620c97f | 00000010: xxxxxxxxxxxxxxxx00000002xxxxxxxx
-t=                 860 | OP=0620c97f | 00000010: xxxxxxxx00000003xxxxxxxxxxxxxxxx
-t=                 870 | OP=0620c97f | 00000010: 00000004xxxxxxxxxxxxxxxxxxxxxxxx

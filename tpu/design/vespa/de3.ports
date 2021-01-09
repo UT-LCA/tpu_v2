@@ -1,0 +1,10 @@
+# Name	direction	bits	Handshake_from_circuit	Handshake_from_SUN
+count	o	32	count_ready	count_want
+procresetn_in	i	1	procreset_want	procreset_ready
+bootloadresetn_in	i	1	bootloadreset_want	bootloadreset_ready
+traceactivate_in	i	1	traceactivate_want	traceactivate_ready
+data	i	32	datawrite_want	datawrite_ready
+fs_writedata	o	9	fs_writedata_ready	fs_writedata_want
+fs_readdata	i	8	fs_readdata_want	fs_readdata_ready
+trc_addr	o	5	trc_addr_ready	trc_addr_want 
+trc_data	o	32	trc_data_ready	trc_data_want
