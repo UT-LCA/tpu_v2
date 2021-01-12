@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 #include <string.h>
-
+#include <bits/stdc++.h> 
 #include <string>
 #include <map>
 

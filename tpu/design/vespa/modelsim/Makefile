@@ -28,7 +28,7 @@ altera:
 	vlog -quiet ${QUARTUS_ROOTDIR}/eda/sim_lib/sgate.v -work altera
 stratixiii:
 	vlib stratixiii
-	vlog -quiet ${QUARTUS_ROOTDIR}/eda/sim_lib/stratixiii_atoms.v -work stratixiii
+	#vlog -quiet ${QUARTUS_ROOTDIR}/eda/sim_lib/stratixiii_atoms.v -work stratixiii
 
 ############################# Compile VESPA ###############################
 
@@ -59,7 +59,7 @@ virtualtype: virtualtype.cc
 
 #Build the PLI-based filesystem which processes I/O calls (printf/fopen/etc.)
 plifs.sl: plifs.c
-	gcc -c -I${MODEL_TECH}/../include plifs.c tm4filesystem.c tm4llist.c
+	gcc -c -I${MODEL_TECH}/include plifs.c tm4filesystem.c tm4llist.c -fPIC
 	ld -G -o plifs.sl plifs.o tm4filesystem.o tm4llist.o
 	rm -f plifs.o tm4filesystem.o tm4llist.o
 
