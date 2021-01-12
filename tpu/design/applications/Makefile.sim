@@ -1,0 +1,61 @@
+############################################################################
+#
+# Sample use: 
+#   make sim
+# 
+# Targets: 
+#   sim - creates disassembled .read file, .dat files, and .mif files
+#   rif - creates .rif files and .mif files
+#   mif - creates .mif files
+#  srec - creates .srec file
+#   raw - creates hexdump in .raw file
+#   raw - creates hexdump in .raw file
+#   clean_sim - removes all output files
+#
+############################################################################
+
+OBJDUMP=$(SPE_COMPILER)/bin/mips-mips-elf-objdump
+OBJCOPY=$(SPE_COMPILER)/bin/mips-mips-elf-objcopy
+RAW2HEX=$(SPE_COMPILER)/tools/raw2hex
+RAW2MIF=$(SPE_COMPILER)/tools/raw2mif
+RAW2LIST=$(SPE_COMPILER)/tools/raw2list
+
+sim: dat
+
+####################### Dat creation  #########################
+
+dat: $(TARGET).instr.dat
+$(TARGET).data.dat: $(TARGET).instr.dat
+$(TARGET).instr.dat: $(TARGET).raw
+# Get address of _end using nm and pass that to RAW2LIST program
+# cut -f2 to drop most-significant digit (effectively subtract 0x10000000)
+# Also use tail -1 since consumer/rsa has an _end symbol in instr memory as well
+	@$(RAW2LIST) -end=0x`$(NM) $(TARGET) |grep _end |cut -f2 -d' ' |tail -1` $(TARGET).raw
+
+######################## Mif creation  ##########################
+
+mif: data.mif
+instr.mif: data.mif 
+data.mif:  $(TARGET).raw
+	@$(RAW2MIF) -width=32 -depth=65536 $(TARGET).raw 
+	@rm -f $(TARGET).data.mif.tmp $(TARGET).instr.mif.tmp
+	@mv $(TARGET).instr.mif instr.mif
+	@mv $(TARGET).data.mif data.mif
+
+######################## Srec creation (GCC)  ##########################
+srec: $(TARGET).srec
+$(TARGET).srec: $(TARGET)
+	@$(OBJCOPY) --output-target=srec $(TARGET) $(TARGET).srec
+
+######################## For cross compiled GCC ##########################
+
+$(TARGET).raw: $(TARGET)
+	@$(OBJDUMP) --full-content $(TARGET) > $(TARGET).raw
+
+$(TARGET).read: $(TARGET)
+	@$(OBJDUMP) -D $(TARGET) > $(TARGET).read
+
+clean_sim:
+	@rm -f $(TARGET) $(TARGET).raw $(TARGET).read $(TARGET).srec $(TARGET).instr.mif $(TARGET).data.mif instr.rif data.rif instr.mif data.mif $(TARGET).instr.dat $(TARGET).data.dat
+
+.PHONY: sim mif rif srec clean_sim

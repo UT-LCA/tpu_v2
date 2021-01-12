@@ -29,6 +29,7 @@ altera:
 stratixiii:
 	vlib stratixiii
 	#vlog -quiet ${QUARTUS_ROOTDIR}/eda/sim_lib/stratixiii_atoms.v -work stratixiii
+	vlog -quiet ../stratixiii_atoms.v -work stratixiii
 
 ############################# Compile VESPA ###############################
 
