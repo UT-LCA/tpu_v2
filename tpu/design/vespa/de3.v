@@ -422,7 +422,7 @@ module de3 (
   *   3) There's also a new DE3 version (over USB 2.0 - tmu_portmux)
   ****************************************/
 
-  `ifdef TEST_BENCH
+ `ifdef TEST_BENCH
   tm4_portmux pm(
       .tm4_glbclk0(clk),
       .tm4_devbus(tm4_devbus),
@@ -623,11 +623,11 @@ module de3 (
   //   i) DDR - cache, ii) count - we force, iii) fs - takes long
 
   register ddrselreg(ddr_select,clk,procresetn,1'b1,ddr_select_r);
-    defparam ddrselreg.WIDTH=1;
+  defparam ddrselreg.WIDTH=1;
   register countselreg(count_select,clk,procresetn,1'b1,count_select_r);
-    defparam ddrselreg.WIDTH=1;
+  //defparam ddrselreg.WIDTH=1;
   register fsselreg(fs_select,clk,procresetn,1'b1,fs_select_r);
-    defparam ddrselreg.WIDTH=1;
+  //defparam ddrselreg.WIDTH=1;
 
   assign dbus_readdata = (count_select_r) ? count :
                           {fs_readdata[7:0],24'b0};

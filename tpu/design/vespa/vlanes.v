@@ -1190,6 +1190,7 @@ assign pipe_squash[6]=1'b0;
     ctrl1_mulshift_op=MULOP_ZERO;
     ctrl1_memunit_op=0;
     ctrl1_flagalu_op=FLAGOP_CLR;
+    $display("Done %m 5");
   end
   always@*
   begin

@@ -1,0 +1,87 @@
+export VCS_HOME /usr/local/packages/synopsys_2018/vcs-mx/O-2018.09-SP1
+export QUARTUS_ROOTDIR /usr/local/packages/quartus_19.4/intelFPGA_pro/19.4/quartus
+QUARTUS_ROOTDIR=/usr/local/packages/quartus_19.4/intelFPGA_pro/19.4/quartus
+
+#try: 
+#	$(VCS_HOME)/bin/vcs -full64 \
+#	try.v -sverilog
+
+all: compile run
+
+SPREE_SRC= ../spree/system.v
+VESPA_SRC= ../vpu.v
+TESTBENCH_SRC= de3_test_bench.v
+DDR_SRC= ../altmemddr/alt_mem_phy_defines.v \
+          ../altmemddr/altmemddr.v \
+          ../altmemddr/altmemddr_controller_phy.v \
+          ../altmemddr/altmemddr_phy.v \
+          ../altmemddr/altmemddr_phy_alt_mem_phy_pll.v \
+          ../altmemddr/altmemddr_phy_alt_mem_phy.v \
+          ../altmemddr/altmemddr_phy_alt_mem_phy_sequencer_wrapper.vo \
+          ../altmemddr/altmemddr_auk_ddr_hp_controller_wrapper.vo \
+
+ALTERA_LIBS= \
+	-v ${QUARTUS_ROOTDIR}/eda/sim_lib/altera_mf.v \
+	-v ${QUARTUS_ROOTDIR}/eda/sim_lib/220model.v \
+	-v ${QUARTUS_ROOTDIR}/eda/sim_lib/altera_primitives.v \
+	-v ${QUARTUS_ROOTDIR}/eda/sim_lib/sgate.v \
+	-v ../stratixiii_atoms.v \
+
+
+DEFINES=+define+TEST_BENCH=1
+
+C_FILES=plifs.c \
+        tm4filesystem.c \
+		tm4llist.c 
+
+VHDL_FILES= \
+	 ../tm4_portmux.vhd \
+	 ../devread.vhd \
+	 ../devreadburst.vhd \
+	 ../devwrite.vhd \
+	 ../devwriteack.vhd 
+
+compile:
+	$(VCS_HOME)/bin/vlogan -full64 \
+	-timescale=1ns/1ps -sverilog \
+	${DEFINES} \
+    +incdir+.. \
+    +incdir+../spree \
+	../simple_dual_port_ram_single_clock.v \
+	../tmj_portmux.v \
+	../virtual1.v \
+	${ALTERA_LIBS} \
+	${SPREE_SRC} \
+	${VESPA_SRC} \
+	${DDR_SRC} \
+	../altmemddr/testbench/altmemddr_mem_model.v \
+	${TESTBENCH_SRC} \
+    -y /misc/linuxws/packages/synopsys_2018/syn/O-2018.06-SP5/dw/sim_ver \
+    -v /misc/linuxws/packages/synopsys_2018/syn/O-2018.06-SP5/dw/sim_ver \
+	+libext+.v
+	$(VCS_HOME)/bin/vhdlan -full64 \
+    ${VHDL_FILES} 
+	$(VCS_HOME)/bin/vcs -full64 \
+	-debug_access+all \
+	-lca \
+	+vpi \
+	-P pli.tab \
+	${C_FILES} \
+	test_bench
+
+
+
+run:
+	./simv -gui=dve
+
+waves:
+	$(VCS_HOME)/bin/dve -vpd vcdplus.vpd
+
+clean:
+	\rm -rf csrc DVEFiles simv.daidir simv ucli.key vcdplus.vpd *.syn *.pvl *.mr *.svf command.log
+
+#Paths when not using LRC machines
+#export VCS_HOME /home/tools/vcs/mx-2017.12-SP1-1
+#-y /home/tools/synopsys/syn_2017.09/dw/sim_ver \
+#-v /home/tools/synopsys/syn_2017.09/dw/sim_ver \
+

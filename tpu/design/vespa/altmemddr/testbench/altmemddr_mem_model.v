@@ -52,6 +52,7 @@ module altmemddr_mem_model_ram_module (
     //This is TOO big for 256 MB RAM!  We right shift data by 1
     $readmemh("instr.dat",mem_array,'h100_0000);
     $readmemh("data.dat",mem_array,'h400_0000>>1);
+    $display("Done %m 1");
   end
 
 
@@ -288,6 +289,7 @@ initial
     begin
       reset_n <= 0;
       #100 reset_n <= 1;
+      $display("Done %m 2");
     end
   assign cmd_code = (&cs_n) ? 3'b111 : {ras_n, cas_n, we_n};
   assign CODE = (&cs_n) ? 24'h494e48 : txt_code;

@@ -1546,23 +1546,23 @@ hi_reg hi_reg (
 	defparam
 		hi_reg.WIDTH=32;
 
-const const11 (
+const_val const11 (
 	.out(const11_out));
 	defparam
 		const11.WIDTH=32,
 		const11.VAL=0;
 
-const const12 (
+const_val const12 (
 	.out(const12_out));
 	defparam
 		const12.WIDTH=32,
 		const12.VAL=16;
 
-const const (
+const_val const13 (
 	.out(const_out));
 	defparam
-		const.WIDTH=32,
-		const.VAL=31;
+		const13.WIDTH=32,
+		const13.VAL=31;
 
 pipereg pipereg (
 	.clk(clk),

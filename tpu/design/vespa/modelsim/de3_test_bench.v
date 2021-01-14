@@ -165,6 +165,7 @@ parameter COUNTER_SIZE=38; //must be >=32
         #30000 _tm4_devbus={1'b1,2'bz0,6'b01,32'b1};
         #30000 _tm4_devbus={1'b1,2'bz1,6'b01,32'b1};
         #30000 _tm4_devbus={1'b1,2'bz1,6'bzz,32'bz}; 
+        $display("Done %m 3");
       end
 
     reg [31:0] dummy;
@@ -246,10 +247,12 @@ parameter COUNTER_SIZE=38; //must be >=32
     /**************** Trace of Write Backs ********************/
     initial
     begin
+        $display("Starting %m 4");
         trace=$fopen("/tmp/modelsim_trace.txt","w");
         store_trace=$fopen("/tmp/modelsim_store_trace.txt","w");
         fs=$fopen("/tmp/modelsim_filesystem.txt","w");
         vector_trace=$fopen("/tmp/modelsim_vector_trace.txt","w");
+        $display("Done %m 4");
     end
 
     always@(posedge clk)
@@ -580,6 +583,15 @@ assign D_pipe3_squash = t.p.c.p.squash_stage3;
   assign (weak1, weak0) mem_dq = 0;
   assign (weak1, weak0) mem_dqs = 0;
   assign (weak1, weak0) mem_dqsn = 1;
+
+ //////////////////////////////////////////////
+ //Dump waves
+ //////////////////////////////////////////////
+ initial begin
+   $vcdpluson;
+   $vcdplusmemon;
+ end
+
 
 endmodule
 

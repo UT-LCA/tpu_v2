@@ -3,6 +3,10 @@
 // single read/write clock
 
 module simple_dual_port_ram_single_clock
+#(
+	parameter DATA_WIDTH = 1,
+	parameter ADDR_WIDTH = 13
+)
 (
 	input [(DATA_WIDTH-1):0] data,
 	input [(ADDR_WIDTH-1):0] read_addr, write_addr,
@@ -10,8 +14,6 @@ module simple_dual_port_ram_single_clock
 	output reg [(DATA_WIDTH-1):0] q
 );
 
-	parameter DATA_WIDTH = 1;
-	parameter ADDR_WIDTH = 13;
 
 	// Declare the RAM variable
 	reg [DATA_WIDTH-1:0] ram[2**ADDR_WIDTH-1:0];
