@@ -252,6 +252,8 @@ module altmemddr_mem_model (
   reg              write_valid_r;
   reg              write_valid_r2;
   reg              write_valid_r3;
+
+  /*
 initial
   begin
     $write("\n");
@@ -704,6 +706,6 @@ initial
 //////////////// END SIMULATION-ONLY CONTENTS
 
 //synthesis translate_on
-
+*/
 endmodule
 

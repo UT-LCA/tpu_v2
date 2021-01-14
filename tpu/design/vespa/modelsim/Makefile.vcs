@@ -13,12 +13,13 @@ VESPA_SRC= ../vpu.v
 TESTBENCH_SRC= de3_test_bench.v
 DDR_SRC= ../altmemddr/alt_mem_phy_defines.v \
           ../altmemddr/altmemddr.v \
-          ../altmemddr/altmemddr_controller_phy.v \
-          ../altmemddr/altmemddr_phy.v \
-          ../altmemddr/altmemddr_phy_alt_mem_phy_pll.v \
-          ../altmemddr/altmemddr_phy_alt_mem_phy.v \
-          ../altmemddr/altmemddr_phy_alt_mem_phy_sequencer_wrapper.vo \
-          ../altmemddr/altmemddr_auk_ddr_hp_controller_wrapper.vo \
+
+#          ../altmemddr/altmemddr_controller_phy.v \
+#          ../altmemddr/altmemddr_phy.v \
+#          ../altmemddr/altmemddr_phy_alt_mem_phy_pll.v \
+#          ../altmemddr/altmemddr_phy_alt_mem_phy.v \
+#          ../altmemddr/altmemddr_phy_alt_mem_phy_sequencer_wrapper.vo \
+#          ../altmemddr/altmemddr_auk_ddr_hp_controller_wrapper.vo \
 
 ALTERA_LIBS= \
 	-v ${QUARTUS_ROOTDIR}/eda/sim_lib/altera_mf.v \

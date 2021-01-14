@@ -121,6 +121,29 @@ module altmemddr (
 	wire signal_wire12 = 1'b0;
 	wire signal_wire13 = 1'b0;
 
+
+  //Synchronous write when (CODE == 24'h205752 (write))
+  altmemddr_mem_model_ram_module altmemddr_mem_model_ram
+    (
+      .data      (local_wdata),
+      .q         (local_rdata),
+      .rdaddress (local_address),
+      .rdclken   (1'b1),
+      .wraddress (local_address),
+      .wrclock   (phy_clk),
+      .wren      (local_write_req)
+    );
+
+
+    reg phy_clk;
+	initial
+      phy_clk = 1'b1;
+    always
+      #3760 phy_clk <= ~phy_clk;
+
+    //Removing the PHY and controller
+	/*
+
 	altmemddr_controller_phy	altmemddr_controller_phy_inst(
 		.local_address(local_address),
 		.local_write_req(local_write_req),
@@ -182,6 +205,9 @@ module altmemddr (
 		.mem_dq(mem_dq),
 		.mem_dqs(mem_dqs),
 		.mem_dqsn(mem_dqsn));
+
+		*/
+
 endmodule
 
 // =========================================================
