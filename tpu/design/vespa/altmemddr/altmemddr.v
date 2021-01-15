@@ -70,11 +70,11 @@ module altmemddr (
 
 
 	input	[23:0]	local_address;
-	input		local_write_req;
-	input		local_read_req;
+	input		local_write_req; //active high signal request for write
+	input		local_read_req;  //active high signal request for read
 	input	[127:0]	local_wdata;
 	input	[15:0]	local_be;
-	input	[1:0]	local_size;
+	input	[1:0]	local_size; //size of burst transfer
 	input	[13:0]	oct_ctl_rs_value;
 	input	[13:0]	oct_ctl_rt_value;
 	input		global_reset_n;
@@ -121,6 +121,24 @@ module altmemddr (
 	wire signal_wire12 = 1'b0;
 	wire signal_wire13 = 1'b0;
 
+
+  //currently asserted read or write req has been accepted
+  //the addr of the req is sampled when both ready adn req are high
+  assign local_ready = 1'b1;
+  //indicate that read data is valid
+  assign local_rdata_valid = 1'b1;
+  //Acknowledging refresh req (not used)
+  assign local_refresh_ack = 1'b1;
+  //controller request for write data (request for writing data into the user logic I think)
+  assign local_wdata_req = 1'b1;
+
+  //controller has initialized the memory and calibration process should begin
+  reg local_init_done;
+  initial begin
+	  local_init_done = 1'b0;
+	  #10000;
+	  local_init_done = 1'b1;
+  end
 
   //Synchronous write when (CODE == 24'h205752 (write))
   altmemddr_mem_model_ram_module altmemddr_mem_model_ram

@@ -5,7 +5,7 @@
 
 static int is_initialized=0;
 
-static PLI_INT32 plifs()
+PLI_INT32 plifs()
 {
   char c;
 
@@ -23,8 +23,7 @@ static PLI_INT32 plifs()
 
   return 0;
 }
-
-static PLI_INT32 tm4fsexit()
+PLI_INT32 tm4fsexit()
 {
   if (is_initialized) 
     tm4fs_exit();

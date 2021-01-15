@@ -1,10 +1,20 @@
-export VCS_HOME /usr/local/packages/synopsys_2018/vcs-mx/O-2018.09-SP1
+#export VCS_HOME /usr/local/packages/synopsys_2018/vcs-mx/O-2018.09-SP1
+#export VCS_HOME /usr/local/packages/synopsys_2020/vcs/Q-2020.03-SP2
+export VCS_HOME /usr/local/packages/synopsys_2019/vcs/P-2019.06-SP1
+export DC_HOME /usr/local/packages/synopsys_2019/syn/P-2019.03-SP5
 export QUARTUS_ROOTDIR /usr/local/packages/quartus_19.4/intelFPGA_pro/19.4/quartus
 QUARTUS_ROOTDIR=/usr/local/packages/quartus_19.4/intelFPGA_pro/19.4/quartus
 
+#C_FILES=plifs.c \
+#        tm4filesystem.c \
+#		tm4llist.c 
+#
 #try: 
 #	$(VCS_HOME)/bin/vcs -full64 \
-#	try.v -sverilog
+#	$(C_FILES) \
+#	-P pli.tab \
+#	try.v -sverilog 
+#	./simv 
 
 all: compile run
 
@@ -22,10 +32,10 @@ DDR_SRC= ../altmemddr/alt_mem_phy_defines.v \
 #          ../altmemddr/altmemddr_auk_ddr_hp_controller_wrapper.vo \
 
 ALTERA_LIBS= \
-	-v ${QUARTUS_ROOTDIR}/eda/sim_lib/altera_mf.v \
-	-v ${QUARTUS_ROOTDIR}/eda/sim_lib/220model.v \
-	-v ${QUARTUS_ROOTDIR}/eda/sim_lib/altera_primitives.v \
-	-v ${QUARTUS_ROOTDIR}/eda/sim_lib/sgate.v \
+	-v $(QUARTUS_ROOTDIR)/eda/sim_lib/altera_mf.v \
+	-v $(QUARTUS_ROOTDIR)/eda/sim_lib/220model.v \
+	-v $(QUARTUS_ROOTDIR)/eda/sim_lib/altera_primitives.v \
+	-v $(QUARTUS_ROOTDIR)/eda/sim_lib/sgate.v \
 	-v ../stratixiii_atoms.v \
 
 
@@ -57,8 +67,6 @@ compile:
 	${DDR_SRC} \
 	../altmemddr/testbench/altmemddr_mem_model.v \
 	${TESTBENCH_SRC} \
-    -y /misc/linuxws/packages/synopsys_2018/syn/O-2018.06-SP5/dw/sim_ver \
-    -v /misc/linuxws/packages/synopsys_2018/syn/O-2018.06-SP5/dw/sim_ver \
 	+libext+.v
 	$(VCS_HOME)/bin/vhdlan -full64 \
     ${VHDL_FILES} 
@@ -71,15 +79,17 @@ compile:
 	test_bench
 
 
+#    -y $(DC_HOME)/dw/sim_ver \
+#    -v $(DC_HOME)/dw/sim_ver \
 
 run:
-	./simv -gui=dve
+	./simv 
 
 waves:
 	$(VCS_HOME)/bin/dve -vpd vcdplus.vpd
 
 clean:
-	\rm -rf csrc DVEFiles simv.daidir simv ucli.key vcdplus.vpd *.syn *.pvl *.mr *.svf command.log
+	\rm -rf csrc DVEFiles simv.daidir simv ucli.key vcdplus.vpd *.syn *.pvl *.mr *.svf command.log AN.DB 64
 
 #Paths when not using LRC machines
 #export VCS_HOME /home/tools/vcs/mx-2017.12-SP1-1
