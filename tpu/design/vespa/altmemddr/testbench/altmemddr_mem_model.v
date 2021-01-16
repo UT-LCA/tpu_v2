@@ -50,9 +50,12 @@ module altmemddr_mem_model_ram_module (
   initial
   begin
     //This is TOO big for 256 MB RAM!  We right shift data by 1
-    $readmemh("instr.dat",mem_array,'h100_0000);
     $readmemh("data.dat",mem_array,'h400_0000>>1);
+    $readmemh("instr.dat",mem_array,'h100_0000);
     $display("Done %m 1");
+    for (integer i=('h100_0000); i<('h100_0200); i++) begin
+        $display("%h", mem_array[i]);
+    end
   end
 
 

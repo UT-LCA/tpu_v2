@@ -1,4 +1,3 @@
-#export VCS_HOME /usr/local/packages/synopsys_2018/vcs-mx/O-2018.09-SP1
 #export VCS_HOME /usr/local/packages/synopsys_2020/vcs/Q-2020.03-SP2
 export VCS_HOME /usr/local/packages/synopsys_2019/vcs/P-2019.06-SP1
 export DC_HOME /usr/local/packages/synopsys_2019/syn/P-2019.03-SP5
@@ -85,6 +84,8 @@ compile:
 run:
 	./simv 
 
+#export VCS_HOME/usr/local/packages/synopsys_2018/vcs-mx/O-2018.09-SP1
+#VCS_HOME=/usr/local/packages/synopsys_2018/vcs-mx/O-2018.09-SP1
 waves:
 	$(VCS_HOME)/bin/dve -vpd vcdplus.vpd
 

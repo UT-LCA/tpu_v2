@@ -121,16 +121,23 @@ module altmemddr (
 	wire signal_wire12 = 1'b0;
 	wire signal_wire13 = 1'b0;
 
+	reg [127:0]	local_rdata;
 
   //currently asserted read or write req has been accepted
   //the addr of the req is sampled when both ready adn req are high
-  assign local_ready = 1'b1;
+  //assign local_ready = 1'b1;
+  reg local_ready;
+
   //indicate that read data is valid
-  assign local_rdata_valid = 1'b1;
+  //assign local_rdata_valid = 1'b1;
+  reg local_rdata_valid;
+
   //Acknowledging refresh req (not used)
   assign local_refresh_ack = 1'b1;
+  
   //controller request for write data (request for writing data into the user logic I think)
-  assign local_wdata_req = 1'b1;
+  //assign local_wdata_req = 1'b1;
+  reg local_wdata_req;
 
   //controller has initialized the memory and calibration process should begin
   reg local_init_done;
@@ -140,16 +147,132 @@ module altmemddr (
 	  local_init_done = 1'b1;
   end
 
+  reg [23:0]  address_for_ram;
+  reg [127:0] wdata_for_ram;
+  reg         wren_to_ram;
+  reg [127:0] rdata_from_ram;
+  reg [3:0] state;
+  reg [31:0] count;
+  reg burst;
+
+  always @(posedge phy_clk) begin
+    if (~global_reset_n) begin
+		state <= 0;
+		address_for_ram <= 0;
+		wdata_for_ram <= 0;
+		wren_to_ram <= 0;
+		count <= 0;
+		local_wdata_req <= 0;
+		local_rdata_valid <= 0;
+		local_rdata <= 0;
+		local_ready <= 0;
+		burst <= 0;
+	end 
+	else begin
+		case (state)
+		  //Rest
+		  4'b0000: begin
+			 if (local_read_req) begin
+				 state <= 4'b0001;
+			 end
+			 else if (local_write_req) begin
+				 state <= 4'b0010;
+				 wdata_for_ram <= local_wdata;
+			 end
+			 if (local_read_req || local_write_req) begin
+			     address_for_ram <= local_address;
+			     local_ready <= 1'b1;
+				 //local_size can be 1 or 2. if it is 2, we set the burst flag.
+				 burst <= (local_size==2);
+			 end	 
+			 count <= 0;
+			 wren_to_ram <= 0;
+			 local_rdata_valid <= 1'b0;
+			 local_rdata <= 0;
+			 local_wdata_req <= 0;
+		  end 
+
+          //Read
+		  4'b0001: begin
+			local_ready <= 1'b0;
+            count <= count + 1;
+			if (burst) begin
+			    if (count == 100) begin
+			    	local_rdata_valid <= 1'b1;
+			    	local_rdata <= rdata_from_ram;
+					//set the address for the next burst
+					address_for_ram <= address_for_ram+1;
+			    end
+			    if (count == 101) begin
+			    	local_rdata_valid <= 1'b1;
+			    	local_rdata <= rdata_from_ram;
+					//set the address for the next burst
+					address_for_ram <= address_for_ram+1;
+			    end
+			    if (count == 102) begin
+			    	local_rdata_valid <= 1'b1;
+			    	local_rdata <= rdata_from_ram;
+					//set the address for the next burst
+					address_for_ram <= address_for_ram+1;
+			    end
+			    if (count == 103) begin
+			    	local_rdata_valid <= 1'b1;
+			    	local_rdata <= rdata_from_ram;
+				    state <= 4'b0000;
+			    end
+			end
+			else begin
+			    if (count == 100) begin
+			    	local_rdata_valid <= 1'b1;
+			    	local_rdata <= rdata_from_ram;
+			    	state <= 4'b0000;
+			    end
+			end
+		  end
+          
+		  //Write
+		  4'b0010: begin
+			local_ready <= 1'b0;
+			count <= count + 1;
+			if (burst) begin
+			    if (count == 100) begin
+			       wren_to_ram <= 1;
+				   //i think this it to ask the user code to provide the next data. 
+				   //but does it get correctly written in the next cycle? CHECK. FIXME. TODO
+			       local_wdata_req <= 1;
+				   //set the address for the next burst
+				   address_for_ram <= address_for_ram+1;
+			    end
+			    if (count == 101) begin
+			       wren_to_ram <= 1;
+			       local_wdata_req <= 0;
+				   state <= 4'b0000;
+			    end
+			end
+			else begin
+			    if (count == 100) begin
+			       wren_to_ram <= 1;
+			       local_wdata_req <= 0;
+				   state <= 4'b0000;
+			    end
+			end
+		  end
+		endcase  
+
+	end
+  end
+
+
   //Synchronous write when (CODE == 24'h205752 (write))
   altmemddr_mem_model_ram_module altmemddr_mem_model_ram
     (
-      .data      (local_wdata),
-      .q         (local_rdata),
-      .rdaddress (local_address),
+      .data      (wdata_for_ram),
+      .q         (rdata_from_ram),
+      .rdaddress (address_for_ram),
       .rdclken   (1'b1),
-      .wraddress (local_address),
+      .wraddress (address_for_ram),
       .wrclock   (phy_clk),
-      .wren      (local_write_req)
+      .wren      (wren_to_ram)
     );
 
 
