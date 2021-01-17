@@ -181,10 +181,13 @@ module altmemddr (
 			 end
 			 if (local_read_req || local_write_req) begin
 			     address_for_ram <= local_address;
-			     local_ready <= 1'b1;
+			     local_ready <= 1;
 				 //local_size can be 1 or 2. if it is 2, we set the burst flag.
 				 burst <= (local_size==2);
 			 end	 
+			 else begin
+				 local_ready <= 0;
+			 end
 			 count <= 0;
 			 wren_to_ram <= 0;
 			 local_rdata_valid <= 1'b0;
@@ -194,7 +197,6 @@ module altmemddr (
 
           //Read
 		  4'b0001: begin
-			local_ready <= 1'b0;
             count <= count + 1;
 			if (burst) begin
 			    if (count == 100) begin
@@ -232,7 +234,6 @@ module altmemddr (
           
 		  //Write
 		  4'b0010: begin
-			local_ready <= 1'b0;
 			count <= count + 1;
 			if (burst) begin
 			    if (count == 100) begin
@@ -244,6 +245,16 @@ module altmemddr (
 				   address_for_ram <= address_for_ram+1;
 			    end
 			    if (count == 101) begin
+			       wren_to_ram <= 1;
+			       local_wdata_req <= 1;
+				   address_for_ram <= address_for_ram+1;
+			    end
+			    if (count == 102) begin
+			       wren_to_ram <= 1;
+			       local_wdata_req <= 1;
+				   address_for_ram <= address_for_ram+1;
+			    end
+			    if (count == 103) begin
 			       wren_to_ram <= 1;
 			       local_wdata_req <= 0;
 				   state <= 4'b0000;
