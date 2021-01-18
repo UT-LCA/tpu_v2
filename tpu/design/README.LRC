@@ -1,0 +1,8 @@
+setenv QUARTUS_ROOTDIR /usr/local/packages/quartus_19.4/intelFPGA_pro/19.4/quartus
+module load mentor/modelsim/2016
+module load quartus/2019
+From the vespa directory:
+make de3sim_compile
+make de3sim_gui
+Then type "run -all" at the simulation prompt.
+
