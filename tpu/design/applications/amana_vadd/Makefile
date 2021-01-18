@@ -1,5 +1,5 @@
-export SPE_HOME /home/projects/ljohn/aarora1/tpu_v2/tpu_v2/tpu/design
-SPE_HOME=/home/projects/ljohn/aarora1/tpu_v2/tpu_v2/tpu/design
+export SPE_HOME ../..
+SPE_HOME=../..
 export SPE_COMPILER ${SPE_HOME}/compiler-vector
 SPE_COMPILER=${SPE_HOME}/compiler-vector
 export SPE_COMPILER_LIBPATH ${SPE_COMPILER}/lib/gcc/mips-mips-elf/4.2.0/soft-float

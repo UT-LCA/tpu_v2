@@ -1,3 +1,11 @@
+export SPE_HOME ../..
+SPE_HOME=../..
+export SPE_COMPILER ${SPE_HOME}/compiler-vector
+SPE_COMPILER=${SPE_HOME}/compiler-vector
+export SPE_COMPILER_LIBPATH ${SPE_COMPILER}/lib/gcc/mips-mips-elf/4.2.0/soft-float
+SPE_COMPILER_LIBPATH=${SPE_COMPILER}/lib/gcc/mips-mips-elf/4.2.0/soft-float
+
+
 TARGET=kozyrakis_blend
 SRC=kozyrakis_blend.c vector_blend.S
 OBJS=kozyrakis_blend.o vector_blend.o

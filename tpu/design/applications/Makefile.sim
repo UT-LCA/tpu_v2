@@ -20,7 +20,7 @@ RAW2HEX=$(SPE_COMPILER)/tools/raw2hex
 RAW2MIF=$(SPE_COMPILER)/tools/raw2mif
 RAW2LIST=$(SPE_COMPILER)/tools/raw2list
 
-sim: dat
+sim: dat $(TARGET).read
 
 ####################### Dat creation  #########################
 
