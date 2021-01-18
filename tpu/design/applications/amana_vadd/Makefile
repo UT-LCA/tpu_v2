@@ -1,0 +1,33 @@
+export SPE_HOME /home/projects/ljohn/aarora1/tpu_v2/tpu_v2/tpu/design
+SPE_HOME=/home/projects/ljohn/aarora1/tpu_v2/tpu_v2/tpu/design
+export SPE_COMPILER ${SPE_HOME}/compiler-vector
+SPE_COMPILER=${SPE_HOME}/compiler-vector
+export SPE_COMPILER_LIBPATH ${SPE_COMPILER}/lib/gcc/mips-mips-elf/4.2.0/soft-float
+SPE_COMPILER_LIBPATH=${SPE_COMPILER}/lib/gcc/mips-mips-elf/4.2.0/soft-float
+
+TARGET=amana_vadd
+SRC=amana_vadd.c vector_add.S
+OBJS=amana_vadd.o vector_add.o
+include $(SPE_HOME)/applications/Makefile.inc
+include $(SPE_HOME)/applications/Makefile.sim
+
+
+######################## For cross compiled GCC ##########################
+
+all: $(TARGET)
+
+# START must be linked first!!! Since RTL model blindly executes from 400000
+$(TARGET): $(OBJS)
+	@$(LD) $(START) $(OBJS) $(LDFLAGS) -o $(TARGET)
+
+.c.o: 
+	@$(CC) $(CFLAGS) -c -o $*.o $<
+.S.o: 
+	@$(CC) $(ASFLAGS) -c -o $*.o $<
+.s.o: 
+	@$(AS) $(ASFLAGS) -o $*.o $<
+.c.s:	
+	@$(CC) $(CFLAGS) -S -o $*.s $<
+
+clean: clean_sim
+	@rm -f $(TARGET) $(OBJS) $(TARGET).srec 
