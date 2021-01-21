@@ -15,6 +15,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <list>
+#include <bits/stdc++.h>
 
 using namespace std;
 

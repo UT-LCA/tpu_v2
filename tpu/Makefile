@@ -78,8 +78,8 @@ de3cad_clean: gziprpt
 de3run_clean:
 	@rm -f instr.dat data.dat instr.rif data.rif cmdlineargs.txt trace.txt 
 
-vdecoder: vdecoder.cc
-	g++ -g -O2 vdecoder.cc -o vdecoder
+vdecoder: design/vector/vdecoder.cc
+	cd design/vector && g++ -g -O2 vdecoder.cc -o vdecoder
 
 quartus:
 	quartus  ${TOP}.qpf &

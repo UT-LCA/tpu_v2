@@ -1,8 +1,14 @@
 setenv QUARTUS_ROOTDIR /usr/local/packages/quartus_19.4/intelFPGA_pro/19.4/quartus
 module load mentor/modelsim/2016
 module load quartus/2019
-From the vespa directory:
+From the verif directory:
 make de3sim_compile
 make de3sim_gui
 Then type "run -all" at the simulation prompt.
+
+To change the test/app you want to run:
+Compile your test/app located in the apps/ directory.
+This is done by doing make in the app's directory.
+Then copy the <test_name>.instr.dat and <test_name>.data.dat files into the
+verif/ directory as instr.dat and data.dat. Then compile and run as above.
 
