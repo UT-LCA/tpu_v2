@@ -2,17 +2,17 @@
 VLOG_ARGS=+define+TEST_BENCH=1
 
 # List all source files, note many files use `include to include dependencies
-SPREE_SRC= ../spree/system.v
-VESPA_SRC= ../vpu.v
+SPREE_SRC= ../design/scalar/system.v
+VESPA_SRC= ../design/vector/vpu.v
 TESTBENCH_SRC= de3_test_bench.v
-DDR_SRC= ../altmemddr/alt_mem_phy_defines.v \
-          ../altmemddr/altmemddr.v \
-          ../altmemddr/altmemddr_controller_phy.v \
-          ../altmemddr/altmemddr_phy.v \
-          ../altmemddr/altmemddr_phy_alt_mem_phy_pll.v \
-          ../altmemddr/altmemddr_phy_alt_mem_phy.v \
-          ../altmemddr/altmemddr_phy_alt_mem_phy_sequencer_wrapper.vo \
-          ../altmemddr/altmemddr_auk_ddr_hp_controller_wrapper.vo \
+DDR_SRC=  ../design/ddr/alt_mem_phy_defines.v \
+          ../design/ddr/altmemddr.v \
+          ../design/ddr/altmemddr_controller_phy.v \
+          ../design/ddr/altmemddr_phy.v \
+          ../design/ddr/altmemddr_phy_alt_mem_phy_pll.v \
+          ../design/ddr/altmemddr_phy_alt_mem_phy.v \
+          ../design/ddr/altmemddr_phy_alt_mem_phy_sequencer_wrapper.vo \
+          ../design/ddr/altmemddr_auk_ddr_hp_controller_wrapper.vo \
 
 compile: plifs.sl virtualtype.do filesystem_standalone compilelib compilework
 
@@ -28,8 +28,7 @@ altera:
 	vlog -quiet ${QUARTUS_ROOTDIR}/eda/sim_lib/sgate.v -work altera
 stratixiii:
 	vlib stratixiii
-	#vlog -quiet ${QUARTUS_ROOTDIR}/eda/sim_lib/stratixiii_atoms.v -work stratixiii
-	vlog -quiet ../stratixiii_atoms.v -work stratixiii
+	vlog -quiet stratixiii_atoms.v -work stratixiii
 
 ############################# Compile VESPA ###############################
 
@@ -37,16 +36,16 @@ work:
 	vlib work
 
 compilework: work vregfile_control.dat
-	vcom ../tm4_portmux.vhd
-	vcom ../devread.vhd
-	vcom ../devreadburst.vhd
-	vcom ../devwrite.vhd
-	vcom ../devwriteack.vhd
-	vlog ${VLOG_ARGS} +incdir+.. +incdir+../spree ${SPREE_SRC}
-	vlog ${VLOG_ARGS} +incdir+.. ${VESPA_SRC}
-	vlog ${VLOG_ARGS} +incdir+.. ${DDR_SRC}
-	vlog ${VLOG_ARGS} ../altmemddr/testbench/altmemddr_mem_model.v
-	vlog ${VLOG_ARGS} +incdir+.. +incdir+../spree ${TESTBENCH_SRC}
+	vcom ../design/top/tm4_portmux.vhd
+	vcom ../design/top/devread.vhd
+	vcom ../design/top/devreadburst.vhd
+	vcom ../design/top/devwrite.vhd
+	vcom ../design/top/devwriteack.vhd
+	vlog ${VLOG_ARGS} +incdir+.. +incdir+../design/top +incdir+../design/vector +incdir+../design/scalar +incdir+../design/ddr ${SPREE_SRC}
+	vlog ${VLOG_ARGS} +incdir+.. +incdir+../design/top +incdir+../design/vector +incdir+../design/scalar +incdir+../design/ddr ${VESPA_SRC}
+	vlog ${VLOG_ARGS} +incdir+.. +incdir+../design/top +incdir+../design/vector +incdir+../design/scalar +incdir+../design/ddr ${DDR_SRC}
+	vlog ${VLOG_ARGS} ../design/ddr/testbench/altmemddr_mem_model.v
+	vlog ${VLOG_ARGS} +incdir+.. +incdir+../design/top +incdir+../design/vector +incdir+../design/scalar +incdir+../design/ddr ${TESTBENCH_SRC}
 
 #Convert .mif to .dat format - HACKY
 vregfile_control.dat:

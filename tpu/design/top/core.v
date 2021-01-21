@@ -70,7 +70,7 @@ output              trc_we;
 input               trc_stall;
 output              trc_pipestall;
 
-`include "spree/isa.v"
+`include "isa.v"
 `include "visa.v"
 
     wire [31:0] p_dbus_address;    // Processor's data bus signals

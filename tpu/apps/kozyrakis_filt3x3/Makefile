@@ -1,8 +1,8 @@
 TARGET=kozyrakis_filt3x3
 SRC=kozyrakis_filt3x3.c vector_filt3x3.S
 OBJS=kozyrakis_filt3x3.o vector_filt3x3.o
-include $(SPE_HOME)/applications/Makefile.inc
-include $(SPE_HOME)/applications/Makefile.sim
+include $(SPE_HOME)/apps/Makefile.inc
+include $(SPE_HOME)/apps/Makefile.sim
 
 
 ######################## For cross compiled GCC ##########################

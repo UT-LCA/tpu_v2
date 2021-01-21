@@ -89,22 +89,22 @@ quartus:
 #########################################################################
 
 de3sim_compile:
-	cd modelsim && make 
+	cd verif && make 
 	@echo 
 	@echo Successfully compiled!!!!  
 	@echo 
 	@echo Note DDR2 controller requires a few thousand initialization cycles
 de3sim:
-	cd modelsim && vsim -novopt -quiet -keepstdout -pli plifs.sl -warning 1130 +nowarnTFMPC +nowarnPCDPC -c -do "run -all" -L altera -L stratixiii test_bench
+	cd verif && vsim -novopt -quiet -keepstdout -pli plifs.sl -warning 1130 +nowarnTFMPC +nowarnPCDPC -c -do "run -all" -L altera -L stratixiii test_bench
 de3sim_runapp: de3sim_getapp de3sim
-	tail -12 modelsim/transcript >modelsim_transcripts/$(APP).transcript
+	tail -12 verif/transcript >modelsim_transcripts/$(APP).transcript
 de3sim_runapp_gui: de3sim_getapp de3sim_gui
 de3sim_gui:
-	cd modelsim && vsim -novopt -gui -pli plifs.sl -warning 1130 -do waveadd_de3.do -L altera -L stratixiii test_bench 
+	cd verif && vsim -novopt -gui -pli plifs.sl -warning 1130 -do waveadd_de3.do -L altera -L stratixiii test_bench 
 de3sim_getapp:
-	cd modelsim && getapp ${APP}
+	cd verif && getapp ${APP}
 de3sim_clean:
-	cd modelsim && make clean
+	cd verif && make clean
 
 #########################################################################
 ############################# Clean STUFF ###############################

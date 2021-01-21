@@ -9,8 +9,8 @@ SPE_COMPILER_LIBPATH=${SPE_COMPILER}/lib/gcc/mips-mips-elf/4.2.0/soft-float
 TARGET=kozyrakis_blend
 SRC=kozyrakis_blend.c vector_blend.S
 OBJS=kozyrakis_blend.o vector_blend.o
-include $(SPE_HOME)/applications/Makefile.inc
-include $(SPE_HOME)/applications/Makefile.sim
+include $(SPE_HOME)/apps/Makefile.inc
+include $(SPE_HOME)/apps/Makefile.sim
 
 
 ######################## For cross compiled GCC ##########################

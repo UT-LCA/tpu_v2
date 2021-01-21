@@ -23,7 +23,7 @@ int main()
   map<int,string> instrmap;
   FILE * f;
 
-  f=fopen("../vdecode_mips_opcode.txt","r");
+  f=fopen("../design/vector/vdecode_mips_opcode.txt","r");
   if (!f)
   {
     printf("Error: Failed to open vdecode_mips_opcode.txt\n\n");

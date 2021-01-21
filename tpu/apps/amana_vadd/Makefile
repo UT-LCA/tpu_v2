@@ -8,8 +8,8 @@ SPE_COMPILER_LIBPATH=${SPE_COMPILER}/lib/gcc/mips-mips-elf/4.2.0/soft-float
 TARGET=amana_vadd
 SRC=amana_vadd.c vector_add.S
 OBJS=amana_vadd.o vector_add.o
-include $(SPE_HOME)/applications/Makefile.inc
-include $(SPE_HOME)/applications/Makefile.sim
+include $(SPE_HOME)/apps/Makefile.inc
+include $(SPE_HOME)/apps/Makefile.sim
 
 
 ######################## For cross compiled GCC ##########################
