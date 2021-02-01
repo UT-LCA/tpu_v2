@@ -74,17 +74,18 @@ always@(posedge clk)
     zeroout<=(op[3:0]==0);
 `ifdef USE_INHOUSE_LOGIC
 local_mult local_mult_component (
-.dataa(),
-.datab(),
+.dataa({is_signed&opA_mux_out[WIDTH-1],opA_mux_out}),
+.datab(opB_mux_out),
 .clock(clk),
 .clken(en[1]),
 .aclr(~resetn),
 .result({dum2,dum,hi,lo})
 );
+defparam
  local_mult_component.LPM_WIDTHA = WIDTH + 1,
  local_mult_component.LPM_WIDTHB = WIDTH + 1,
  local_mult_component.LPM_WIDTHP = 2*WIDTH + 2,
- local_mult_component.LPM_REPRESENTATION = "SIGNED",
+ local_mult_component.LPM_REPRESENTATION = "SIGNED";
 `else 
 lpm_mult  lpm_mult_component (
   .dataa ({is_signed&opA_mux_out[WIDTH-1],opA_mux_out}),

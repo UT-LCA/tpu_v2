@@ -3,7 +3,8 @@
 
 `define NO_PLI 1
 //`define TEST_BENCH 1
-
+`define USE_INHOUSE_LOGIC
+// Replaces altera blocks with local logic files
 
 /************************** ABBREVIEATED NAMES *****************************/
 // Note: LG = Log base 2
