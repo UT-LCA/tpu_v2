@@ -72,7 +72,20 @@ reg zeroout;
 always@(posedge clk)
   if (en[1])
     zeroout<=(op[3:0]==0);
-
+`ifdef USE_INHOUSE_LOGIC
+local_mult local_mult_component (
+.dataa(),
+.datab(),
+.clock(clk),
+.clken(en[1]),
+.aclr(~resetn),
+.result({dum2,dum,hi,lo})
+);
+ local_mult_component.LPM_WIDTHA = WIDTH + 1,
+ local_mult_component.LPM_WIDTHB = WIDTH + 1,
+ local_mult_component.LPM_WIDTHP = 2*WIDTH + 2,
+ local_mult_component.LPM_REPRESENTATION = "SIGNED",
+`else 
 lpm_mult  lpm_mult_component (
   .dataa ({is_signed&opA_mux_out[WIDTH-1],opA_mux_out}),
   .datab (opB_mux_out),
@@ -90,7 +103,7 @@ defparam
   lpm_mult_component.lpm_type = "LPM_MULT",
   lpm_mult_component.lpm_representation = "SIGNED",
   lpm_mult_component.lpm_hint = "MAXIMIZE_SPEED=6";
-
+`endif
 // if A is positive/negative make it maximum/minimum positive/negative
 wire [WIDTH-1:0] signedsaturate=
                     (opA_mux_out[WIDTH-1]) ? {1'b1,{WIDTH-1{1'b0}}} : 

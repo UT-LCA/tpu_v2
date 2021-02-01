@@ -140,6 +140,19 @@ wire [1:0] ctrl_flag_sel;
   assign adder_opA=(ctrl_adderopA_sel) ? 0 : src1;
   assign adder_opB=(ctrl_adderopB_sel) ? src1 : src2;
 
+  `ifdef USE_INHOUSE_LOGIC
+  local_add_sub local_adder_inst1(
+      .dataa({{2{ctrl_signed&adder_opA[WIDTH-1]}},adder_opA}),
+      .datab({{2{ctrl_signed&adder_opB[WIDTH-1]}},adder_opB}),
+      .cin(~ctrl_addsub),
+      .add_sub(ctrl_addsub),
+      .result(adder_result)
+  );
+  defparam
+      local_adder_inst.WIDTH = WIDTH+2,
+      local_adder_inst.PIPELINE = 0,
+      local_adder_inst.REPRESENTATION = "SIGNED";
+  `else
   lpm_add_sub adder_inst(
       .dataa({{2{ctrl_signed&adder_opA[WIDTH-1]}},adder_opA}),
       .datab({{2{ctrl_signed&adder_opB[WIDTH-1]}},adder_opB}),
@@ -154,6 +167,7 @@ wire [1:0] ctrl_flag_sel;
       adder_inst.lpm_width=WIDTH+2,
       adder_inst.lpm_pipeline=0,
       adder_inst.lpm_representation="SIGNED";
+  `endif
 
   assign lt=adder_result[WIDTH];
   assign neq=|adder_result;
