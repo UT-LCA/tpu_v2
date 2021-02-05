@@ -39,15 +39,15 @@ wire [WIDTH-1:0] partial_result_,partial_result;
 
 `ifdef USE_INHOUSE_LOGIC
  local_shifter local_shifter_inst1(
-  .data(),
-  .distance(),
-  .direction(),
-  .result()
+  .data({sign_ext&opB[WIDTH-1],opB}),
+  .distance(sa&(32'hffffffff<<((REGISTERBREAK>0) ? REGISTERBREAK : 0))),
+  .direction(shift_direction),
+  .result({dum,partial_result})
  );
  defparam
-    local_shifter_inst1.lpm_width = WIDTH+1,
-    local_shifter_inst1.lpm_widthdist = LOG2WIDTH,
-    local_shifter_inst1.lpm_shifttype="ARITHMETIC";
+    local_shifter_inst1.LPM_WIDTH = WIDTH+1,
+    local_shifter_inst1.LPM_WIDTHDIST = LOG2WIDTH,
+    local_shifter_inst1.LPM_SHIFTTYPE="ARITHMETIC";
 `else
 lpm_clshift shifter_inst1(
     .data({sign_ext&opB[WIDTH-1],opB}),
@@ -74,16 +74,16 @@ register secondstagedir (shift_direction, clk,resetn,1'b1,shift_direction_2);
   defparam secondstagedir.WIDTH=1;
 
 `ifdef USE_INHOUSE_LOGIC
- local_shifter local_shifter_shift2(
-  .data(),
-  .distance(),
-  .direction(),
-  .result()
+ local_shifter local_shifter_inst2(
+  .data({dum_,partial_result_}),
+  .distance(sa_2[((REGISTERBREAK>0) ? REGISTERBREAK-1 : 0):0]),
+  .direction(shift_direction_2),
+  .result({dum2,result})
  );
  defparam
-    local_shifter_inst1.lpm_width = WIDTH+1,
-    local_shifter_inst1.lpm_widthdist = LOG2WIDTH,
-    local_shifter_inst1.lpm_shifttype="ARITHMETIC";
+    local_shifter_inst1.LPM_WIDTH = WIDTH+1,
+    local_shifter_inst1.LPM_WIDTHDIST = (REGISTERBREAK>0) ? REGISTERBREAK : 1,
+    local_shifter_inst1.LPM_SHIFTTYPE ="ARITHMETIC";
 `else
 lpm_clshift shifter_inst2(
     .data({dum_,partial_result_}),

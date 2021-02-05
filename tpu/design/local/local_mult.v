@@ -7,25 +7,25 @@ aclr,
 result
 );
 
-parameter LPA_WIDTHA = 32;
-parameter LPA_WIDTHB = 32;
-parameter LPA_WIDTHP = 64;
-parameter LPA_REPRESENTATION = "SIGNED";
+parameter LPM_WIDTHA = 32;
+parameter LPM_WIDTHB = 32;
+parameter LPM_WIDTHP = 64;
+parameter LPM_REPRESENTATION = "SIGNED";
 
-input [LPA_WIDTHA-1:0] dataa;
-input [LPA_WIDTHB-1:0] datab;
+input [LPM_WIDTHA-1:0] dataa;
+input [LPM_WIDTHB-1:0] datab;
 input clock;
 input clken;
 input aclr;
-output reg [LPA_WIDTHP-1:0] result;
+output reg [LPM_WIDTHP-1:0] result;
 
-wire signed [LPA_WIDTHA-1:0] signedinputA;
-wire signed [LPA_WIDTHB-1:0] signedinputB;
-wire signed [LPA_WIDTHP-1:0] signedoutputP;
+wire signed [LPM_WIDTHA-1:0] signedinputA;
+wire signed [LPM_WIDTHB-1:0] signedinputB;
+wire signed [LPM_WIDTHP-1:0] signedoutputP;
 
-wire unsigned [LPA_WIDTHA-1:0] unsignedinputA;
-wire unsigned [LPA_WIDTHB-1:0] unsignedinputB;
-wire unsigned [LPA_WIDTHP-1:0] unsignedinputP;
+wire unsigned [LPM_WIDTHA-1:0] unsignedinputA;
+wire unsigned [LPM_WIDTHB-1:0] unsignedinputB;
+wire unsigned [LPM_WIDTHP-1:0] unsignedinputP;
 
 wire gated_clock;
 
@@ -43,7 +43,7 @@ always @(posedge gated_clock)begin
     if(aclr)begin
        result <= 0;
     end
-    else if(LPA_REPRESENTATION == "SIGNED")
+    else if(LPM_REPRESENTATION == "SIGNED")
        result <= signedoutputP;
     else
        result <= unsignedoutputP; 

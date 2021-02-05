@@ -141,7 +141,7 @@ wire [1:0] ctrl_flag_sel;
   assign adder_opB=(ctrl_adderopB_sel) ? src1 : src2;
 
   `ifdef USE_INHOUSE_LOGIC
-  local_add_sub local_adder_inst1(
+  local_add_sub local_adder_inst(
       .dataa({{2{ctrl_signed&adder_opA[WIDTH-1]}},adder_opA}),
       .datab({{2{ctrl_signed&adder_opB[WIDTH-1]}},adder_opB}),
       .cin(~ctrl_addsub),
