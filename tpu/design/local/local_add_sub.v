@@ -17,7 +17,7 @@ input add_sub;
 output reg [WIDTH-1:0] result;
 
 always @(*)begin
-    if(add_sub == 1'b0)
+    if(add_sub == 1'b1)
          result = dataa+datab+cin;
     else
          result = dataa - datab;
