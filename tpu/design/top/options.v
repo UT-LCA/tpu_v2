@@ -37,8 +37,8 @@
 `define DPV 0
 
 // VECTOR CORE
-`define LGL 4
-`define LGB 1
+`define LGL 3
+`define LGB 0
 `define APB 0
 `define LGM `LGL
 `define LGX `LGL
