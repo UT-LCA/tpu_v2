@@ -321,10 +321,10 @@ assign D_pipe3_squash = t.p.c.p.squash_stage3;
     read_vector_next[b]<=t.p.c.v.vlanes.D_wb_instrdone[b];
 
     //Zero out Elm ID part of destination
-    dst_vector_next[b]<={
-      t.p.c.v.vlanes.vr_c_reg[b][t.p.c.v.vlanes.REGIDWIDTH-1 : t.p.c.v.vlanes.VELMIDWIDTH], 
-      {t.p.c.v.vlanes.VELMIDWIDTH{1'b0}}
-      };
+    // TODO REMOVING TEMPORARILY BECAUSE OF ERROR dst_vector_next[b]<={
+    // TODO REMOVING TEMPORARILY BECAUSE OF ERROR   t.p.c.v.vlanes.vr_c_reg[b][t.p.c.v.vlanes.REGIDWIDTH-1 : t.p.c.v.vlanes.VELMIDWIDTH], 
+    // TODO REMOVING TEMPORARILY BECAUSE OF ERROR   {t.p.c.v.vlanes.VELMIDWIDTH{1'b0}}
+    // TODO REMOVING TEMPORARILY BECAUSE OF ERROR   };
     if (read_vector_next[b] && !(`DISABLETRACES))
     begin
       readdata_vector_next[b]=0;

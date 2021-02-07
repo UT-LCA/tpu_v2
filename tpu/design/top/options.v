@@ -79,5 +79,11 @@
 // DRAM
 `define LOG2DRAMWIDTHBITS 7
 
+/****************** NUM PIPELINE STAGES in VECTOR PROCESSOR ***************/
+//mult consumes 3 cycles
+//`define MAX_PIPE_STAGES 7
+//matmul consumes 29 cycles
+`define MAX_PIPE_STAGES 33
+
 `endif
 

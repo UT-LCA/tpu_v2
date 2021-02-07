@@ -1,48 +1,13 @@
 
 `timescale 1ns / 1ps
 
-`define DWIDTH 32
-`define AWIDTH 10
-`define MEM_SIZE 1024
-
-`define MAT_MUL_SIZE 8
-`define MASK_WIDTH 8
-`define LOG2_MAT_MUL_SIZE 3
-
-`define BB_MAT_MUL_SIZE `MAT_MUL_SIZE
-`define NUM_CYCLES_IN_MAC 3
-`define MEM_ACCESS_LATENCY 1
-`define REG_DATAWIDTH 32
-`define REG_ADDRWIDTH 8
-`define ADDR_STRIDE_WIDTH 16
-`define MAX_BITS_POOL 3
-
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 2021-02-01 17:33:13.454016
-// Design Name: 
-// Module Name: matmul_8x8_systolic
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
-
 module matmul_8x8(
  clk,
  reset,
  pe_reset,
- activate,
- stall,
+ start,
+ in_progress,
+ done,
  a_data,
  b_data,
  c_data_out, 
@@ -58,8 +23,9 @@ module matmul_8x8(
  input clk;
  input reset;
  input pe_reset;
- input activate;
- output stall;
+ input start;
+ output in_progress;
+ output done;
  input [`MAT_MUL_SIZE*`DWIDTH-1:0] a_data;
  input [`MAT_MUL_SIZE*`DWIDTH-1:0] b_data;
  output [`MAT_MUL_SIZE*`DWIDTH-1:0] c_data_out;
@@ -73,9 +39,11 @@ module matmul_8x8(
 //////////////////////////////////////////////////////////////////////////
 // Logic for clock counting and when to assert done
 //////////////////////////////////////////////////////////////////////////
-reg stall;
+reg in_progress;
 reg done_mat_mul;
 reg start_mat_mul;
+
+assign done = done_mat_mul;
 //This is 7 bits because the expectation is that clock count will be pretty
 //small. For large matmuls, this will need to increased to have more bits.
 //In general, a systolic multiplier takes 4*N-2+P cycles, where N is the size 
@@ -91,35 +59,35 @@ reg [7:0] clk_cnt;
 wire [7:0] clk_cnt_for_done;
 
 assign clk_cnt_for_done = 
-                          (33);  
+                          (34);  
     
 always @(posedge clk) begin
   if (reset) begin
     clk_cnt <= 0;
     done_mat_mul <= 0;
-    stall <= 0;
+    in_progress <= 0;
     start_mat_mul <= 0;
   end
-  else if (activate == 1'b1) begin
+  else if (start == 1'b1) begin
     clk_cnt <= clk_cnt + 1;
     start_mat_mul <= 1;
     done_mat_mul <= 0;
-    stall <= 0;
+    in_progress <= 0;
   end
   else if (clk_cnt == clk_cnt_for_done) begin
     done_mat_mul <= 1;
     clk_cnt <= clk_cnt + 1;
-    stall <= 0;
+    in_progress <= 0;
     start_mat_mul <= 0;
   end
   else if ((done_mat_mul == 0) && (start_mat_mul == 1)) begin
     clk_cnt <= clk_cnt + 1;
-    stall <= 1;
+    in_progress <= 1;
   end    
   else begin
     clk_cnt <= 0;
     done_mat_mul <= 0;
-    stall <= 0;
+    in_progress <= 0;
     start_mat_mul <= 0;
   end
 end
