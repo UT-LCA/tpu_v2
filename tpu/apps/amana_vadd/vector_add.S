@@ -48,13 +48,13 @@ vector_add:
 	
 	# set shamt_v, vpw, vfmask0
   # load immediate
-	li	t3, 8
+	#li	t3, 8
   # move to coprocessor (t3->shamt_v)
-	mtc2	t3, shamt_v
-  # load immidiate
+	#mtc2	t3, shamt_v
+  # load immediate
 	li	t3, 1
   # control to coprocessor (t3->vpw)
-	ctc2	t3, vpw			# set vpw to 16b
+	ctc2	t3, vpw			# set vpw to 8b #this doesn't matter really since we are doing simple adds for +ve numbers. it may matter with signed adds, shifts, etc
   # control from coprocessor (mvl_r <- mvl)
 	cfc2	mvl_r, mvl	# read mvl
   # control to coprocessor (mvl_r -> vl)
@@ -74,8 +74,89 @@ vector_add:
 	
 	vld.u.b		a_v, a_addr, addr_inc	# load A	
 	vld.u.b		b_v, b_addr, addr_inc	# load B	
-	vadd.vv		c_v, a_v, b_v		# c = a + b
-	vst.b	  	c_v, c_addr, addr_inc	# store C
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+	#vadd.vv		c_v, a_v, b_v		# c = a + b
+	#vmullo.vv		c_v, a_v, b_v		# c = a * b
+	vdiv.vv		c_v, a_v, b_v		# c = a matmul b #hack:  fixme: todo: Using DIV as Matmul
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+	vadd.vv		$vr7, a_v, c_v		# c = a + b
+	vst.b	  	$vr7, c_addr, addr_inc	# store C
+	#vst.b	  	c_v, c_addr, addr_inc	# store C
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
 
 	# restore stack
 	lw	ra, 8(sp)

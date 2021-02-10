@@ -38,8 +38,8 @@
 `define DPV 0
 
 // VECTOR CORE
-`define LGL 4
-`define LGB 1
+`define LGL 3
+`define LGB 0
 `define APB 0
 `define LGM `LGL
 `define LGX `LGL
@@ -79,6 +79,13 @@
 
 // DRAM
 `define LOG2DRAMWIDTHBITS 7
+
+/****************** NUM PIPELINE STAGES in VECTOR PROCESSOR ***************/
+//mult consumes 3 cycles
+//`define MAX_PIPE_STAGES 7
+//matmul consumes 29 cycles
+`define MAX_PIPE_STAGES 33
+`define MATMUL_STAGES 29
 
 `endif
 

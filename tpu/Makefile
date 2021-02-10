@@ -100,7 +100,8 @@ de3sim_runapp: de3sim_getapp de3sim
 	tail -12 verif/transcript >modelsim_transcripts/$(APP).transcript
 de3sim_runapp_gui: de3sim_getapp de3sim_gui
 de3sim_gui:
-	cd verif && vsim -novopt -gui -pli plifs.sl -warning 1130 -do waveadd_de3.do -L altera -L stratixiii test_bench 
+	#cd verif && vsim -novopt -gui -pli plifs.sl -warning 1130 -do waveadd_de3.do -L altera -L stratixiii test_bench 
+	cd verif && vsim -novopt -gui -pli plifs.sl -warning 1130 -do my_waveadd.do -L altera -L stratixiii test_bench 
 de3sim_getapp:
 	cd verif && getapp ${APP}
 de3sim_clean:

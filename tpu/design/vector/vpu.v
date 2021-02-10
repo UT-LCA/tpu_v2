@@ -141,7 +141,7 @@ wire                                    stall3;
 wire                        [ 3 : 1 ]   internal_stall;
 wire                                    squash1;
 wire                                    squash2;
-wire                        [ 6 : 0 ]   vlanes_stalled;
+wire        [`MAX_PIPE_STAGES-1 : 0 ]   vlanes_stalled;
 
 wire                        [ 5 : 0 ]   ir_cop2;
 wire                        [ 9 : 0 ]   ir_op;
