@@ -102,7 +102,7 @@ pipe #(REGIDWIDTH,PIPE_STAGES_MATMUL-1) dstpipe (
     .en(en[PIPE_STAGES_MATMUL-1:1] & {1'b1,{(PIPE_STAGES_MATMUL-2){~stall}}} ),
     .q(out_dst));
 
-  pipe #(1,PIPE_STAGES_MATMUL-1) dstwepipe (
+pipe #(1,PIPE_STAGES_MATMUL-1) dstwepipe (
     .d(in_dst_we ),  
     .clk(clk),
     .resetn(resetn),
@@ -110,7 +110,7 @@ pipe #(REGIDWIDTH,PIPE_STAGES_MATMUL-1) dstpipe (
     .squash(squash[PIPE_STAGES_MATMUL-1:1]),
     .q(out_dst_we));
 
-  pipe #(NUMLANES,PIPE_STAGES_MATMUL-1) dstmaskpipe (
+pipe #(NUMLANES,PIPE_STAGES_MATMUL-1) dstmaskpipe (
     .d(vmask ),  
     .clk(clk),
     .resetn(resetn),

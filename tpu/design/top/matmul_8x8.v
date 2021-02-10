@@ -59,7 +59,8 @@ wire start_pulse;
 assign start_pulse = start & (~start_delayed);
 
 reg shift_out_data;
-assign start_mat_mul = start_pulse|in_progress|shift_out_data;
+reg shift_in_data;
+assign start_mat_mul = start_pulse|shift_in_data|in_progress|shift_out_data;
 
 //This is 7 bits because the expectation is that clock count will be pretty
 //small. For large matmuls, this will need to increased to have more bits.
@@ -75,6 +76,7 @@ reg [7:0] clk_cnt;
 //to avoid multiplication, we now use "final_mat_mul_size<<2"
 wire [7:0] clk_cnt_for_done;
 wire [7:0] clk_cnt_for_latching_c_data;
+wire [7:0] clk_cnt_for_shifting_inputs;
 
 assign clk_cnt_for_done = 
                           (34);  
@@ -82,30 +84,47 @@ assign clk_cnt_for_done =
 assign clk_cnt_for_latching_c_data =                        
                           (27);  
     
+assign clk_cnt_for_shifting_inputs =                        
+                          (1);  //Ideally this should have been 7, but if we keep this as
+                                //7, then stall signal is asserted a bit later than required
+
 always @(posedge clk) begin
   if (reset) begin
     clk_cnt <= 0;
     done_mat_mul <= 0;
     in_progress <= 0;
     shift_out_data <= 0;
+    shift_in_data <= 0;
+  end
+  else if (start_pulse == 1'b1) begin
+    clk_cnt <= clk_cnt + 1;
+    done_mat_mul <= 0;
+    in_progress <= 0;
+    shift_out_data <= 0;
+    shift_in_data <= 1;
+  end
+  else if (clk_cnt == clk_cnt_for_shifting_inputs) begin 
+    clk_cnt <= clk_cnt + 1;
+    done_mat_mul <= 0;
+    in_progress <= 1;
+    shift_out_data <= 0;
+    shift_in_data <= 0;
   end
   else if (clk_cnt == clk_cnt_for_latching_c_data) begin 
     clk_cnt <= clk_cnt + 1;
+    done_mat_mul <= 0;
     in_progress <= 0;
     shift_out_data <= 1;
+    shift_in_data <= 0;
   end
   else if (clk_cnt == clk_cnt_for_done) begin
     done_mat_mul <= 1;
     clk_cnt <= clk_cnt + 1;
     in_progress <= 0;
     shift_out_data <= 0;
+    shift_in_data <= 0;
   end
-  else if (start_pulse == 1'b1) begin
-    clk_cnt <= clk_cnt + 1;
-    done_mat_mul <= 0;
-    in_progress <= 1;
-  end
-  else if ((done_mat_mul == 0) && ((in_progress == 1) || (shift_out_data == 1))) begin
+  else if ((in_progress == 1) || (shift_out_data == 1) || (shift_in_data == 1)) begin
     clk_cnt <= clk_cnt + 1;
   end    
   else begin
