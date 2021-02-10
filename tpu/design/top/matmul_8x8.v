@@ -3,21 +3,37 @@
 
 module matmul_8x8(
  clk,
+ //Reset for the whole matmul
  reset,
+ //Reset for the PEs. Typically connected to 'reset'
  pe_reset,
- start,
+ //When this is asserted, the matmul operation starts. This can remain
+ //asserted during the execution, but is not required to.
+ start, 
+ //This is asserted a cycle after the matmul start operation. It stays
+ //asserted until the matmul starts shifting out the output data.
  in_progress,
+ //This is not used any more. But it is a pulse, and is asserted when
+ //the execution (including output shift out) is finished.
  done,
+ //Input data matrix A. For MAT_MUL_SIZE=8, 64 values come in over 8 cycles.
+ //8 values in one cycle.
  a_data,
+ //Input data matrix B. For MAT_MUL_SIZE=8, 64 values come in over 8 cycles.
+ //8 values in one cycle.
  b_data,
+ //Output data matrix C. For MAT_MUL_SIZE=8, 64 values come out over 8 cycles.
+ //8 values in one cycle.
  c_data_out, 
+ //This isn't used anymore. It stays asserted when the output data matrix C
+ //is being shifted out.
  c_data_available,
-
+ //Masks for input matrices A and B. These are used when we want to use this 
+ //unit to multiply matrices that are less than 8x8 (eg: 6x4 with a 4x5 matrix).
  validity_mask_a_rows,
  validity_mask_a_cols,
  validity_mask_b_rows,
  validity_mask_b_cols
-  
 );
 
  input clk;
@@ -41,7 +57,13 @@ module matmul_8x8(
 //////////////////////////////////////////////////////////////////////////
 reg in_progress;
 reg done_mat_mul;
-wire start_mat_mul;
+wire matmul_op_in_progress;
+reg shift_out_data;
+reg shift_in_data;
+wire start_pulse;
+wire [7:0] clk_cnt_for_done;
+wire [7:0] clk_cnt_for_latching_c_data;
+wire [7:0] clk_cnt_for_shifting_inputs;
 
 assign done = done_mat_mul;
 
@@ -55,12 +77,21 @@ always @(posedge clk) begin
   end
 end
 
-wire start_pulse;
 assign start_pulse = start & (~start_delayed);
 
-reg shift_out_data;
-reg shift_in_data;
-assign start_mat_mul = start_pulse|shift_in_data|in_progress|shift_out_data;
+//This signal is used in other modules instantiated in this design.
+//It stays high during the entire time matmul is working.
+//                            _
+//start_pulse           _____| |___________________________________________
+//                              ___
+//shift_in_data         _______|   |_______________________________________
+//                                   ________________________
+//in_progress           ____________|                        |______________
+//                                                            _______
+//shift_out_data        _____________________________________|       |______
+//                            _______________________________________
+//matmul_op_in_progress _____|                                       |______
+assign matmul_op_in_progress = start_pulse|shift_in_data|in_progress|shift_out_data;
 
 //This is 7 bits because the expectation is that clock count will be pretty
 //small. For large matmuls, this will need to increased to have more bits.
@@ -68,22 +99,18 @@ assign start_mat_mul = start_pulse|shift_in_data|in_progress|shift_out_data;
 //of the matmul and P is the number of pipleine stages in the MAC block.
 reg [7:0] clk_cnt;
 
-//Finding out number of cycles to assert matmul done.
-//When we have to save the outputs to accumulators, then we don't need to
-//shift out data. So, we can assert done_mat_mul early.
-//In the normal case, we have to include the time to shift out the results. 
-//Note: the count expression used to contain "4*final_mat_mul_size", but 
-//to avoid multiplication, we now use "final_mat_mul_size<<2"
-wire [7:0] clk_cnt_for_done;
-wire [7:0] clk_cnt_for_latching_c_data;
-wire [7:0] clk_cnt_for_shifting_inputs;
-
+//Number of cycles to assert matmul done. This includes the cycles to shift out the results. 
+//This is hardcoded here, because this was generated using a script.
 assign clk_cnt_for_done = 
                           (34);  
 
+//Number of cycles at which we latch the output data and start shifting it out.
 assign clk_cnt_for_latching_c_data =                        
                           (27);  
-    
+
+//Number of cycles at which we finish shifting inputs into the matmul.
+//Note that while this shifting is happening, the matmul is calculating
+//outputs in its PEs.
 assign clk_cnt_for_shifting_inputs =                        
                           (1);  //Ideally this should have been 7, but if we keep this as
                                 //7, then stall signal is asserted a bit later than required
@@ -133,6 +160,7 @@ always @(posedge clk) begin
     in_progress <= 0;
   end
 end
+
 wire [`DWIDTH-1:0] a0_data;
 wire [`DWIDTH-1:0] a1_data;
 wire [`DWIDTH-1:0] a2_data;
@@ -213,7 +241,7 @@ wire [`DWIDTH-1:0] b7_data_delayed_7;
 systolic_data_setup u_systolic_data_setup(
 .clk(clk),
 .reset(reset),
-.start_mat_mul(start_mat_mul),
+.matmul_op_in_progress(matmul_op_in_progress),
 .a_data(a_data),
 .b_data(b_data),
 .clk_cnt(clk_cnt),
@@ -346,7 +374,7 @@ wire row_latch_en;
 // Instantiation of the output logic
 //////////////////////////////////////////////////////////////////////////
 output_logic u_output_logic(
-.start_mat_mul(start_mat_mul),
+.matmul_op_in_progress(matmul_op_in_progress),
 .done_mat_mul(done_mat_mul),
 .c_data_out(c_data_out),
 .c_data_available(c_data_available),
@@ -520,7 +548,7 @@ endmodule
 // Output logic
 //////////////////////////////////////////////////////////////////////////
 module output_logic(
-start_mat_mul,
+matmul_op_in_progress,
 done_mat_mul,
 c_data_out,
 c_data_available,
@@ -597,7 +625,7 @@ reset
 
 input clk;
 input reset;
-input start_mat_mul;
+input matmul_op_in_progress;
 input done_mat_mul;
 output [`MAT_MUL_SIZE*`DWIDTH-1:0] c_data_out;
 output c_data_available;
@@ -698,7 +726,7 @@ assign condition_to_start_shifting_output =
   
 //For larger matmuls, this logic will have more entries in the case statement
 always @(posedge clk) begin
-  if (reset | ~start_mat_mul) begin
+  if (reset | ~matmul_op_in_progress) begin
     start_capturing_c_data <= 1'b0;
     c_data_available <= 1'b0;
     c_data_out <= 0;
@@ -772,7 +800,7 @@ endmodule
 module systolic_data_setup(
 clk,
 reset,
-start_mat_mul,
+matmul_op_in_progress,
 a_data,
 b_data,
 clk_cnt,
@@ -801,7 +829,7 @@ validity_mask_b_cols
 
 input clk;
 input reset;
-input start_mat_mul;
+input matmul_op_in_progress;
 input [`MAT_MUL_SIZE*`DWIDTH-1:0] a_data;
 input [`MAT_MUL_SIZE*`DWIDTH-1:0] b_data;
 input [7:0] clk_cnt;
@@ -844,48 +872,8 @@ wire [`DWIDTH-1:0] b5_data;
 wire [`DWIDTH-1:0] b6_data;
 wire [`DWIDTH-1:0] b7_data;
 
-//////////////////////////////////////////////////////////////////////////
-// Logic to generate addresses to BRAM A
-//////////////////////////////////////////////////////////////////////////
-//reg a_mem_access; //flag that tells whether the matmul is trying to access memory or not
-//reg [7:0] a_mem_access_counter;
 wire [7:0] a_mem_access_counter;
-
-//always @(posedge clk) begin
-//  //(clk_cnt >= a_loc*`MAT_MUL_SIZE+final_mat_mul_size) begin
-//  //Writing the line above to avoid multiplication:
-//
-//  if (reset || ~start_mat_mul || (clk_cnt >= 8)) begin
-//  
-//    a_mem_access <= 0;
-//    a_mem_access_counter <= 0;
-//  end
-//  //else if ((clk_cnt >= a_loc*`MAT_MUL_SIZE) && (clk_cnt < a_loc*`MAT_MUL_SIZE+final_mat_mul_size)) begin
-//  //Writing the line above to avoid multiplication:
-//
-//  else if ((clk_cnt >= 0) && (clk_cnt < 8)) begin
-//  
-//    a_mem_access <= 1;
-//    a_mem_access_counter <= a_mem_access_counter + 1;  
-//  end
-//end
-
-assign a_mem_access_counter = ((clk_cnt>=8) ? 0 : (start_mat_mul ? (clk_cnt+1) : 0));
-
-//////////////////////////////////////////////////////////////////////////
-// Logic to generate valid signals for data coming from BRAM A
-//////////////////////////////////////////////////////////////////////////
-//always @(posedge clk) begin
-//  if (reset || ~start_mat_mul) begin
-//    a_mem_access_counter <= 0;
-//  end
-//  else if (a_mem_access == 1) begin
-//    a_mem_access_counter <= a_mem_access_counter + 1;  
-//  end
-//  else begin
-//    a_mem_access_counter <= 0;
-//  end
-//end
+assign a_mem_access_counter = ((clk_cnt>=8) ? 0 : (matmul_op_in_progress ? (clk_cnt+1) : 0));
 
 wire a_data_valid; //flag that tells whether the data from memory is valid
 assign a_data_valid = 
@@ -943,7 +931,7 @@ reg [`DWIDTH-1:0] a7_data_delayed_7;
 
 
 always @(posedge clk) begin
-  if (reset || ~start_mat_mul) begin
+  if (reset || ~matmul_op_in_progress) begin
     a1_data_delayed_1 <= 0;
     a2_data_delayed_1 <= 0;
     a2_data_delayed_2 <= 0;
@@ -1007,47 +995,8 @@ always @(posedge clk) begin
   end
 end
 
-//////////////////////////////////////////////////////////////////////////
-// Logic to generate addresses to BRAM B
-//////////////////////////////////////////////////////////////////////////
-//reg b_mem_access; //flag that tells whether the matmul is trying to access memory or not
-//reg [7:0] b_mem_access_counter;
 wire [7:0] b_mem_access_counter;
-
-//always @(posedge clk) begin
-//  //else if (clk_cnt >= b_loc*`MAT_MUL_SIZE+final_mat_mul_size) begin
-//  //Writing the line above to avoid multiplication:
-//
-//  if ((reset || ~start_mat_mul) || (clk_cnt >= 8)) begin
-//
-//    b_mem_access <= 0;
-//    b_mem_access_counter <= 0;
-//  end
-//  //else if ((clk_cnt >= b_loc*`MAT_MUL_SIZE) && (clk_cnt < b_loc*`MAT_MUL_SIZE+final_mat_mul_size)) begin
-//  //Writing the line above to avoid multiplication:
-//
-//  else if ((clk_cnt >= 0) && (clk_cnt < 8)) begin
-//
-//    b_mem_access <= 1;
-//    b_mem_access_counter <= b_mem_access_counter + 1;  
-//  end
-//end 
-assign b_mem_access_counter = ((clk_cnt>=8) ? 0 : (start_mat_mul ? (clk_cnt+1) : 0));
-
-//////////////////////////////////////////////////////////////////////////
-// Logic to generate valid signals for data coming from BRAM B
-//////////////////////////////////////////////////////////////////////////
-//always @(posedge clk) begin
-//  if (reset || ~start_mat_mul) begin
-//    b_mem_access_counter <= 0;
-//  end
-//  else if (b_mem_access == 1) begin
-//    b_mem_access_counter <= b_mem_access_counter + 1;  
-//  end
-//  else begin
-//    b_mem_access_counter <= 0;
-//  end
-//end
+assign b_mem_access_counter = ((clk_cnt>=8) ? 0 : (matmul_op_in_progress ? (clk_cnt+1) : 0));
 
 wire b_data_valid; //flag that tells whether the data from memory is valid
 assign b_data_valid = 
@@ -1105,7 +1054,7 @@ reg [`DWIDTH-1:0] b7_data_delayed_7;
 
 
 always @(posedge clk) begin
-  if (reset || ~start_mat_mul) begin
+  if (reset || ~matmul_op_in_progress) begin
     b1_data_delayed_1 <= 0;
     b2_data_delayed_1 <= 0;
     b2_data_delayed_2 <= 0;

@@ -254,6 +254,11 @@ reg   [ VCWIDTH-1 : 0 ]   vstride_in_saved;
 reg   [ VSWIDTH-1 : 0 ]   vs_in_saved;
 
 // Control register values
+//TODO: Rethink whether the following vars (vc, vl, vbase, vinc, vstride)
+//need to be change to use `MAX_PIPE_STAGES. I think these variables are 
+//only used for memory operations and for that, we only need 6 stages.
+//Not a big deal because most of these are not used much. Synthesis tool
+//will optimize out the unnecessary bits anyway.
 wire  [ VCWIDTH-1 : 0 ]   vc[`MAX_PIPE_STAGES-1:2];
 wire  [ VCWIDTH-1 : 0 ]   vl[`MAX_PIPE_STAGES-1:2];
 wire  [ VCWIDTH-1 : 0 ]   vbase[`MAX_PIPE_STAGES-1:2];
@@ -617,6 +622,9 @@ assign pipe_squash[4]=pipe_advance[5]&~pipe_advance[4];
 assign pipe_squash[5]=pipe_advance[6]&~pipe_advance[5];
 //assign pipe_squash[6]=1'b0;
 
+//The code below basically replicates the statements above for
+//pipe stages from 6 to MAX_PIPE_STAGES. Using generate statement
+//to reduce typing.
 genvar pipe_stage;
 generate
 for (pipe_stage=6; pipe_stage<`MAX_PIPE_STAGES-1; pipe_stage=pipe_stage+1) begin: pipe_squash_assign
@@ -1233,7 +1241,7 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VSUB_U:    ctrl1_alu_op=ALUOP_SUBU^ALUOP_ZERO;
       COP2_VMULHI:  ctrl1_mulshift_op=MULOP_MULHI;
       COP2_VMULHI_U:ctrl1_mulshift_op=MULOP_MULUHI;
-      COP2_VDIV:    ctrl1_matmul_en=1'b1;
+      COP2_VDIV:    ctrl1_matmul_en=1'b1;  //Note: This is a hack. We're using VDIV opcode for matmul operation
       //COP2_VDIV_U,
       //COP2_VMOD,
       //COP2_VMOD_U,
@@ -2363,7 +2371,9 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
   end
   endgenerate
 
-
+ //This code is just for assigning from signals connected
+ //to the matmul, which are linear multi bit signals, to the
+ //multi-dimensional signals.
  wire [`MATMUL_STAGES*REGIDWIDTH-1:0] dst_matmul;
  wire [`MATMUL_STAGES*NUMLANES-1:0] dst_mask_matmul;
  genvar g;
@@ -2387,6 +2397,7 @@ matmul_unit #(REGIDWIDTH,`MATMUL_STAGES,NUMLANES) u_matmul(
 .stall(stall_matmul),
 .a_data(vr_src1[FU_MATMUL][NUMLANES*LANEWIDTH-1:0]),
 .b_data(vr_src2[FU_MATMUL][NUMLANES*LANEWIDTH-1:0]),
+//TODO: For now, typing these to FF. Need to control these from the instruction
 .validity_mask_a_rows(8'b1111_1111),
 .validity_mask_a_cols(8'b1111_1111),
 .validity_mask_b_rows(8'b1111_1111),
@@ -2431,7 +2442,8 @@ matmul_unit #(REGIDWIDTH,`MATMUL_STAGES,NUMLANES) u_matmul(
   assign wb_dst[FU_MATMUL]=dst[FU_MATMUL][5];
   assign wb_dst_we[FU_MATMUL]=dst_we[FU_MATMUL][5] && ~pipe_squash[5];
   assign wb_dst_mask[FU_MATMUL]=dst_mask[FU_MATMUL][5];
-  //TODO: Assign to the s31 var. This is only a debug var
+  //TODO: There is no code that assigns to the s31 var used below. Need to add that code
+  //This is only a debug var, so it doesn't affect functionality
   assign D_wb_last_subvector[FU_MATMUL]=D_last_subvector_s31[FU_MATMUL];
 
   // ******************  Map functional units to banks ******************
@@ -2444,7 +2456,7 @@ matmul_unit #(REGIDWIDTH,`MATMUL_STAGES,NUMLANES) u_matmul(
                   (wb_dst_we[FU_ALU] && `LO(wb_dst[FU_ALU],LOG2NUMBANKS)==bw && ALUPERBANK==0) ||
                   (wb_dst_we[FU_ALU+bw] && ALUPERBANK!=0);
 
-      //TODO: Update this code for matmul. This is for debug only
+      //TODO: Update this code for matmul. This is for debug only, so skipping it for now.
       //Tells test_bench when to record register file contents.
       //Record if instruction writes to VRF, on last subvector, and not stalled
       D_wb_instrdone[bw] = pipe_advance[5] && (
@@ -2454,7 +2466,6 @@ matmul_unit #(REGIDWIDTH,`MATMUL_STAGES,NUMLANES) u_matmul(
         (dst_we[FU_MUL][5] && D_wb_last_subvector[FU_MUL] && `LO(wb_dst[FU_MUL],LOG2NUMBANKS)==bw) || 
         (dst_we[FU_MEM][5] && D_wb_last_subvector[FU_MEM] && `LO(wb_dst[FU_MEM],LOG2NUMBANKS)==bw));
 
-
       //Take matmul output
       if (wb_dst_we[FU_MATMUL] && `LO(wb_dst[FU_MATMUL],LOG2NUMBANKS)==bw)
       begin
@@ -2463,7 +2474,8 @@ matmul_unit #(REGIDWIDTH,`MATMUL_STAGES,NUMLANES) u_matmul(
         vr_c_reg[bw]= wb_dst[FU_MATMUL];
         vr_c_writedatain[bw]= matmul_out;
         D_last_subvector_done[bw]=D_wb_last_subvector[FU_MATMUL];
-      end      //Take multiplier output
+      end      
+      //Take multiplier output
       else if (wb_dst_we[FU_MUL] && `LO(wb_dst[FU_MUL],LOG2NUMBANKS)==bw)
       begin
         vmask_final[bw]=wb_dst_mask[FU_MUL];

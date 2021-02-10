@@ -3,6 +3,18 @@
 `define AWIDTH 10
 `define MEM_SIZE 1024
 
+///////////////////////////////////////////////////////////
+//MAT_MUL_SIZE refers to the dimension of the matrix
+//multiplication performed by the matmul unit. The value 
+//8 means it will multiply an 8x8 matrix with an 8x8 matrix.
+///////////////////////////////////////////////////////////
+//IMP IMP IMP IMP IMP IMP IMP IMP IMP IMP IMP
+///////////////////////////////////////////////////////////
+//MAT_MUL_SIZE should be equal to number of lanes in the vector processor
+///////////////////////////////////////////////////////////
+//IMP IMP IMP IMP IMP IMP IMP IMP IMP IMP IMP
+///////////////////////////////////////////////////////////
+
 `define MAT_MUL_SIZE 8
 `define MASK_WIDTH 8
 `define LOG2_MAT_MUL_SIZE 3
@@ -78,6 +90,8 @@ pipe #(1,PIPE_STAGES_MATMUL-1) activatepipe (
 wire in_progress;
 assign stall=in_progress;
 
+//The actual matrix multiplier block. This is an abridged
+//version of the matmul block used in the TPU v1 design.
 matmul_8x8 mat(
     .clk(clk),
     .reset(~resetn),

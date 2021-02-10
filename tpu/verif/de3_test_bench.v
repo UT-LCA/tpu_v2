@@ -341,7 +341,10 @@ assign D_pipe3_squash = t.p.c.p.squash_stage3;
             //unrolled instead.  If there is only 1 bank there shouldn't be any
             //conditional statement below, it should be a straight assignment
             //to the first term (everything in the first curly brace).
-           //(((i%t.p.c.v.NUMBANKS)==0) ?
+
+            //TODO: Need to go back to original code.
+            //Making the change because for now we've kept NUMBANKS=1
+            //(((i%t.p.c.v.NUMBANKS)==0) ?
             {{32-t.p.c.v.VPW*8+1{t.p.c.v.vlanes.vregfile_vector.bank_gen[0].reg_file1.altera_syncram_inst.mem_data[ (dst_vector_next[b]+i)>>t.p.c.v.LOG2NUMBANKS][(k+1)*t.p.c.v.VPW*8-1]}}, //sign-extend
             t.p.c.v.vlanes.vregfile_vector.bank_gen[0].reg_file1.altera_syncram_inst.mem_data[(dst_vector_next[b]+i)>>t.p.c.v.LOG2NUMBANKS][(k+1)*t.p.c.v.VPW*8-2 -: t.p.c.v.VPW*8-1]} //:
             //((i%t.p.c.v.NUMBANKS)==1) ?
@@ -396,7 +399,10 @@ assign D_pipe3_squash = t.p.c.p.squash_stage3;
           //unrolled instead.  If there is only 1 bank there shouldn't be any
           //conditional statement below, it should be a straight assignment
           //to the first term (everything in the first curly brace).
-        //(((j%t.p.c.v.NUMBANKS)==0) ?
+
+         //TODO: Need to go back to original code.
+         //Making the change because for now we've kept NUMBANKS=1
+         //(((j%t.p.c.v.NUMBANKS)==0) ?
           (t.p.c.v.vlanes.vregfile_flag.bank_gen[0].reg_file1.altera_syncram_inst.mem_data[ (dst_vf_next[bf]+j)>>t.p.c.v.LOG2NUMBANKS ]<<(t.p.c.v.NUMLANES*j)) //:
          //((j%t.p.c.v.NUMBANKS)==1) ?
           //(t.p.c.v.vlanes.vregfile_flag.bank_gen[1].reg_file1.altera_syncram_inst.mem_data[ (dst_vf_next[bf]+j)>>t.p.c.v.LOG2NUMBANKS ]<<(t.p.c.v.NUMLANES*j)) 

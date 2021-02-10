@@ -31,7 +31,9 @@ char frame2[WIDTH*HEIGHT]={
 };
 */
 
-
+//Using the following data for matmul just makes
+//it a bit easier to debug. All 1s means the 
+//output matrix should have all 8s
 char frame1[WIDTH*HEIGHT]={
 
   0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,

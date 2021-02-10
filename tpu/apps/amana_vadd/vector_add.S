@@ -48,9 +48,9 @@ vector_add:
 	
 	# set shamt_v, vpw, vfmask0
   # load immediate
-	#li	t3, 8
+	#li	t3, 8 #this is not used anywhere
   # move to coprocessor (t3->shamt_v)
-	#mtc2	t3, shamt_v
+	#mtc2	t3, shamt_v #we don't need this in the simple matmul program
   # load immediate
 	li	t3, 1
   # control to coprocessor (t3->vpw)
@@ -75,87 +75,14 @@ vector_add:
 	vld.u.b		a_v, a_addr, addr_inc	# load A	
 	vld.u.b		b_v, b_addr, addr_inc	# load B	
   #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
+
 	#vadd.vv		c_v, a_v, b_v		# c = a + b
 	#vmullo.vv		c_v, a_v, b_v		# c = a * b
 	vdiv.vv		c_v, a_v, b_v		# c = a matmul b #hack:  fixme: todo: Using DIV as Matmul
   #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-	vadd.vv		$vr7, a_v, c_v		# c = a + b
-	vst.b	  	$vr7, c_addr, addr_inc	# store C
-	#vst.b	  	c_v, c_addr, addr_inc	# store C
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
-  #nop
+
+	vadd.vv		c_v, a_v, c_v	#bias operation
+	vst.b	  	c_v, c_addr, addr_inc	# store C
   #nop
 
 	# restore stack
