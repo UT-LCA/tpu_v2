@@ -621,7 +621,7 @@ genvar pipe_stage;
 generate
 for (pipe_stage=6; pipe_stage<`MAX_PIPE_STAGES-1; pipe_stage=pipe_stage+1) begin: pipe_squash_assign
   assign pipe_squash[pipe_stage] = pipe_advance[pipe_stage+1] & ~pipe_advance[pipe_stage];
-  if (pipe_stage==31) begin
+  if (pipe_stage==(`MAX_PIPE_STAGES-2)) begin
     assign internal_pipe_advance[pipe_stage] = internal_pipe_advance[pipe_stage+1] && ~stall_matmul;
   end
   else begin
@@ -678,8 +678,6 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
           ctrl1_vr_b_en=1;
           ctrl1_usesvssel=1;
         end
-      COP2_VDIV,
-      COP2_VDIV_U,
       COP2_VMOD,
       COP2_VMOD_U,
       COP2_VCMP_EQ,
@@ -694,6 +692,8 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
           ctrl1_vr_b_en=~ir_op[BIT_VSSRC2];
           ctrl1_usesvssel=1;
         end
+      COP2_VDIV,
+      COP2_VDIV_U,
       COP2_VMIN,
       COP2_VMIN_U,
       COP2_VMAX,
@@ -1801,7 +1801,7 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
         alu_dst_we[4],
         dst_we[FU_MUL][4],
         dst_we[FU_MEM][4],
-        dst_we[FU_MATMUl][4]
+        dst_we[FU_MATMUL][4]
         }),
       .dst_mode({{3+(NUMBANKS-1)*ALUPERBANK{1'b0}},ctrl4_volatiledest}),
       .lt_dst(t_dst_s3),
@@ -2364,11 +2364,11 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
   endgenerate
 
 
- wire [29*REGIDWIDTH-1:0] dst_matmul;
- wire [29*NUMLANES-1:0] dst_mask_matmul;
+ wire [`MATMUL_STAGES*REGIDWIDTH-1:0] dst_matmul;
+ wire [`MATMUL_STAGES*NUMLANES-1:0] dst_mask_matmul;
  genvar g;
   generate
-    for (g=0; g<29; g=g+1) begin
+    for (g=0; g<`MATMUL_STAGES; g=g+1) begin: matmul_dst_gen
       assign dst[FU_MATMUL][g+4] = dst_matmul[REGIDWIDTH*(g+1)-1:REGIDWIDTH*g];
       assign dst_mask[FU_MATMUL][g+4] = dst_mask_matmul[NUMLANES*(g+1)-1:NUMLANES*g];
     end
@@ -2378,7 +2378,7 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
 // Matmul unit
 ///////////////////////////
 //TODO: Need to update for 2 banks
-matmul_unit #(REGIDWIDTH,29,NUMLANES) u_matmul(
+matmul_unit #(REGIDWIDTH,`MATMUL_STAGES,NUMLANES) u_matmul(
 .clk(clk),
 .resetn(resetn),
 .activate(ctrl4_matmul_en),
@@ -2428,9 +2428,9 @@ matmul_unit #(REGIDWIDTH,29,NUMLANES) u_matmul(
   assign wb_dst_mask[FU_MUL]=dst_mask[FU_MUL][5];
   assign D_wb_last_subvector[FU_MUL]=D_last_subvector_s5[FU_MUL];
 
-  assign wb_dst[FU_MATMUL]=dst[FU_MATMUL][31];
-  assign wb_dst_we[FU_MATMUL]=dst_we[FU_MATMUL][31] && ~pipe_squash[31];
-  assign wb_dst_mask[FU_MATMUL]=dst_mask[FU_MATMUL][31];
+  assign wb_dst[FU_MATMUL]=dst[FU_MATMUL][5];
+  assign wb_dst_we[FU_MATMUL]=dst_we[FU_MATMUL][5] && ~pipe_squash[5];
+  assign wb_dst_mask[FU_MATMUL]=dst_mask[FU_MATMUL][5];
   //TODO: Assign to the s31 var. This is only a debug var
   assign D_wb_last_subvector[FU_MATMUL]=D_last_subvector_s31[FU_MATMUL];
 

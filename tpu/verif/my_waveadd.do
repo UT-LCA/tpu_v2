@@ -225,5 +225,5 @@ delete wave /test_bench/t/p/c/v/vlanes/ctrl*
 #add wave -divide "Divider"
 #add wave sim:/test_bench/t/p/c/p/div/*
 
-run 800000
+run -all
 

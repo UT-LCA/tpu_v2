@@ -41,9 +41,26 @@ module matmul_8x8(
 //////////////////////////////////////////////////////////////////////////
 reg in_progress;
 reg done_mat_mul;
-reg start_mat_mul;
+wire start_mat_mul;
 
 assign done = done_mat_mul;
+
+reg start_delayed;
+always @(posedge clk) begin
+  if (reset) begin
+    start_delayed <= 0;
+  end 
+  else begin
+    start_delayed <= start;
+  end
+end
+
+wire start_pulse;
+assign start_pulse = start & (~start_delayed);
+
+reg shift_out_data;
+assign start_mat_mul = start_pulse|in_progress|shift_out_data;
+
 //This is 7 bits because the expectation is that clock count will be pretty
 //small. For large matmuls, this will need to increased to have more bits.
 //In general, a systolic multiplier takes 4*N-2+P cycles, where N is the size 
@@ -57,38 +74,44 @@ reg [7:0] clk_cnt;
 //Note: the count expression used to contain "4*final_mat_mul_size", but 
 //to avoid multiplication, we now use "final_mat_mul_size<<2"
 wire [7:0] clk_cnt_for_done;
+wire [7:0] clk_cnt_for_latching_c_data;
 
 assign clk_cnt_for_done = 
                           (34);  
+
+assign clk_cnt_for_latching_c_data =                        
+                          (27);  
     
 always @(posedge clk) begin
   if (reset) begin
     clk_cnt <= 0;
     done_mat_mul <= 0;
     in_progress <= 0;
-    start_mat_mul <= 0;
+    shift_out_data <= 0;
   end
-  else if (start == 1'b1) begin
+  else if (clk_cnt == clk_cnt_for_latching_c_data) begin 
     clk_cnt <= clk_cnt + 1;
-    start_mat_mul <= 1;
-    done_mat_mul <= 0;
     in_progress <= 0;
+    shift_out_data <= 1;
   end
   else if (clk_cnt == clk_cnt_for_done) begin
     done_mat_mul <= 1;
     clk_cnt <= clk_cnt + 1;
     in_progress <= 0;
-    start_mat_mul <= 0;
+    shift_out_data <= 0;
   end
-  else if ((done_mat_mul == 0) && (start_mat_mul == 1)) begin
+  else if (start_pulse == 1'b1) begin
     clk_cnt <= clk_cnt + 1;
+    done_mat_mul <= 0;
     in_progress <= 1;
+  end
+  else if ((done_mat_mul == 0) && ((in_progress == 1) || (shift_out_data == 1))) begin
+    clk_cnt <= clk_cnt + 1;
   end    
   else begin
     clk_cnt <= 0;
     done_mat_mul <= 0;
     in_progress <= 0;
-    start_mat_mul <= 0;
   end
 end
 wire [`DWIDTH-1:0] a0_data;
@@ -805,40 +828,45 @@ wire [`DWIDTH-1:0] b7_data;
 //////////////////////////////////////////////////////////////////////////
 // Logic to generate addresses to BRAM A
 //////////////////////////////////////////////////////////////////////////
-reg a_mem_access; //flag that tells whether the matmul is trying to access memory or not
+//reg a_mem_access; //flag that tells whether the matmul is trying to access memory or not
+//reg [7:0] a_mem_access_counter;
+wire [7:0] a_mem_access_counter;
 
-always @(posedge clk) begin
-  //(clk_cnt >= a_loc*`MAT_MUL_SIZE+final_mat_mul_size) begin
-  //Writing the line above to avoid multiplication:
+//always @(posedge clk) begin
+//  //(clk_cnt >= a_loc*`MAT_MUL_SIZE+final_mat_mul_size) begin
+//  //Writing the line above to avoid multiplication:
+//
+//  if (reset || ~start_mat_mul || (clk_cnt >= 8)) begin
+//  
+//    a_mem_access <= 0;
+//    a_mem_access_counter <= 0;
+//  end
+//  //else if ((clk_cnt >= a_loc*`MAT_MUL_SIZE) && (clk_cnt < a_loc*`MAT_MUL_SIZE+final_mat_mul_size)) begin
+//  //Writing the line above to avoid multiplication:
+//
+//  else if ((clk_cnt >= 0) && (clk_cnt < 8)) begin
+//  
+//    a_mem_access <= 1;
+//    a_mem_access_counter <= a_mem_access_counter + 1;  
+//  end
+//end
 
-  if (reset || ~start_mat_mul || (clk_cnt > 8)) begin
-  
-    a_mem_access <= 0;
-  end
-  //else if ((clk_cnt >= a_loc*`MAT_MUL_SIZE) && (clk_cnt < a_loc*`MAT_MUL_SIZE+final_mat_mul_size)) begin
-  //Writing the line above to avoid multiplication:
-
-  else if ((clk_cnt > 0) && (clk_cnt <= 8)) begin
-  
-    a_mem_access <= 1;
-  end
-end
+assign a_mem_access_counter = ((clk_cnt>=8) ? 0 : (start_mat_mul ? (clk_cnt+1) : 0));
 
 //////////////////////////////////////////////////////////////////////////
 // Logic to generate valid signals for data coming from BRAM A
 //////////////////////////////////////////////////////////////////////////
-reg [7:0] a_mem_access_counter;
-always @(posedge clk) begin
-  if (reset || ~start_mat_mul) begin
-    a_mem_access_counter <= 0;
-  end
-  else if (a_mem_access == 1) begin
-    a_mem_access_counter <= a_mem_access_counter + 1;  
-  end
-  else begin
-    a_mem_access_counter <= 0;
-  end
-end
+//always @(posedge clk) begin
+//  if (reset || ~start_mat_mul) begin
+//    a_mem_access_counter <= 0;
+//  end
+//  else if (a_mem_access == 1) begin
+//    a_mem_access_counter <= a_mem_access_counter + 1;  
+//  end
+//  else begin
+//    a_mem_access_counter <= 0;
+//  end
+//end
 
 wire a_data_valid; //flag that tells whether the data from memory is valid
 assign a_data_valid = 
@@ -896,7 +924,7 @@ reg [`DWIDTH-1:0] a7_data_delayed_7;
 
 
 always @(posedge clk) begin
-  if (reset || ~start_mat_mul || clk_cnt==0) begin
+  if (reset || ~start_mat_mul) begin
     a1_data_delayed_1 <= 0;
     a2_data_delayed_1 <= 0;
     a2_data_delayed_2 <= 0;
@@ -963,39 +991,44 @@ end
 //////////////////////////////////////////////////////////////////////////
 // Logic to generate addresses to BRAM B
 //////////////////////////////////////////////////////////////////////////
-reg b_mem_access; //flag that tells whether the matmul is trying to access memory or not
-always @(posedge clk) begin
-  //else if (clk_cnt >= b_loc*`MAT_MUL_SIZE+final_mat_mul_size) begin
-  //Writing the line above to avoid multiplication:
+//reg b_mem_access; //flag that tells whether the matmul is trying to access memory or not
+//reg [7:0] b_mem_access_counter;
+wire [7:0] b_mem_access_counter;
 
-  if ((reset || ~start_mat_mul) || (clk_cnt > 8)) begin
-
-    b_mem_access <= 0;
-  end
-  //else if ((clk_cnt >= b_loc*`MAT_MUL_SIZE) && (clk_cnt < b_loc*`MAT_MUL_SIZE+final_mat_mul_size)) begin
-  //Writing the line above to avoid multiplication:
-
-  else if ((clk_cnt > 0) && (clk_cnt <= 8)) begin
-
-    b_mem_access <= 1;
-  end
-end 
+//always @(posedge clk) begin
+//  //else if (clk_cnt >= b_loc*`MAT_MUL_SIZE+final_mat_mul_size) begin
+//  //Writing the line above to avoid multiplication:
+//
+//  if ((reset || ~start_mat_mul) || (clk_cnt >= 8)) begin
+//
+//    b_mem_access <= 0;
+//    b_mem_access_counter <= 0;
+//  end
+//  //else if ((clk_cnt >= b_loc*`MAT_MUL_SIZE) && (clk_cnt < b_loc*`MAT_MUL_SIZE+final_mat_mul_size)) begin
+//  //Writing the line above to avoid multiplication:
+//
+//  else if ((clk_cnt >= 0) && (clk_cnt < 8)) begin
+//
+//    b_mem_access <= 1;
+//    b_mem_access_counter <= b_mem_access_counter + 1;  
+//  end
+//end 
+assign b_mem_access_counter = ((clk_cnt>=8) ? 0 : (start_mat_mul ? (clk_cnt+1) : 0));
 
 //////////////////////////////////////////////////////////////////////////
 // Logic to generate valid signals for data coming from BRAM B
 //////////////////////////////////////////////////////////////////////////
-reg [7:0] b_mem_access_counter;
-always @(posedge clk) begin
-  if (reset || ~start_mat_mul) begin
-    b_mem_access_counter <= 0;
-  end
-  else if (b_mem_access == 1) begin
-    b_mem_access_counter <= b_mem_access_counter + 1;  
-  end
-  else begin
-    b_mem_access_counter <= 0;
-  end
-end
+//always @(posedge clk) begin
+//  if (reset || ~start_mat_mul) begin
+//    b_mem_access_counter <= 0;
+//  end
+//  else if (b_mem_access == 1) begin
+//    b_mem_access_counter <= b_mem_access_counter + 1;  
+//  end
+//  else begin
+//    b_mem_access_counter <= 0;
+//  end
+//end
 
 wire b_data_valid; //flag that tells whether the data from memory is valid
 assign b_data_valid = 
@@ -1053,7 +1086,7 @@ reg [`DWIDTH-1:0] b7_data_delayed_7;
 
 
 always @(posedge clk) begin
-  if (reset || ~start_mat_mul || clk_cnt==0) begin
+  if (reset || ~start_mat_mul) begin
     b1_data_delayed_1 <= 0;
     b2_data_delayed_1 <= 0;
     b2_data_delayed_2 <= 0;

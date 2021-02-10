@@ -74,12 +74,89 @@ vector_add:
 	
 	vld.u.b		a_v, a_addr, addr_inc	# load A	
 	vld.u.b		b_v, b_addr, addr_inc	# load B	
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
 	#vadd.vv		c_v, a_v, b_v		# c = a + b
 	#vmullo.vv		c_v, a_v, b_v		# c = a * b
 	vdiv.vv		c_v, a_v, b_v		# c = a matmul b #hack:  fixme: todo: Using DIV as Matmul
-	#vadd.vv		$vr7, a_v, c_v		# c = a + b
-	#vst.b	  	$vr7, c_addr, addr_inc	# store C
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+	vadd.vv		$vr7, a_v, c_v		# c = a + b
+	vst.b	  	$vr7, c_addr, addr_inc	# store C
 	#vst.b	  	c_v, c_addr, addr_inc	# store C
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
+  #nop
 
 	# restore stack
 	lw	ra, 8(sp)

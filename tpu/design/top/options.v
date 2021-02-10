@@ -84,6 +84,7 @@
 //`define MAX_PIPE_STAGES 7
 //matmul consumes 29 cycles
 `define MAX_PIPE_STAGES 33
+`define MATMUL_STAGES 29
 
 `endif
 

@@ -75,11 +75,8 @@ pipe #(1,PIPE_STAGES_MATMUL-1) activatepipe (
     .en(en),
     .q(ctrl_activate));
 
-wire done;
-wire done_NC;
-assign done = 1'b1;
-assign stall = 1'b0;
-//assign stall=~done && (ctrl_activate[2]) && in_progress;
+wire in_progress;
+assign stall=in_progress;
 
 matmul_8x8 mat(
     .clk(clk),
