@@ -1,3 +1,11 @@
+export SPE_HOME ../..
+SPE_HOME=../..
+export SPE_COMPILER ${SPE_HOME}/compiler-vector
+SPE_COMPILER=${SPE_HOME}/compiler-vector
+export SPE_COMPILER_LIBPATH ${SPE_COMPILER}/lib/gcc/mips-mips-elf/4.2.0/soft-float
+SPE_COMPILER_LIBPATH=${SPE_COMPILER}/lib/gcc/mips-mips-elf/4.2.0/soft-float
+
+
 TARGET=kozyrakis_filt3x3
 SRC=kozyrakis_filt3x3.c vector_filt3x3.S
 OBJS=kozyrakis_filt3x3.o vector_filt3x3.o
