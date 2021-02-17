@@ -74,14 +74,25 @@ vector_add:
 	
 	vld.u.b		a_v, a_addr, addr_inc	# load A	
 	vld.u.b		b_v, b_addr, addr_inc	# load B	
-  #nop
+  nop
+  nop
+  nop
+	vadd.vv		$vr7, a_v, b_v		# c = a + b
+	vadd.vv		$vr8, a_v, b_v		# c = a + b
+  nop
+  nop
+  nop
+  #matmul masks 
+  #31:24 - a_rows, 23:16 - a_cols, 15:8 - b_rows, 7:0 - b_cols
+  li t3, 0xf0f0f0f0
+  ctc2 t3, $vc31
 
 	#vadd.vv		c_v, a_v, b_v		# c = a + b
 	#vmullo.vv		c_v, a_v, b_v		# c = a * b
 	vdiv.vv		c_v, a_v, b_v		# c = a matmul b #hack:  fixme: todo: Using DIV as Matmul
   #nop
 
-	vadd.vv		c_v, a_v, c_v	#bias operation
+	#vadd.vv		$vr9, $vr7, $vr8	#bias operation
 	vst.b	  	c_v, c_addr, addr_inc	# store C
   #nop
 
