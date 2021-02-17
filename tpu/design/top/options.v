@@ -40,8 +40,7 @@
 // VECTOR CORE
 //Changing to 3. That is, we now have 8 lanes.
 `define LGL 3
-//TODO: For now, keeping number of banks to 1. Need to change back to 2 banks.
-`define LGB 0
+`define LGB 1
 `define APB 0
 `define LGM `LGL
 `define LGX `LGL

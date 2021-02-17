@@ -2154,8 +2154,10 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
              vf_a_readdataout[banksel_s4[FU_MEM]*NUMLANES +: NUMLANES] :
              {NUMLANES{1'b1}}) ;
 
-    vr_src1[FU_MATMUL] = vr_a_readdataout[banksel_s4[FU_MATMUL]];
-    vr_src2[FU_MATMUL] = vr_b_readdataout[banksel_s4[FU_MATMUL]];
+    vr_src1[FU_MATMUL] =(src1scalar_s4[FU_MATMUL]) ? {NUMLANES{vs_s4[FU_MATMUL][LANEWIDTH-1:0]}} : 
+                                    vr_a_readdataout[banksel_s4[FU_MATMUL]];
+    vr_src2[FU_MATMUL] =(src2scalar_s4[FU_MATMUL]) ? {NUMLANES{vs_s4[FU_MATMUL][LANEWIDTH-1:0]}} : 
+                                    vr_b_readdataout[banksel_s4[FU_MATMUL]];
     vmask[FU_MATMUL] =  vlane_en[FU_MATMUL] &
            ((ctrl4_ismasked[FU_MATMUL]) ?  
              vf_a_readdataout[banksel_s4[FU_MATMUL]*NUMLANES +: NUMLANES] :
@@ -2387,7 +2389,6 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
 ///////////////////////////
 // Matmul unit
 ///////////////////////////
-//TODO: Need to update for 2 banks
 matmul_unit #(REGIDWIDTH,`MATMUL_STAGES,NUMLANES) u_matmul(
 .clk(clk),
 .resetn(resetn),
