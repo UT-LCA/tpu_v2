@@ -16,7 +16,8 @@ module vregfile_control (
     c_writedatain, 
     c_we,
 
-    vl
+    vl,
+    matmul_masks
     );
 
 parameter WIDTH=32;
@@ -33,8 +34,10 @@ input [WIDTH-1:0] c_writedatain;
 input c_we;
 
 output [WIDTH-1:0] vl;
+output [WIDTH-1:0] matmul_masks;
 
 reg [WIDTH-1:0] vl;
+reg [WIDTH-1:0] matmul_masks;
 
 	altsyncram	reg_file1(
 				.wren_a (c_we),
@@ -87,11 +90,22 @@ reg [WIDTH-1:0] vl;
 		reg_file1.ram_block_type = "AUTO",
 		reg_file1.intended_device_family = "Stratix";
 
-  always@(posedge clk)
-    if (!resetn)
-      vl=0;
-    else if (c_we && c_reg==0)
-      vl=c_writedatain;
+  always@(posedge clk) begin
+    if (!resetn) begin
+      vl<=0;
+      matmul_masks<=32'hffffffff;
+    end
+    else begin
+      if (c_we) begin
+        if (c_reg==0) begin
+          vl<=c_writedatain;
+        end 
+        else if (c_reg==31) begin
+          matmul_masks<=c_writedatain;
+        end
+      end  
+    end
+  end
 
 endmodule
 

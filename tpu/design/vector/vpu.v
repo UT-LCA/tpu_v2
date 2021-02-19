@@ -141,7 +141,7 @@ wire                                    stall3;
 wire                        [ 3 : 1 ]   internal_stall;
 wire                                    squash1;
 wire                                    squash2;
-wire                        [ 6 : 0 ]   vlanes_stalled;
+wire        [`MAX_PIPE_STAGES-1 : 0 ]   vlanes_stalled;
 
 wire                        [ 5 : 0 ]   ir_cop2;
 wire                        [ 9 : 0 ]   ir_op;
@@ -158,6 +158,9 @@ wire    [ LOG2NUMNONMEMVCREGS-1 : 0 ]   vc_c_reg;
 wire                [ VCWIDTH-1 : 0 ]   vc_c_writedatain;
 wire                                    vc_c_we;
 wire                [ VCWIDTH-1 : 0 ]   vl;
+//Masks for the matmul (4 masks. each is 8-bit. 
+//1-bit for each row/column element in the matmul. we have an 8x8 matmul)
+wire                [ VCWIDTH-1 : 0 ]   matmul_masks;
 
 wire       [ LOG2NUMVBASEREGS-1 : 0 ]   vbase_a_reg;
 wire                [ VCWIDTH-1 : 0 ]   vbase_a_readdataout;
@@ -956,7 +959,11 @@ reg is_cop2_s1;
       .c_reg(vc_c_reg), 
       .c_writedatain(vc_c_writedatain), 
       .c_we(vc_c_we),
-      .vl(vl));
+      .vl(vl),
+      //The reserved registers vc31 is used
+      //for the matmul's masks.
+      .matmul_masks(matmul_masks)
+      );
     defparam vregfile_control.WIDTH=VCWIDTH;
     defparam vregfile_control.NUMREGS=NUMNONMEMVCREGS;
     defparam vregfile_control.LOG2NUMREGS=LOG2NUMNONMEMVCREGS;
@@ -1246,6 +1253,7 @@ reg is_cop2_s1;
     .vinc_in(vinc_readdataout),
     .vstride_in(vstride_readdataout),
     .vs_in(vs_readdataout),
+    .matmul_masks_in(matmul_masks),
 
     // vs Writeback
     .vs_dst(vlanes_vs_dst),

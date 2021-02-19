@@ -39,8 +39,9 @@
 `define DPV 0
 
 // VECTOR CORE
+//Changing to 3. That is, we now have 8 lanes.
 `define LGL 3
-`define LGB 0
+`define LGB 1
 `define APB 0
 `define LGM `LGL
 `define LGX `LGL
@@ -80,6 +81,13 @@
 
 // DRAM
 `define LOG2DRAMWIDTHBITS 7
+
+/****************** NUM PIPELINE STAGES in VECTOR PROCESSOR ***************/
+//mult consumes 3 cycles
+//`define MAX_PIPE_STAGES 7
+//matmul consumes 29 cycles
+`define MAX_PIPE_STAGES 33
+`define MATMUL_STAGES 29
 
 `endif
 

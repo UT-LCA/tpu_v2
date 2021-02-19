@@ -16,6 +16,7 @@
 `include "vmul_unit.v"
 `include "vmem_unit.v"
 `include "vlane_flagalu.v"
+`include "matmul_unit.v"
 
 `define LO(x,b) ((x)&~({1024{1'b1}}<<b))
 
@@ -39,6 +40,7 @@ module vlanes (
     vinc_in,
     vstride_in,
     vs_in,
+    matmul_masks_in,
 
     // vs Writeback
     vs_writedata,
@@ -94,11 +96,12 @@ parameter BANKREGIDWIDTH=VRIDWIDTH+LOG2MVL-LOG2NUMLANES-LOG2NUMBANKS;
 `define VRELM_RANGE REGIDWIDTH-VRIDWIDTH-1:0
 
 // NUMFUS = ALU*NUMBANKS + MUL + MEM + FALU*MEMBANKS
-parameter NUMFUS=4+2*(NUMBANKS-1)*ALUPERBANK;
+parameter NUMFUS=4+2*(NUMBANKS-1)*ALUPERBANK+1; //Adding 1 for matmul FU
 parameter FU_ALU=0;
 parameter FU_MUL=FU_ALU+(NUMBANKS-1)*ALUPERBANK+1;
 parameter FU_MEM=FU_MUL+1;
 parameter FU_FALU=FU_MEM+1;
+parameter FU_MATMUL=FU_FALU+1;
 
 input clk;
 input resetn;
@@ -114,7 +117,7 @@ input instr_en;     // tells when instr is valid and available
 output instr_wait;   // if high says vpu is not ready to receive
 
 input [3:0] stall_in;  
-output [6:0] is_stalled;
+output [`MAX_PIPE_STAGES-1:0] is_stalled;
 output has_memop;
 
 // Control register values
@@ -124,6 +127,7 @@ input  [ VCWIDTH-1 : 0 ]   vbase_in;
 input  [ VCWIDTH-1 : 0 ]   vinc_in;
 input  [ VCWIDTH-1 : 0 ]   vstride_in;
 input  [ VSWIDTH-1 : 0 ]   vs_in;
+input  [ VCWIDTH-1 : 0 ]  matmul_masks_in;
 
 // vs Writeback
 output       [ VSWIDTH-1 : 0 ]   vs_writedata;
@@ -252,13 +256,18 @@ reg   [ VCWIDTH-1 : 0 ]   vstride_in_saved;
 reg   [ VSWIDTH-1 : 0 ]   vs_in_saved;
 
 // Control register values
-wire  [ VCWIDTH-1 : 0 ]   vc[6:2];
-wire  [ VCWIDTH-1 : 0 ]   vl[6:2];
-wire  [ VCWIDTH-1 : 0 ]   vbase[6:2];
+//TODO: Rethink whether the following vars (vc, vl, vbase, vinc, vstride)
+//need to be change to use `MAX_PIPE_STAGES. I think these variables are 
+//only used for memory operations and for that, we only need 6 stages.
+//Not a big deal because most of these are not used much. Synthesis tool
+//will optimize out the unnecessary bits anyway.
+wire  [ VCWIDTH-1 : 0 ]   vc[`MAX_PIPE_STAGES-1:2];
+wire  [ VCWIDTH-1 : 0 ]   vl[`MAX_PIPE_STAGES-1:2];
+wire  [ VCWIDTH-1 : 0 ]   vbase[`MAX_PIPE_STAGES-1:2];
 reg   [ VCWIDTH-1 : 0 ]   vbase_s4;
-wire  [ VCWIDTH-1 : 0 ]   vinc[6:2];
-wire  [ VCWIDTH-1 : 0 ]   vstride[6:2];
-wire  [ VSWIDTH-1 : 0 ]   vs[6:2];
+wire  [ VCWIDTH-1 : 0 ]   vinc[`MAX_PIPE_STAGES-1:2];
+wire  [ VCWIDTH-1 : 0 ]   vstride[`MAX_PIPE_STAGES-1:2];
+wire  [ VSWIDTH-1 : 0 ]   vs[`MAX_PIPE_STAGES-1:2];
 reg   [ VSWIDTH-1 : 0 ]   vs_s3[NUMBANKS-1:0];
 reg   [ VSWIDTH-1 : 0 ]   vs_s4[NUMFUS-1:0];
 reg   [ VCWIDTH-1 : 0 ]   vc_s3[NUMBANKS-1:0];
@@ -296,9 +305,9 @@ wire             [ REGIDWIDTH-1 : 0 ]   wb_dst[NUMFUS-1:0];
 wire                     [NUMFUS-1:0]   wb_dst_we;
 wire               [ NUMLANES-1 : 0 ]   wb_dst_mask[NUMFUS-1:0];
 
-wire                        [ 6 : 4 ]   dst_we[NUMFUS-1:0];
-wire             [ REGIDWIDTH-1 : 0 ]   dst[NUMFUS-1:0][6:4];
-wire               [ NUMLANES-1 : 0 ]   dst_mask[NUMFUS-1:0][6:4];
+wire                        [ `MAX_PIPE_STAGES-1 : 4 ]   dst_we[NUMFUS-1:0];
+wire             [ REGIDWIDTH-1 : 0 ]   dst[NUMFUS-1:0][`MAX_PIPE_STAGES-1:4];
+wire               [ NUMLANES-1 : 0 ]   dst_mask[NUMFUS-1:0][`MAX_PIPE_STAGES-1:4];
 wire             [ REGIDWIDTH-1 : 0 ]   dst_s2;
 reg              [ REGIDWIDTH-1 : 0 ]   _dst_s3[NUMBANKS-1:0];
 reg              [ REGIDWIDTH-1 : 0 ]   dst_s3[NUMBANKS-1:0];
@@ -341,6 +350,7 @@ wire                    [LOG2MVL-1:0]   dst_start;
 
 reg          [ LANEWIDTH*NUMLANES-1 : 0 ]   vr_src1[NUMFUS-1:0];
 reg          [ LANEWIDTH*NUMLANES-1 : 0 ]   vr_src2[NUMFUS-1:0];
+wire         [ LANEWIDTH*NUMLANES-1 : 0 ]   matmul_out;
 reg                [ NUMLANES-1 : 0 ]   vf_src1[NUMFUS-1:0];
 reg                [ NUMLANES-1 : 0 ]   vf_src2[NUMFUS-1:0];
 reg                [ NUMLANES-1 : 0 ]   vmask[NUMFUS-1:0];
@@ -357,7 +367,7 @@ wire           [ NUMLANES-1 : 0 ] flagalu_result_s5[(NUMBANKS-1)*ALUPERBANK:0];
 wire [ LANEWIDTH*NUMLANES-1 : 0 ] mulshift_result_s5;
 
 //Support 1 Lane processor
-wire [((LOG2NUMLANES>0) ? LOG2NUMLANES : 1)-1:0] elmshamt[6:2];
+wire [((LOG2NUMLANES>0) ? LOG2NUMLANES : 1)-1:0] elmshamt[`MAX_PIPE_STAGES-1:2];
 
 reg ctrl1_vr_a_en; // SRC1
 reg ctrl1_vr_b_en; // SRC2
@@ -379,6 +389,7 @@ reg [10:0] ctrl1_alu_op;
 reg [1:0] ctrl1_satsum_op;
 reg [3:0] ctrl1_satsize_op;
 reg [4:0] ctrl1_mulshift_op;
+reg ctrl1_matmul_en;
 reg ctrl1_memunit_en;
 reg ctrl1_mem_en;
 reg [6:0] ctrl1_memunit_op;
@@ -390,7 +401,7 @@ reg ctrl1_vrdest_sel;  //0-dest, 1-src2
 reg ctrl1_vf_a_sel; //0-0/1 from instr, 1-src1
 
 wire [5:4] ctrl_vs_we;
-wire [6:0] ctrl_memunit_op[6:1] ;
+wire [6:0] ctrl_memunit_op[`MAX_PIPE_STAGES-1:1] ;
 
 wire ctrl2_vr_a_en; // SRC1
 wire ctrl2_vr_b_en; // SRC2
@@ -420,6 +431,7 @@ wire ctrl2_vf_wbsel;   //0-flag ALU, 1-normal ALU
 wire ctrl2_volatiledest;
 wire ctrl2_vf_a_sel; //0-0/1 from instr, 1-src1
 wire ctrl2_mulshift_en;
+wire ctrl2_matmul_en;
 wire ctrl2_alufalu_en;
 
 reg [NUMBANKS-1:0] ctrl3_vr_a_en; // SRC1
@@ -445,6 +457,7 @@ reg [NUMBANKS-1:0] ctrl3_vf_wbsel;   //0-flag ALU, 1-normal ALU
 reg [NUMBANKS-1:0] ctrl3_volatiledest;
 reg [NUMBANKS-1:0] ctrl3_vf_a_sel; //0-0/1 from instr, 1-src1
 reg [NUMBANKS-1:0] ctrl3_mulshift_en;
+reg [NUMBANKS-1:0] ctrl3_matmul_en;
 reg [NUMBANKS-1:0] ctrl3_alufalu_en;
 
 reg ctrl4_mem_dir_left;
@@ -462,6 +475,7 @@ reg ctrl4_vf_wbsel[(NUMBANKS-1)*ALUPERBANK:0];   //0-flag ALU, 1-normal ALU
 reg ctrl4_volatiledest;
 reg ctrl4_vf_a_sel[(NUMBANKS-1)*ALUPERBANK:0]; //0-0/1 from instr, 1-src1
 reg ctrl4_mulshift_en;
+reg ctrl4_matmul_en;
 
 wire ctrl5_mem_en;
 
@@ -497,9 +511,9 @@ reg  [NUMBANKS-1:0] banksel_s4[NUMFUS-1:0];
 wire dispatcher_shift;
 wire dispatcher_rotate;
 
-wire [6:0] internal_pipe_advance;
-wire [6:0] pipe_advance;
-wire [6:0] pipe_squash;
+wire [`MAX_PIPE_STAGES-1:0] internal_pipe_advance;
+wire [`MAX_PIPE_STAGES-1:0] pipe_advance;
+wire [`MAX_PIPE_STAGES-1:0] pipe_squash;
 wire stall_srcstart;
 wire stall_dispatcher;
 wire stall_hazsrc1;
@@ -510,6 +524,7 @@ wire stall_memunit;
 wire _stall_memunit;
 wire stall_mulcooldown;
 wire stall_mulunit;
+wire stall_matmul;
 
 // DEBUG signals for Modelsim
 wire  [7:0] D_instr[2:1];
@@ -520,6 +535,7 @@ wire  [7:0] D_instr_s6[NUMFUS-1:0];
 reg   [NUMFUS-1:0] D_last_subvector_s4;
 wire  [NUMFUS-1:0] D_last_subvector_s5;
 wire  [NUMFUS-1:0] D_last_subvector_s6;
+wire  [NUMFUS-1:0] D_last_subvector_s31;
 wire  [NUMFUS-1:0] D_wb_last_subvector;
 reg   [NUMBANKS-1:0] D_last_subvector_done;
 reg   [NUMBANKS-1:0] D_wb_instrdone;
@@ -598,7 +614,7 @@ assign internal_pipe_advance[2]=internal_pipe_advance[3] &&
 assign internal_pipe_advance[3]=internal_pipe_advance[4];
 assign internal_pipe_advance[4]=internal_pipe_advance[5];
 assign internal_pipe_advance[5]=internal_pipe_advance[6] && ~stall_mulunit && ~stall_memunit;
-assign internal_pipe_advance[6]=1'b1;
+//assign internal_pipe_advance[6]=1'b1;
 
 assign pipe_squash[0]=pipe_advance[1]&~pipe_advance[0];
 assign pipe_squash[1]=pipe_advance[2]&~pipe_advance[1];
@@ -606,7 +622,26 @@ assign pipe_squash[2]=pipe_advance[3]&~pipe_advance[2];
 assign pipe_squash[3]=pipe_advance[4]&~pipe_advance[3];
 assign pipe_squash[4]=pipe_advance[5]&~pipe_advance[4];
 assign pipe_squash[5]=pipe_advance[6]&~pipe_advance[5];
-assign pipe_squash[6]=1'b0;
+//assign pipe_squash[6]=1'b0;
+
+//The code below basically replicates the statements above for
+//pipe stages from 6 to MAX_PIPE_STAGES. Using generate statement
+//to reduce typing.
+genvar pipe_stage;
+generate
+for (pipe_stage=6; pipe_stage<`MAX_PIPE_STAGES-1; pipe_stage=pipe_stage+1) begin: pipe_squash_assign
+  assign pipe_squash[pipe_stage] = pipe_advance[pipe_stage+1] & ~pipe_advance[pipe_stage];
+  if (pipe_stage==(`MAX_PIPE_STAGES-2)) begin
+    assign internal_pipe_advance[pipe_stage] = internal_pipe_advance[pipe_stage+1] && ~stall_matmul;
+  end
+  else begin
+    assign internal_pipe_advance[pipe_stage] = internal_pipe_advance[pipe_stage+1];
+  end
+end
+endgenerate
+
+assign pipe_squash[`MAX_PIPE_STAGES-1]=1'b0;
+assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
 
 /******************************************************************************/
 /************************** 1st Pipeline Stage ********************************/
@@ -653,8 +688,6 @@ assign pipe_squash[6]=1'b0;
           ctrl1_vr_b_en=1;
           ctrl1_usesvssel=1;
         end
-      COP2_VDIV,
-      COP2_VDIV_U,
       COP2_VMOD,
       COP2_VMOD_U,
       COP2_VCMP_EQ,
@@ -669,6 +702,8 @@ assign pipe_squash[6]=1'b0;
           ctrl1_vr_b_en=~ir_op[BIT_VSSRC2];
           ctrl1_usesvssel=1;
         end
+      COP2_VDIV,
+      COP2_VDIV_U,
       COP2_VMIN,
       COP2_VMIN_U,
       COP2_VMAX,
@@ -1188,6 +1223,7 @@ assign pipe_squash[6]=1'b0;
     ctrl1_satsum_op=SATSUMOP_NOP;
     ctrl1_satsize_op=SATSIZEOP_VSATUW;
     ctrl1_mulshift_op=MULOP_ZERO;
+    ctrl1_matmul_en=0;
     ctrl1_memunit_op=0;
     ctrl1_flagalu_op=FLAGOP_CLR;
   end
@@ -1198,6 +1234,7 @@ assign pipe_squash[6]=1'b0;
     ctrl1_satsize_op=SATSIZEOP_VSATUW;
     ctrl1_mulshift_op=MULOP_ZERO;
     ctrl1_memunit_op=0;
+    ctrl1_matmul_en=0;
     ctrl1_flagalu_op=FLAGOP_CLR;
     casez(ir_op)
       COP2_VADD:      ctrl1_alu_op=ALUOP_ADD^ALUOP_ZERO;
@@ -1206,7 +1243,7 @@ assign pipe_squash[6]=1'b0;
       COP2_VSUB_U:    ctrl1_alu_op=ALUOP_SUBU^ALUOP_ZERO;
       COP2_VMULHI:  ctrl1_mulshift_op=MULOP_MULHI;
       COP2_VMULHI_U:ctrl1_mulshift_op=MULOP_MULUHI;
-      //COP2_VDIV,
+      COP2_VDIV:    ctrl1_matmul_en=1'b1;  //Note: This is a hack. We're using VDIV opcode for matmul operation
       //COP2_VDIV_U,
       //COP2_VMOD,
       //COP2_VMOD_U,
@@ -1387,6 +1424,7 @@ assign pipe_squash[6]=1'b0;
       1+
       1+
       1+
+      1+
       1
     ) pipe1regwsquash (
       .d( {
@@ -1401,6 +1439,7 @@ assign pipe_squash[6]=1'b0;
         ctrl1_memunit_en,
         ctrl1_mem_en,
         |ctrl1_mulshift_op,
+        ctrl1_matmul_en,
         (ctrl1_alu_op!=(ALUOP_ZERO^ALUOP_ZERO)) || ctrl1_vf_c_we
       }),
       .clk(clk),
@@ -1419,6 +1458,7 @@ assign pipe_squash[6]=1'b0;
         ctrl2_memunit_en,
         ctrl2_mem_en,
         ctrl2_mulshift_en,
+        ctrl2_matmul_en,
         ctrl2_alufalu_en
         })
       );
@@ -1611,6 +1651,7 @@ assign pipe_squash[6]=1'b0;
     //Structural hazard
     (|(ctrl3_memunit_en&~last_subvector) && ctrl2_memunit_en) ||
     (|(ctrl3_mulshift_en&~last_subvector) && ctrl2_mulshift_en) ||
+    (|(ctrl3_matmul_en&~last_subvector) && ctrl2_matmul_en) ||
     (|(ctrl3_alufalu_en&~last_subvector) && ctrl2_alufalu_en && ALUPERBANK==0)||
     //Entry 0 is taken
     (dispatcher_rotate && ctrl2_useslanes);
@@ -1654,6 +1695,7 @@ assign pipe_squash[6]=1'b0;
     3+ \
     1+ \
     1+ \
+    1+ \
     VCWIDTH+ \
     VSWIDTH+ \
     8
@@ -1677,6 +1719,7 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
           (pipe_squash[2]) ? 1'b0 : ctrl2_memunit_en,
           (pipe_squash[2]) ? 1'b0 : ctrl2_mem_en,
           (pipe_squash[2]) ? 1'b0 : ctrl2_mulshift_en,
+          (pipe_squash[2]) ? 1'b0 : ctrl2_matmul_en,
           (pipe_squash[2]) ? 1'b0 : ctrl2_alufalu_en,
           dst_s2,
           src1_s2,
@@ -1732,41 +1775,45 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
     end
 
 
-  hazardchecker #(REGIDWIDTH,VELMIDWIDTH,3+(NUMBANKS-1)*ALUPERBANK,NUMBANKS) 
+  hazardchecker #(REGIDWIDTH,VELMIDWIDTH,4+(NUMBANKS-1)*ALUPERBANK,NUMBANKS) 
     src1hazchecker(
       .src( src1_s2 |(src_start_delayed[LOG2MVL-1:0]>>LOG2NUMLANES) ),
       .src_valid(ctrl2_vr_a_en),
       .dst({
         alu_dst[4],
         dst[FU_MUL][4],
-        dst[FU_MEM][4]
+        dst[FU_MEM][4],
+        dst[FU_MATMUL][4]
         }),
       .dst_valid({
         alu_dst_we[4],
         dst_we[FU_MUL][4],
-        dst_we[FU_MEM][4]
+        dst_we[FU_MEM][4],
+        dst_we[FU_MATMUL][4]
         }),
-      .dst_mode({{2+(NUMBANKS-1)*ALUPERBANK{1'b0}},ctrl4_volatiledest}),
+      .dst_mode({{3+(NUMBANKS-1)*ALUPERBANK{1'b0}},ctrl4_volatiledest}),
       .lt_dst(t_dst_s3),
       .lt_dst_valid(ctrl3_vr_c_we),
       .lt_mode(ctrl3_volatiledest),
       .haz(stall_hazsrc1));
 
-  hazardchecker #(REGIDWIDTH,VELMIDWIDTH,3+(NUMBANKS-1)*ALUPERBANK,NUMBANKS) 
+  hazardchecker #(REGIDWIDTH,VELMIDWIDTH,4+(NUMBANKS-1)*ALUPERBANK,NUMBANKS) 
     src2hazchecker(
       .src( src2_s2 |(src_start_delayed[LOG2MVL-1:0]>>LOG2NUMLANES) ),
       .src_valid(ctrl2_vr_b_en),
       .dst({
         alu_dst[4],
         dst[FU_MUL][4],
-        dst[FU_MEM][4]
+        dst[FU_MEM][4],
+        dst[FU_MATMUL][4]
         }),
       .dst_valid({
         alu_dst_we[4],
         dst_we[FU_MUL][4],
-        dst_we[FU_MEM][4]
+        dst_we[FU_MEM][4],
+        dst_we[FU_MATMUL][4]
         }),
-      .dst_mode({{2+(NUMBANKS-1)*ALUPERBANK{1'b0}},ctrl4_volatiledest}),
+      .dst_mode({{3+(NUMBANKS-1)*ALUPERBANK{1'b0}},ctrl4_volatiledest}),
       .lt_dst(t_dst_s3),
       .lt_dst_valid(ctrl3_vr_c_we),
       .lt_mode(ctrl3_volatiledest),
@@ -1819,6 +1866,7 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
         ctrl3_memunit_en[bi],
         ctrl3_mem_en[bi],
         ctrl3_mulshift_en[bi],
+        ctrl3_matmul_en[bi],
         ctrl3_alufalu_en[bi],
         _dst_s3[bi],
         _src1_s3[bi],
@@ -1885,6 +1933,7 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
     begin
       dst_we_s4=0;
       ctrl4_mulshift_en=0;
+      ctrl4_matmul_en=0;
       ctrl4_memunit_en=0;
       ctrl4_mem_en=0;
       ctrl4_volatiledest=0;
@@ -1893,6 +1942,7 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
     begin
       dst_we_s4=0;
       ctrl4_mulshift_en=0;
+      ctrl4_matmul_en=0;
       ctrl4_memunit_en=0;
       ctrl4_mem_en=|ctrl3_mem_en;
       ctrl4_volatiledest=0;
@@ -1926,6 +1976,21 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
             ctrl4_ismasked[FU_MUL]=ctrl3_ismasked[b3];
             ctrl4_mulshift_op=ctrl3_mulshift_op[b3];
             ctrl4_rshiftnonzero=ctrl3_rshiftnonzero[b3];
+          end
+          if (ctrl3_matmul_en[b3])    //is matmul
+          begin
+            D_instr_s4[FU_MATMUL]=D_instr_s3[b3];
+            D_last_subvector_s4[FU_MATMUL]=last_subvector[b3];
+            ctrl4_matmul_en=ctrl3_matmul_en[b3];
+            banksel_s4[FU_MATMUL]=b3;
+            vs_s4[FU_MATMUL]=vs_s3[b3];
+            vc_s4[FU_MATMUL]=vc_s3[b3];
+            dst_s4[FU_MATMUL]=dst_s3[b3];
+            dst_we_s4[FU_MATMUL]=ctrl3_vr_c_we[b3];
+            vlane_en[FU_MATMUL]=lane_en[b3];
+            src1scalar_s4[FU_MATMUL]=src1scalar_s3[b3];
+            src2scalar_s4[FU_MATMUL]=src2scalar_s3[b3];
+            ctrl4_ismasked[FU_MATMUL]=ctrl3_ismasked[b3];
           end
           else if (ctrl3_memunit_en[b3] && !ctrl3_mem_en[b3]) //is memunit shift
           begin
@@ -2091,6 +2156,15 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
              vf_a_readdataout[banksel_s4[FU_MEM]*NUMLANES +: NUMLANES] :
              {NUMLANES{1'b1}}) ;
 
+    vr_src1[FU_MATMUL] =(src1scalar_s4[FU_MATMUL]) ? {NUMLANES{vs_s4[FU_MATMUL][LANEWIDTH-1:0]}} : 
+                                    vr_a_readdataout[banksel_s4[FU_MATMUL]];
+    vr_src2[FU_MATMUL] =(src2scalar_s4[FU_MATMUL]) ? {NUMLANES{vs_s4[FU_MATMUL][LANEWIDTH-1:0]}} : 
+                                    vr_b_readdataout[banksel_s4[FU_MATMUL]];
+    vmask[FU_MATMUL] =  vlane_en[FU_MATMUL] &
+           ((ctrl4_ismasked[FU_MATMUL]) ?  
+             vf_a_readdataout[banksel_s4[FU_MATMUL]*NUMLANES +: NUMLANES] :
+             {NUMLANES{1'b1}}) ;
+
     for (fn2=FU_FALU; fn2<=FU_FALU+(NUMBANKS-1)*ALUPERBANK; fn2=fn2+1)
     begin
       vf_src1[fn2] =(src1scalar_s4[fn2]&ctrl4_vf_a_sel[fn2-FU_FALU]) ? {NUMLANES{vs_s4[fn2][0]}} :
@@ -2118,7 +2192,7 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
   //    i) it's a store hence requiring no writeback bank, AND
   //    ii) another memory instruction isn't waiting on the memunit
   assign stall_memunit=_stall_memunit && (dst_we[FU_MEM][5] ||
-    (ctrl4_memunit_en && ~stall_mulunit));
+    (ctrl4_memunit_en && ~stall_mulunit && ~stall_matmul));
 
   pipereg #(1) memen5pipereg (
       .d( ctrl4_mem_en ),
@@ -2133,7 +2207,7 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
   vmem_unit vmem_unit(
     .clk(clk),
     .resetn(resetn),
-    .enable(ctrl4_memunit_en && ~stall_mulunit),  //unit on and pipe active
+    .enable(ctrl4_memunit_en && ~stall_mulunit && ~stall_matmul),  //unit on and pipe active
     .en(pipe_advance[6:4]),
     .squash(pipe_squash[6:4]),
     .op(ctrl4_memunit_op),
@@ -2301,7 +2375,45 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
   end
   endgenerate
 
+ //This code is just for assigning from signals connected
+ //to the matmul, which are linear multi bit signals, to the
+ //multi-dimensional signals.
+ wire [`MATMUL_STAGES*REGIDWIDTH-1:0] dst_matmul;
+ wire [`MATMUL_STAGES*NUMLANES-1:0] dst_mask_matmul;
+ genvar g;
+  generate
+    for (g=0; g<`MATMUL_STAGES; g=g+1) begin: matmul_dst_gen
+      assign dst[FU_MATMUL][g+4] = dst_matmul[REGIDWIDTH*(g+1)-1:REGIDWIDTH*g];
+      assign dst_mask[FU_MATMUL][g+4] = dst_mask_matmul[NUMLANES*(g+1)-1:NUMLANES*g];
+    end
+ endgenerate
 
+///////////////////////////
+// Matmul unit
+///////////////////////////
+matmul_unit #(REGIDWIDTH,`MATMUL_STAGES,NUMLANES) u_matmul(
+.clk(clk),
+.resetn(resetn),
+.activate(ctrl4_matmul_en),
+.en(pipe_advance[`MAX_PIPE_STAGES-1:4]),
+.squash(pipe_squash[`MAX_PIPE_STAGES-1:4]),
+.stall(stall_matmul),
+.a_data(vr_src1[FU_MATMUL][NUMLANES*LANEWIDTH-1:0]),
+.b_data(vr_src2[FU_MATMUL][NUMLANES*LANEWIDTH-1:0]),
+//TODO: For now, typing these to FF. Need to control these from the instruction
+.validity_mask_a_rows(matmul_masks_in[31:24]),
+.validity_mask_a_cols(matmul_masks_in[23:16]),
+.validity_mask_b_rows(matmul_masks_in[15:8]),
+.validity_mask_b_cols(matmul_masks_in[7:0]),
+.c_data(matmul_out), 
+.vmask(vmask[FU_MATMUL]),
+.in_dst(dst_s4[FU_MATMUL]),
+.in_dst_we(dst_we_s4[FU_MATMUL]),
+.out_dst(dst_matmul),
+.out_dst_we(dst_we[FU_MATMUL][`MAX_PIPE_STAGES-1:4]),
+.out_dst_mask(dst_mask_matmul)
+);
+ 
 
 
 /******************************************************************************/
@@ -2330,15 +2442,24 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
   assign wb_dst_mask[FU_MUL]=dst_mask[FU_MUL][5];
   assign D_wb_last_subvector[FU_MUL]=D_last_subvector_s5[FU_MUL];
 
+  assign wb_dst[FU_MATMUL]=dst[FU_MATMUL][5];
+  assign wb_dst_we[FU_MATMUL]=dst_we[FU_MATMUL][5] && ~pipe_squash[5];
+  assign wb_dst_mask[FU_MATMUL]=dst_mask[FU_MATMUL][5];
+  //TODO: There is no code that assigns to the s31 var used below. Need to add that code
+  //This is only a debug var, so it doesn't affect functionality
+  assign D_wb_last_subvector[FU_MATMUL]=D_last_subvector_s31[FU_MATMUL];
+
   // ******************  Map functional units to banks ******************
   always@*
     for (bw=0; bw<NUMBANKS; bw=bw+1)
     begin
       vr_c_we[bw]=(wb_dst_we[FU_MUL] && `LO(wb_dst[FU_MUL],LOG2NUMBANKS)==bw) ||
+                  (wb_dst_we[FU_MATMUL] && `LO(wb_dst[FU_MATMUL],LOG2NUMBANKS)==bw) ||
                   (wb_dst_we[FU_MEM] && `LO(wb_dst[FU_MEM],LOG2NUMBANKS)==bw) ||
                   (wb_dst_we[FU_ALU] && `LO(wb_dst[FU_ALU],LOG2NUMBANKS)==bw && ALUPERBANK==0) ||
                   (wb_dst_we[FU_ALU+bw] && ALUPERBANK!=0);
 
+      //TODO: Update this code for matmul. This is for debug only, so skipping it for now.
       //Tells test_bench when to record register file contents.
       //Record if instruction writes to VRF, on last subvector, and not stalled
       D_wb_instrdone[bw] = pipe_advance[5] && (
@@ -2348,9 +2469,17 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
         (dst_we[FU_MUL][5] && D_wb_last_subvector[FU_MUL] && `LO(wb_dst[FU_MUL],LOG2NUMBANKS)==bw) || 
         (dst_we[FU_MEM][5] && D_wb_last_subvector[FU_MEM] && `LO(wb_dst[FU_MEM],LOG2NUMBANKS)==bw));
 
-
+      //Take matmul output
+      if (wb_dst_we[FU_MATMUL] && `LO(wb_dst[FU_MATMUL],LOG2NUMBANKS)==bw)
+      begin
+        vmask_final[bw]=wb_dst_mask[FU_MATMUL];
+        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_MATMUL]>>LOG2NUMBANKS;
+        vr_c_reg[bw]= wb_dst[FU_MATMUL];
+        vr_c_writedatain[bw]= matmul_out;
+        D_last_subvector_done[bw]=D_wb_last_subvector[FU_MATMUL];
+      end      
       //Take multiplier output
-      if (wb_dst_we[FU_MUL] && `LO(wb_dst[FU_MUL],LOG2NUMBANKS)==bw)
+      else if (wb_dst_we[FU_MUL] && `LO(wb_dst[FU_MUL],LOG2NUMBANKS)==bw)
       begin
         vmask_final[bw]=wb_dst_mask[FU_MUL];
         _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_MUL]>>LOG2NUMBANKS;
