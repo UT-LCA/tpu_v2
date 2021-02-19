@@ -49,11 +49,12 @@ compilework: work vregfile_control.dat
 	vlog ${VLOG_ARGS} +incdir+.. +incdir+../design/top +incdir+../design/vector +incdir+../design/scalar +incdir+../design/ddr ${VESPA_SRC}
 	vlog ${VLOG_ARGS} +incdir+.. +incdir+../design/top +incdir+../design/vector +incdir+../design/scalar +incdir+../design/ddr ${DDR_SRC}
 	vlog ${VLOG_ARGS} ../design/ddr/testbench/altmemddr_mem_model.v
+	vlog ${VLOG_ARGS} ../design/top/spram1.v
 	vlog ${VLOG_ARGS} +incdir+.. +incdir+../design/top +incdir+../design/vector +incdir+../design/scalar +incdir+../design/ddr ${TESTBENCH_SRC}
 
 #Convert .mif to .dat format - HACKY
 vregfile_control.dat:
-	@grep ":" ../vregfile_control.mif |cut -f2 -d':' |cut -f1 -d';' >vregfile_control.dat
+	@grep ":" ../design/vector/vregfile_control.mif |cut -f2 -d':' |cut -f1 -d';' >vregfile_control.dat
 
 #Create virtualtype.do script for translating instruction encodings to names
 virtualtype.do: virtualtype

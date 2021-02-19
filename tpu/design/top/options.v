@@ -4,6 +4,7 @@
 `define NO_PLI 1
 //`define TEST_BENCH 1
 `define USE_INHOUSE_LOGIC
+`define SIMULATION_MEMORY
 // Replaces altera blocks with local logic files
 
 /************************** ABBREVIEATED NAMES *****************************/
@@ -38,8 +39,8 @@
 `define DPV 0
 
 // VECTOR CORE
-`define LGL 4
-`define LGB 1
+`define LGL 3
+`define LGB 0
 `define APB 0
 `define LGM `LGL
 `define LGX `LGL

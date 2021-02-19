@@ -88,59 +88,74 @@ reg  [LOG2CACHEDEPTH-1:0] count;
     if (bus_flush)
       count <= count + 1'b1;
 
-  // Must flush for CACHEDEPTH cycles
-  altsyncram status
-    (
-     .clock0    (mem_clk),
-     .wren_a    ((bus_flush) ? 1'b1 : mem_fillwe),
-     .data_a    ((bus_flush) ? 0 : 1),
-     .address_a ((bus_flush) ? count : mem_filladdr[`OFFSETRANGE]),
-     .clock1    (bus_clk),
-     .clocken1  (bus_en),
-     .address_b (bus_address[`OFFSETRANGE]),
-     .q_b       (cache_validout)
-    );
-  defparam
-   status.operation_mode = "DUAL_PORT",
-   status.width_a = 1, 
-   status.widthad_a = LOG2CACHEDEPTH,
-   status.width_b = 1,
-   status.widthad_b = LOG2CACHEDEPTH,
-   status.outdata_reg_a = "UNREGISTERED",
-   status.outdata_reg_b = "UNREGISTERED",
-   //status.rdcontrol_reg_a = "CLOCK0",
-   status.rdcontrol_reg_b = "CLOCK1",
-   //status.address_reg_a = "CLOCK0",
-   status.address_reg_b = "CLOCK1",
-   status.read_during_write_mode_mixed_ports = "OLD_DATA";
+//  // Must flush for CACHEDEPTH cycles
+//  altsyncram status
+//    (
+//     .clock0    (mem_clk),
+//     .wren_a    ((bus_flush) ? 1'b1 : mem_fillwe),
+//     .data_a    ((bus_flush) ? 0 : 1),
+//     .address_a ((bus_flush) ? count : mem_filladdr[`OFFSETRANGE]),
+//     .clock1    (bus_clk),
+//     .clocken1  (bus_en),
+//     .address_b (bus_address[`OFFSETRANGE]),
+//     .q_b       (cache_validout)
+//    );
+//  defparam
+//   status.operation_mode = "DUAL_PORT",
+//   status.width_a = 1, 
+//   status.widthad_a = LOG2CACHEDEPTH,
+//   status.width_b = 1,
+//   status.widthad_b = LOG2CACHEDEPTH,
+//   status.outdata_reg_a = "UNREGISTERED",
+//   status.outdata_reg_b = "UNREGISTERED",
+//   //status.rdcontrol_reg_a = "CLOCK0",
+//   status.rdcontrol_reg_b = "CLOCK1",
+//   //status.address_reg_a = "CLOCK0",
+//   status.address_reg_b = "CLOCK1",
+//   status.read_during_write_mode_mixed_ports = "OLD_DATA";
+//
+//
+//  altsyncram tags
+//    (
+//     .clock0    (mem_clk),
+//     .wren_a    (mem_fillwe),
+//     .data_a    (mem_filladdr[`TAGRANGE]),
+//     .address_a (mem_filladdr[`OFFSETRANGE]),
+//
+//     .clock1    (bus_clk),
+//     .clocken1  (bus_en),
+//     .address_b (bus_address[`OFFSETRANGE]),
+//     .q_b       (cache_tagout)
+//    );
+//  defparam
+//   tags.operation_mode = "DUAL_PORT",
+//   tags.width_a = TAGSIZE, 
+//   tags.widthad_a = LOG2CACHEDEPTH,
+//   tags.width_b = TAGSIZE,
+//   tags.widthad_b = LOG2CACHEDEPTH,
+//   tags.outdata_reg_a = "UNREGISTERED",
+//   tags.outdata_reg_b = "UNREGISTERED",
+//   //tags.rdcontrol_reg_a = "CLOCK0",
+//   tags.rdcontrol_reg_b = "CLOCK1",
+//   //tags.address_reg_a = "CLOCK0",
+//   tags.address_reg_b = "CLOCK1",
+//   tags.read_during_write_mode_mixed_ports = "OLD_DATA";
 
+`ifdef USE_INHOUSE_LOGIC
+ spram1 data1 (
+    .clk(bus_clk),
+    .address(bus_address[27:2]),
+    .wren(1'b0),
+    .data(0),
+    .byteen(-1),
+    .out(cache_dataout)
+ );
+ defparam 
+    data1.AWIDTH=26,
+    data1.NUM_WORDS = 67108864,
+    data1.DWIDTH= 32;
 
-  altsyncram tags
-    (
-     .clock0    (mem_clk),
-     .wren_a    (mem_fillwe),
-     .data_a    (mem_filladdr[`TAGRANGE]),
-     .address_a (mem_filladdr[`OFFSETRANGE]),
-
-     .clock1    (bus_clk),
-     .clocken1  (bus_en),
-     .address_b (bus_address[`OFFSETRANGE]),
-     .q_b       (cache_tagout)
-    );
-  defparam
-   tags.operation_mode = "DUAL_PORT",
-   tags.width_a = TAGSIZE, 
-   tags.widthad_a = LOG2CACHEDEPTH,
-   tags.width_b = TAGSIZE,
-   tags.widthad_b = LOG2CACHEDEPTH,
-   tags.outdata_reg_a = "UNREGISTERED",
-   tags.outdata_reg_b = "UNREGISTERED",
-   //tags.rdcontrol_reg_a = "CLOCK0",
-   tags.rdcontrol_reg_b = "CLOCK1",
-   //tags.address_reg_a = "CLOCK0",
-   tags.address_reg_b = "CLOCK1",
-   tags.read_during_write_mode_mixed_ports = "OLD_DATA";
-
+`else
 
   altsyncram data
     (
@@ -171,6 +186,8 @@ reg  [LOG2CACHEDEPTH-1:0] count;
     //data.address_reg_a = "CLOCK0",
     data.address_reg_b = "CLOCK1";
 
+`endif
+
   assign bus_readdata=cache_dataout;
 
     // Save offset to make sure still asking for same data
@@ -180,9 +197,10 @@ reg  [LOG2CACHEDEPTH-1:0] count;
     else 
       bus_address_saved<=bus_address;
 
-  assign tagmatch=(cache_tagout==bus_address_saved[`TAGRANGE]);
+//  assign tagmatch=(cache_tagout==bus_address_saved[`TAGRANGE]);
 
-  assign cache_hit = tagmatch && cache_validout;
+//  assign cache_hit = tagmatch && cache_validout;
+  assign cache_hit = 1'b1;
 
   assign cache_miss=bus_en && ~cache_hit;
 
