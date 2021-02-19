@@ -341,18 +341,33 @@ assign D_pipe3_squash = t.p.c.p.squash_stage3;
             //unrolled instead.  If there is only 1 bank there shouldn't be any
             //conditional statement below, it should be a straight assignment
             //to the first term (everything in the first curly brace).
-           (((i%t.p.c.v.NUMBANKS)==0) ?
-            {{32-t.p.c.v.VPW*8+1{t.p.c.v.vlanes.vregfile_vector.bank_gen[0].reg_file1.altera_syncram_inst.mem_data[ (dst_vector_next[b]+i)>>t.p.c.v.LOG2NUMBANKS][(k+1)*t.p.c.v.VPW*8-1]}}, //sign-extend
-            t.p.c.v.vlanes.vregfile_vector.bank_gen[0].reg_file1.altera_syncram_inst.mem_data[(dst_vector_next[b]+i)>>t.p.c.v.LOG2NUMBANKS][(k+1)*t.p.c.v.VPW*8-2 -: t.p.c.v.VPW*8-1]} :
-            //((i%t.p.c.v.NUMBANKS)==1) ?
-            {{32-t.p.c.v.VPW*8+1{t.p.c.v.vlanes.vregfile_vector.bank_gen[1].reg_file1.altera_syncram_inst.mem_data[ (dst_vector_next[b]+i)>>t.p.c.v.LOG2NUMBANKS][(k+1)*t.p.c.v.VPW*8-1]}}, //sign-extend
-            t.p.c.v.vlanes.vregfile_vector.bank_gen[1].reg_file1.altera_syncram_inst.mem_data[(dst_vector_next[b]+i)>>t.p.c.v.LOG2NUMBANKS][(k+1)*t.p.c.v.VPW*8-2 -: t.p.c.v.VPW*8-1]} /*:
-            ((i%t.p.c.v.NUMBANKS)==2) ?
-            {{32-t.p.c.v.VPW*8+1{t.p.c.v.vlanes.vregfile_vector.bank_gen[2].reg_file1.mem_data[ (dst_vector_next[b]+i)>>t.p.c.v.LOG2NUMBANKS][(k+1)*t.p.c.v.VPW*8-1]}}, //sign-extend
-            t.p.c.v.vlanes.vregfile_vector.bank_gen[2].reg_file1.mem_data[(dst_vector_next[b]+i)>>t.p.c.v.LOG2NUMBANKS][(k+1)*t.p.c.v.VPW*8-2 -: t.p.c.v.VPW*8-1]} :
-            {{32-t.p.c.v.VPW*8+1{t.p.c.v.vlanes.vregfile_vector.bank_gen[3].reg_file1.mem_data[ (dst_vector_next[b]+i)>>t.p.c.v.LOG2NUMBANKS][(k+1)*t.p.c.v.VPW*8-1]}}, //sign-extend
-            t.p.c.v.vlanes.vregfile_vector.bank_gen[3].reg_file1.mem_data[(dst_vector_next[b]+i)>>t.p.c.v.LOG2NUMBANKS][(k+1)*t.p.c.v.VPW*8-2 -: t.p.c.v.VPW*8-1]} */
-         );
+           `ifdef USE_INHOUSE_LOGIC
+               (((i%t.p.c.v.NUMBANKS)==0) ?
+                {{32-t.p.c.v.VPW*8+1{t.p.c.v.vlanes.vregfile_vector.bank_gen[0].reg_file1.ram[ (dst_vector_next[b]+i)>>t.p.c.v.LOG2NUMBANKS][(k+1)*t.p.c.v.VPW*8-1]}}, //sign-extend
+                t.p.c.v.vlanes.vregfile_vector.bank_gen[0].reg_file1.ram[(dst_vector_next[b]+i)>>t.p.c.v.LOG2NUMBANKS][(k+1)*t.p.c.v.VPW*8-2 -: t.p.c.v.VPW*8-1]} :
+                //((i%t.p.c.v.NUMBANKS)==1) ?
+                {{32-t.p.c.v.VPW*8+1{t.p.c.v.vlanes.vregfile_vector.bank_gen[1].reg_file1.ram[ (dst_vector_next[b]+i)>>t.p.c.v.LOG2NUMBANKS][(k+1)*t.p.c.v.VPW*8-1]}}, //sign-extend
+                t.p.c.v.vlanes.vregfile_vector.bank_gen[1].reg_file1.ram[(dst_vector_next[b]+i)>>t.p.c.v.LOG2NUMBANKS][(k+1)*t.p.c.v.VPW*8-2 -: t.p.c.v.VPW*8-1]} /*:
+                ((i%t.p.c.v.NUMBANKS)==2) ?
+                {{32-t.p.c.v.VPW*8+1{t.p.c.v.vlanes.vregfile_vector.bank_gen[2].reg_file1.mem_data[ (dst_vector_next[b]+i)>>t.p.c.v.LOG2NUMBANKS][(k+1)*t.p.c.v.VPW*8-1]}}, //sign-extend
+                t.p.c.v.vlanes.vregfile_vector.bank_gen[2].reg_file1.mem_data[(dst_vector_next[b]+i)>>t.p.c.v.LOG2NUMBANKS][(k+1)*t.p.c.v.VPW*8-2 -: t.p.c.v.VPW*8-1]} :
+                {{32-t.p.c.v.VPW*8+1{t.p.c.v.vlanes.vregfile_vector.bank_gen[3].reg_file1.mem_data[ (dst_vector_next[b]+i)>>t.p.c.v.LOG2NUMBANKS][(k+1)*t.p.c.v.VPW*8-1]}}, //sign-extend
+                t.p.c.v.vlanes.vregfile_vector.bank_gen[3].reg_file1.mem_data[(dst_vector_next[b]+i)>>t.p.c.v.LOG2NUMBANKS][(k+1)*t.p.c.v.VPW*8-2 -: t.p.c.v.VPW*8-1]} */
+             );
+           `else
+               (((i%t.p.c.v.NUMBANKS)==0) ?
+                {{32-t.p.c.v.VPW*8+1{t.p.c.v.vlanes.vregfile_vector.bank_gen[0].reg_file1.altera_syncram_inst.mem_data[ (dst_vector_next[b]+i)>>t.p.c.v.LOG2NUMBANKS][(k+1)*t.p.c.v.VPW*8-1]}}, //sign-extend
+                t.p.c.v.vlanes.vregfile_vector.bank_gen[0].reg_file1.altera_syncram_inst.mem_data[(dst_vector_next[b]+i)>>t.p.c.v.LOG2NUMBANKS][(k+1)*t.p.c.v.VPW*8-2 -: t.p.c.v.VPW*8-1]} :
+                //((i%t.p.c.v.NUMBANKS)==1) ?
+                {{32-t.p.c.v.VPW*8+1{t.p.c.v.vlanes.vregfile_vector.bank_gen[1].reg_file1.altera_syncram_inst.mem_data[ (dst_vector_next[b]+i)>>t.p.c.v.LOG2NUMBANKS][(k+1)*t.p.c.v.VPW*8-1]}}, //sign-extend
+                t.p.c.v.vlanes.vregfile_vector.bank_gen[1].reg_file1.altera_syncram_inst.mem_data[(dst_vector_next[b]+i)>>t.p.c.v.LOG2NUMBANKS][(k+1)*t.p.c.v.VPW*8-2 -: t.p.c.v.VPW*8-1]} /*:
+                ((i%t.p.c.v.NUMBANKS)==2) ?
+                {{32-t.p.c.v.VPW*8+1{t.p.c.v.vlanes.vregfile_vector.bank_gen[2].reg_file1.mem_data[ (dst_vector_next[b]+i)>>t.p.c.v.LOG2NUMBANKS][(k+1)*t.p.c.v.VPW*8-1]}}, //sign-extend
+                t.p.c.v.vlanes.vregfile_vector.bank_gen[2].reg_file1.mem_data[(dst_vector_next[b]+i)>>t.p.c.v.LOG2NUMBANKS][(k+1)*t.p.c.v.VPW*8-2 -: t.p.c.v.VPW*8-1]} :
+                {{32-t.p.c.v.VPW*8+1{t.p.c.v.vlanes.vregfile_vector.bank_gen[3].reg_file1.mem_data[ (dst_vector_next[b]+i)>>t.p.c.v.LOG2NUMBANKS][(k+1)*t.p.c.v.VPW*8-1]}}, //sign-extend
+                t.p.c.v.vlanes.vregfile_vector.bank_gen[3].reg_file1.mem_data[(dst_vector_next[b]+i)>>t.p.c.v.LOG2NUMBANKS][(k+1)*t.p.c.v.VPW*8-2 -: t.p.c.v.VPW*8-1]} */
+             );
+           `endif
 
         readdata_vector_next[b]=readdata_vector_next[b]| 
          (readdata_vector_next_tmp[b] << (t.p.c.v.NUMLANES*32*i));
@@ -394,13 +409,23 @@ assign D_pipe3_squash = t.p.c.p.squash_stage3;
           //unrolled instead.  If there is only 1 bank there shouldn't be any
           //conditional statement below, it should be a straight assignment
           //to the first term (everything in the first curly brace).
-        (((j%t.p.c.v.NUMBANKS)==0) ?
-          (t.p.c.v.vlanes.vregfile_flag.bank_gen[0].reg_file1.altera_syncram_inst.mem_data[ (dst_vf_next[bf]+j)>>t.p.c.v.LOG2NUMBANKS ]<<(t.p.c.v.NUMLANES*j)) :
-         //((j%t.p.c.v.NUMBANKS)==1) ?
-          (t.p.c.v.vlanes.vregfile_flag.bank_gen[1].reg_file1.altera_syncram_inst.mem_data[ (dst_vf_next[bf]+j)>>t.p.c.v.LOG2NUMBANKS ]<<(t.p.c.v.NUMLANES*j)) /* :
-         ((j%t.p.c.v.NUMBANKS)==2) ?
-          (t.p.c.v.vlanes.vregfile_flag.bank_gen[2].reg_file1.mem_data[ (dst_vf_next[bf]+j)>>t.p.c.v.LOG2NUMBANKS ]<<(t.p.c.v.NUMLANES*j)) :
-          (t.p.c.v.vlanes.vregfile_flag.bank_gen[3].reg_file1.mem_data[ (dst_vf_next[bf]+j)>>t.p.c.v.LOG2NUMBANKS ]<<(t.p.c.v.NUMLANES*j)) */ );
+        `ifdef USE_INHOUSE_LOGIC
+            (((j%t.p.c.v.NUMBANKS)==0) ?
+              (t.p.c.v.vlanes.vregfile_flag.bank_gen[0].reg_file1.ram[ (dst_vf_next[bf]+j)>>t.p.c.v.LOG2NUMBANKS ]<<(t.p.c.v.NUMLANES*j)) :
+             //((j%t.p.c.v.NUMBANKS)==1) ?
+              (t.p.c.v.vlanes.vregfile_flag.bank_gen[1].reg_file1.ram[ (dst_vf_next[bf]+j)>>t.p.c.v.LOG2NUMBANKS ]<<(t.p.c.v.NUMLANES*j)) /* :
+             ((j%t.p.c.v.NUMBANKS)==2) ?
+              (t.p.c.v.vlanes.vregfile_flag.bank_gen[2].reg_file1.mem_data[ (dst_vf_next[bf]+j)>>t.p.c.v.LOG2NUMBANKS ]<<(t.p.c.v.NUMLANES*j)) :
+              (t.p.c.v.vlanes.vregfile_flag.bank_gen[3].reg_file1.mem_data[ (dst_vf_next[bf]+j)>>t.p.c.v.LOG2NUMBANKS ]<<(t.p.c.v.NUMLANES*j)) */ );
+        `else
+            (((j%t.p.c.v.NUMBANKS)==0) ?
+              (t.p.c.v.vlanes.vregfile_flag.bank_gen[0].reg_file1.altera_syncram_inst.mem_data[ (dst_vf_next[bf]+j)>>t.p.c.v.LOG2NUMBANKS ]<<(t.p.c.v.NUMLANES*j)) :
+             //((j%t.p.c.v.NUMBANKS)==1) ?
+              (t.p.c.v.vlanes.vregfile_flag.bank_gen[1].reg_file1.altera_syncram_inst.mem_data[ (dst_vf_next[bf]+j)>>t.p.c.v.LOG2NUMBANKS ]<<(t.p.c.v.NUMLANES*j)) /* :
+             ((j%t.p.c.v.NUMBANKS)==2) ?
+              (t.p.c.v.vlanes.vregfile_flag.bank_gen[2].reg_file1.mem_data[ (dst_vf_next[bf]+j)>>t.p.c.v.LOG2NUMBANKS ]<<(t.p.c.v.NUMLANES*j)) :
+              (t.p.c.v.vlanes.vregfile_flag.bank_gen[3].reg_file1.mem_data[ (dst_vf_next[bf]+j)>>t.p.c.v.LOG2NUMBANKS ]<<(t.p.c.v.NUMLANES*j)) */ );
+        `endif
 
       $fwrite(vector_trace,"%d | PC=%h | IR=%h | vf%h: %b\n",
             $time,
@@ -421,7 +446,11 @@ assign D_pipe3_squash = t.p.c.p.squash_stage3;
     dst_vs_next<=t.p.c.v.vs_c_reg;
     if (read_vs_next && !(`DISABLETRACES))
     begin
-      readdata_vs_next=t.p.c.v.vregfile_scalar.reg_file1.altera_syncram_inst.mem_data[dst_vs_next]; 
+      `ifdef USE_INHOUSE_LOGIC
+           readdata_vs_next=t.p.c.v.vregfile_scalar.reg_file1.ram[dst_vs_next]; 
+      `else
+           readdata_vs_next=t.p.c.v.vregfile_scalar.reg_file1.altera_syncram_inst.mem_data[dst_vs_next]; 
+      `endif
 
       $fwrite(vector_trace,"%d | PC=%h | IR=%h | vs%h: %h\n",
             $time,

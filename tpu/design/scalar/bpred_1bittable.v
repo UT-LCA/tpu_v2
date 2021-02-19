@@ -28,6 +28,25 @@ wire [LOG2TABLEDEPTH-1:0] address_b;
 
 assign address_b=pc_predict[LOG2TABLEDEPTH+2-1:2];
 
+`ifdef USE_INHOUSE_LOGIC
+    dpram pred_table(
+	.clk(clk),
+	.address_a(pc_result[LOG2TABLEDEPTH+2-1:2]),
+	.address_b(address_b),
+	.wren_a(result_rdy),
+	.wren_b(0),
+	.data_a(result),
+	.data_b(0),
+	.out_a(),
+	.out_b(prediction)
+    );
+    defparam
+        reg_file1.AWIDTH=LOG2TABLEDEPTH,
+        reg_file1.NUM_WORDS=TABLEDEPTH,
+        reg_file1.DWIDTH=TABLEWIDTH;
+
+`else
+
 	altsyncram	pred_table(
 				.clock0 (clk),
 				.wren_a (result_rdy),
@@ -74,5 +93,6 @@ assign address_b=pc_predict[LOG2TABLEDEPTH+2-1:2];
 		pred_table.ram_block_type = "AUTO",
 		pred_table.intended_device_family = "Stratix";
 
+`endif
 
 endmodule

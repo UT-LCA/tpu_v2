@@ -25,6 +25,40 @@ input [WIDTH-1:0] c_writedatain;
 input c_we;
 input c_squashn;
 
+`ifdef USE_INHOUSE_LOGIC
+        dpram reg_file1(
+	    .clk(clk),
+	    .address_a(c_reg[LOG2NUMREGS-1:0]),
+	    .address_b(a_reg[LOG2NUMREGS-1:0]),
+	    .wren_a(c_we & (|c_reg) & c_squashn),
+	    .wren_b(1'b0),
+	    .data_a(c_writedatain),
+	    .data_b(0),
+	    .out_a(),
+	    .out_b(a_readdataout)
+        );
+        defparam
+            reg_file1.AWIDTH=LOG2NUMREGS,
+            reg_file1.NUM_WORDS=NUMREGS,
+            reg_file1.DWIDTH=WIDTH;
+
+        dpram reg_file2(
+	    .clk(clk),
+	    .address_a(c_reg[LOG2NUMREGS-1:0]),
+	    .address_b(b_reg[LOG2NUMREGS-1:0]),
+	    .wren_a(c_we & (|c_reg)),
+	    .wren_b(1'b0),
+	    .data_a(c_writedatain),
+	    .data_b(0),
+	    .out_a(),
+	    .out_b(b_readdataout)
+        );
+        defparam
+            reg_file2.AWIDTH=LOG2NUMREGS,
+            reg_file2.NUM_WORDS=NUMREGS,
+            reg_file2.DWIDTH=WIDTH;
+`else
+
 	altsyncram	reg_file1(
 				.wren_a (c_we & (|c_reg) & c_squashn),
 				.clock0 (clk),
@@ -118,6 +152,8 @@ input c_squashn;
 		reg_file2.read_during_write_mode_mixed_ports = "OLD_DATA",
 		reg_file2.ram_block_type = "AUTO",
 		reg_file2.intended_device_family = "Stratix";
+
+`endif
 
 endmodule
 

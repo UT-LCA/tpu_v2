@@ -29,6 +29,23 @@ output [WIDTH-1:0] a_readdataout;
 input [WIDTH-1:0] c_writedatain;
 input c_we;
 
+`ifdef USE_INHOUSE_LOGIC
+        dpram reg_file1(
+	    .clk(clk),
+	    .address_a(c_reg[LOG2NUMREGS-1:0]),
+	    .address_b(a_reg[LOG2NUMREGS-1:0]),
+	    .wren_a(c_we),
+	    .wren_b(1'b0),
+	    .data_a(c_writedatain),
+	    .data_b(0),
+	    .out_a(),
+	    .out_b(a_readdataout)
+        );
+        defparam
+            reg_file1.AWIDTH=LOG2NUMREGS,
+            reg_file1.NUM_WORDS=NUMREGS,
+            reg_file1.DWIDTH=WIDTH;
+ `else
 	altsyncram	reg_file1(
 				.wren_a (c_we),
 				.clock0 (clk),
@@ -74,6 +91,6 @@ input c_we;
 		reg_file1.read_during_write_mode_mixed_ports = "OLD_DATA",
 		reg_file1.ram_block_type = "AUTO",
 		reg_file1.intended_device_family = "Stratix";
-
+`endif
 endmodule
 

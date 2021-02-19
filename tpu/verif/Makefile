@@ -44,12 +44,14 @@ compilework: work vregfile_control.dat
 	vcom ../design/top/devreadburst.vhd
 	vcom ../design/top/devwrite.vhd
 	vcom ../design/top/devwriteack.vhd
+	vlog ${VLOG_ARGS} ../design/top/options.v
+	vlog ${VLOG_ARGS} ../design/top/spram1.v
+	vlog ${VLOG_ARGS} ../design/top/rams.v
 	vlog ${VLOG_ARGS} ${LOCAL_SRC}
 	vlog ${VLOG_ARGS} +incdir+.. +incdir+../design/top +incdir+../design/vector +incdir+../design/scalar +incdir+../design/ddr ${SPREE_SRC}
 	vlog ${VLOG_ARGS} +incdir+.. +incdir+../design/top +incdir+../design/vector +incdir+../design/scalar +incdir+../design/ddr ${VESPA_SRC}
 	vlog ${VLOG_ARGS} +incdir+.. +incdir+../design/top +incdir+../design/vector +incdir+../design/scalar +incdir+../design/ddr ${DDR_SRC}
 	vlog ${VLOG_ARGS} ../design/ddr/testbench/altmemddr_mem_model.v
-	vlog ${VLOG_ARGS} ../design/top/spram1.v
 	vlog ${VLOG_ARGS} +incdir+.. +incdir+../design/top +incdir+../design/vector +incdir+../design/scalar +incdir+../design/ddr ${TESTBENCH_SRC}
 
 #Convert .mif to .dat format - HACKY

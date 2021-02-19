@@ -24,6 +24,10 @@ input [(DWIDTH-1):0] data_b;
 output reg [(DWIDTH-1):0] out_a;
 output reg [(DWIDTH-1):0] out_b;
 
+`ifndef SIMULATION_MEMORY
+ `define SIMULATION_MEMORY
+`endif
+
 `ifdef SIMULATION_MEMORY
 
 reg [DWIDTH-1:0] ram[NUM_WORDS-1:0];

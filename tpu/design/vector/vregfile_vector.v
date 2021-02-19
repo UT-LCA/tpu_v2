@@ -34,7 +34,39 @@ input [NUMBANKS-1:0] c_we;
   generate
   for (k=0; k<NUMBANKS; k=k+1)
   begin : bank_gen
-
+  `ifdef USE_INHOUSE_LOGIC
+          dpram reg_file1(
+  	    .clk(clk),
+  	    .address_a(c_reg[k*LOG2NUMREGSPERBANK +: LOG2NUMREGSPERBANK]),
+  	    .address_b(a_reg[k*LOG2NUMREGSPERBANK +: LOG2NUMREGSPERBANK]),
+  	    .wren_a(c_we[k] & ((WIDTH>8) ? 1'b1 : c_byteen[k])),
+  	    .wren_b(1'b0),
+  	    .data_a(c_writedatain[k*WIDTH +: WIDTH]),
+  	    .data_b(0),
+  	    .out_a(),
+  	    .out_b(a_readdataout[k*WIDTH +: WIDTH])
+          );
+          defparam
+              reg_file1.AWIDTH=LOG2NUMREGSPERBANK,
+              reg_file1.NUM_WORDS=NUMREGSPERBANK,
+              reg_file1.DWIDTH=WIDTH;
+  
+          dpram reg_file2(
+  	    .clk(clk),
+  	    .address_a(c_reg[k*LOG2NUMREGSPERBANK +: LOG2NUMREGSPERBANK]),
+  	    .address_b(b_reg[k*LOG2NUMREGSPERBANK +: LOG2NUMREGSPERBANK]),
+  	    .wren_a(c_we[k] & ((WIDTH>8) ? 1'b1 : c_byteen[k])),
+  	    .wren_b(1'b0),
+  	    .data_a(c_writedatain[k*WIDTH +: WIDTH]),
+  	    .data_b(0),
+  	    .out_a(),
+  	    .out_b(b_readdataout[k*WIDTH +: WIDTH])
+          );
+          defparam
+              reg_file2.AWIDTH=LOG2NUMREGSPERBANK,
+              reg_file2.NUM_WORDS=NUMREGSPERBANK,
+              reg_file2.DWIDTH=WIDTH;
+  `else
     altsyncram	reg_file1(
           .clock0 (clk),
           .wren_a (c_we[k] & ((WIDTH>8) ? 1'b1 : c_byteen[k])),
@@ -130,7 +162,7 @@ input [NUMBANKS-1:0] c_we;
       reg_file2.read_during_write_mode_mixed_ports = "OLD_DATA",
       reg_file2.ram_block_type = "AUTO",
       reg_file2.intended_device_family = "Stratix";
-
+  `endif
   end
   endgenerate
 

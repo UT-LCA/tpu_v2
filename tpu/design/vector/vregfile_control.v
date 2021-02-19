@@ -39,6 +39,28 @@ output [WIDTH-1:0] matmul_masks;
 reg [WIDTH-1:0] vl;
 reg [WIDTH-1:0] matmul_masks;
 
+`ifdef USE_INHOUSE_LOGIC
+        dpram reg_file1(
+	    .clk(clk),
+	    .address_a(c_reg[LOG2NUMREGS-1:0]),
+	    .address_b(a_reg[LOG2NUMREGS-1:0]),
+	    .wren_a(c_we),
+	    .wren_b(1'b0),
+	    .data_a(c_writedatain),
+	    .data_b(0),
+	    .out_a(),
+	    .out_b(a_readdataout)
+        );
+        defparam
+            reg_file1.AWIDTH=LOG2NUMREGS,
+            reg_file1.NUM_WORDS=NUMREGS,
+            reg_file1.DWIDTH=WIDTH;
+    `ifdef TEST_BENCH
+                initial begin
+		    $readmemh("vregfile_control.dat",reg_file1.ram,'h0);
+                end
+     `endif 
+ `else
 	altsyncram	reg_file1(
 				.wren_a (c_we),
 				.clock0 (clk),
@@ -89,6 +111,7 @@ reg [WIDTH-1:0] matmul_masks;
 		reg_file1.read_during_write_mode_mixed_ports = "OLD_DATA",
 		reg_file1.ram_block_type = "AUTO",
 		reg_file1.intended_device_family = "Stratix";
+  `endif
 
   always@(posedge clk) begin
     if (!resetn) begin
