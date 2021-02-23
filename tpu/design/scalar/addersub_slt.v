@@ -12,6 +12,8 @@
 6     1     1     0         SLT
 
 ****************************************************************************/
+`include "options.v"
+
 module addersub (
             opA, opB,
             op, 
@@ -46,7 +48,19 @@ assign result=sum[WIDTH-1:0];
 //assign result_slt[0]=sum[WIDTH];
 assign result_slt=sum[WIDTH];
 
-
+`ifdef USE_INHOUSE_LOGIC
+  local_add_sub local_adder_inst(
+      .dataa({signext&opA[WIDTH-1],opA}),
+      .datab({signext&opB[WIDTH-1],opB}),
+      .cin(~addsub),
+      .add_sub(addsub),
+      .result(sum)
+  );
+  defparam
+      local_adder_inst.WIDTH = WIDTH+1,
+      local_adder_inst.PIPELINE = 0,
+      local_adder_inst.REPRESENTATION = "SIGNED";
+`else
 lpm_add_sub adder_inst(
     .dataa({signext&opA[WIDTH-1],opA}),
     .datab({signext&opB[WIDTH-1],opB}),
@@ -65,6 +79,7 @@ lpm_add_sub adder_inst(
 defparam 
     adder_inst.lpm_width=WIDTH+1,
     adder_inst.lpm_representation="SIGNED";
+`endif
 
 assign carry_out=sum[WIDTH];
 

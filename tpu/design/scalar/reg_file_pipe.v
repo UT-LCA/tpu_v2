@@ -4,6 +4,7 @@
    - Has two read ports (a and b) and one write port (c)
    - sel chooses the register to be read/written
 ****************************************************************************/
+`include "options.v"
 module reg_file(clk,resetn, c_squashn,
 	a_reg, a_readdataout, a_en,
 	b_reg, b_readdataout, b_en,
@@ -24,10 +25,15 @@ output [WIDTH-1:0] a_readdataout, b_readdataout;
 input [WIDTH-1:0] c_writedatain;
 input c_we;
 input c_squashn;
+integer i;
 
-`ifdef USE_INHOUSE_LOGIC
-        dpram reg_file1(
+
+`ifdef USE_INHOUSE_LOGIC1
+        ram_wrapper reg_file1(
 	    .clk(clk),
+            .resetn(resetn),
+            .rden_a(1'b0),
+            .rden_b(a_en),
 	    .address_a(c_reg[LOG2NUMREGS-1:0]),
 	    .address_b(a_reg[LOG2NUMREGS-1:0]),
 	    .wren_a(c_we & (|c_reg) & c_squashn),
@@ -41,9 +47,17 @@ input c_squashn;
             reg_file1.AWIDTH=LOG2NUMREGS,
             reg_file1.NUM_WORDS=NUMREGS,
             reg_file1.DWIDTH=WIDTH;
-
-        dpram reg_file2(
+ 
+ initial begin
+    for(i=0;i<NUMREGS;i=i+1)
+        reg_file1.dpram1.ram[i]=0;
+ end 
+         
+        ram_wrapper reg_file2(
 	    .clk(clk),
+            .resetn(resetn),
+            .rden_a(1'b0),
+            .rden_b(b_en),
 	    .address_a(c_reg[LOG2NUMREGS-1:0]),
 	    .address_b(b_reg[LOG2NUMREGS-1:0]),
 	    .wren_a(c_we & (|c_reg)),
@@ -57,6 +71,11 @@ input c_squashn;
             reg_file2.AWIDTH=LOG2NUMREGS,
             reg_file2.NUM_WORDS=NUMREGS,
             reg_file2.DWIDTH=WIDTH;
+
+ initial begin
+    for(i=0;i<NUMREGS;i=i+1)
+        reg_file2.dpram1.ram[i]=0;
+ end 
 `else
 
 	altsyncram	reg_file1(

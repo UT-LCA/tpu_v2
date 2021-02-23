@@ -48,7 +48,7 @@
 
 // VECTOR ISA
 `define LGMVL 6
-`define LGVPW 2
+`define LGVPW 2 //chaging the word size of vector processor to 16: support for bfloat16
 `define LGLW 5
 
 /****************************** FULL NAMES *********************************/

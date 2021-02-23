@@ -11,6 +11,8 @@ Operation table
 1  0   0    1    |  ShiftRightLogic
 3  0   1    1    |  ShiftRightArith
 ****************************************************************************/
+`include "options.v"
+
 module mul(clk, resetn, start, stalled, dst,
             opA, opB, sa,
             op,
@@ -49,6 +51,23 @@ reg [WIDTH:0] decoded_sa;
 
 assign opB_mux_out= (is_mul) ? {is_signed&opB[WIDTH-1],opB} : decoded_sa;
 
+`ifdef USE_INHOUSE_LOGIC
+local_mult local_mult_component (
+.dataa({is_signed&opA[WIDTH-1],opA}),
+.datab(opB_mux_out),
+.clock(clk),
+.clken(1'b1),
+.aclr(~resetn),
+.result({dum2,dum,hi,lo})
+);
+defparam
+ local_mult_component.LPM_WIDTHA = WIDTH + 1,
+ local_mult_component.LPM_WIDTHB = WIDTH + 1,
+ local_mult_component.LPM_WIDTHP = 2*WIDTH + 2,
+ local_mult_component.LPM_REPRESENTATION = "SIGNED";
+
+`else
+ 
 lpm_mult  lpm_mult_component (
   .dataa ({is_signed&opA[WIDTH-1],opA}),
   .datab (opB_mux_out),
@@ -66,6 +85,7 @@ defparam
   lpm_mult_component.lpm_type = "LPM_MULT",
   lpm_mult_component.lpm_representation = "SIGNED",
   lpm_mult_component.lpm_hint = "MAXIMIZE_SPEED=6";
+`endif
 
 assign shift_result= (dir && |sa) ? hi : lo;
 
