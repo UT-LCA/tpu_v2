@@ -127,7 +127,7 @@ input  [ VCWIDTH-1 : 0 ]   vbase_in;
 input  [ VCWIDTH-1 : 0 ]   vinc_in;
 input  [ VCWIDTH-1 : 0 ]   vstride_in;
 input  [ VSWIDTH-1 : 0 ]   vs_in;
-input  [ VCWIDTH-1 : 0 ]  matmul_masks_in;
+input  [3*`MAT_MUL_SIZE-1 : 0]  matmul_masks_in;
 
 // vs Writeback
 output       [ VSWIDTH-1 : 0 ]   vs_writedata;
@@ -2418,11 +2418,10 @@ matmul_unit #(REGIDWIDTH,`MATMUL_STAGES,NUMLANES) u_matmul(
 .stall(stall_matmul),
 .a_data(vr_src1[FU_MATMUL][NUMLANES*LANEWIDTH-1:0]),
 .b_data(vr_src2[FU_MATMUL][NUMLANES*LANEWIDTH-1:0]),
-//TODO: For now, typing these to FF. Need to control these from the instruction
-.validity_mask_a_rows(matmul_masks_in[31:24]),
-.validity_mask_a_cols(matmul_masks_in[23:16]),
-.validity_mask_b_rows(matmul_masks_in[15:8]),
-.validity_mask_b_cols(matmul_masks_in[7:0]),
+.validity_mask_a_rows(matmul_masks_in[1*`MAT_MUL_SIZE-1:0*`MAT_MUL_SIZE]),
+.validity_mask_a_cols(matmul_masks_in[2*`MAT_MUL_SIZE-1:1*`MAT_MUL_SIZE]),
+.validity_mask_b_rows(matmul_masks_in[2*`MAT_MUL_SIZE-1:1*`MAT_MUL_SIZE]),
+.validity_mask_b_cols(matmul_masks_in[3*`MAT_MUL_SIZE-1:2*`MAT_MUL_SIZE]),
 .c_data(matmul_out), 
 .vmask(vmask[FU_MATMUL]),
 .in_dst(dst_s4[FU_MATMUL]),

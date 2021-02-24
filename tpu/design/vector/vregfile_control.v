@@ -34,13 +34,13 @@ input [WIDTH-1:0] c_writedatain;
 input c_we;
 
 output [WIDTH-1:0] vl;
-output [WIDTH-1:0] matmul_masks;
+output [3*`MAT_MUL_SIZE-1:0] matmul_masks;
 
 reg [WIDTH-1:0] vl;
 reg [WIDTH-1:0] matmul_masks;
 
 `ifdef USE_INHOUSE_LOGIC
-        dpram reg_file1(
+      dpram reg_file1(
 	    .clk(clk),
 	    .address_a(c_reg[LOG2NUMREGS-1:0]),
 	    .address_b(a_reg[LOG2NUMREGS-1:0]),
@@ -50,16 +50,16 @@ reg [WIDTH-1:0] matmul_masks;
 	    .data_b(0),
 	    .out_a(),
 	    .out_b(a_readdataout)
-        );
-        defparam
+      );
+      defparam
             reg_file1.AWIDTH=LOG2NUMREGS,
             reg_file1.NUM_WORDS=NUMREGS,
             reg_file1.DWIDTH=WIDTH;
-    `ifdef TEST_BENCH
-                initial begin
-		    $readmemh("vregfile_control.dat",reg_file1.ram,'h0);
-                end
-     `endif 
+      `ifdef TEST_BENCH
+        initial begin
+		      $readmemh("vregfile_control.dat",reg_file1.ram,'h0);
+        end
+      `endif 
  `else
 	altsyncram	reg_file1(
 				.wren_a (c_we),
@@ -123,8 +123,14 @@ reg [WIDTH-1:0] matmul_masks;
         if (c_reg==0) begin
           vl<=c_writedatain;
         end 
-        else if (c_reg==31) begin
-          matmul_masks<=c_writedatain;
+        else if (c_reg==31) begin //a_rows
+          matmul_masks[1*`MAT_MUL_SIZE-1:0*`MAT_MUL_SIZE] <= c_writedatain[`MAT_MUL_SIZE-1:0];
+        end
+        else if (c_reg==30) begin //a_cols, b_rows
+          matmul_masks[2*`MAT_MUL_SIZE-1:1*`MAT_MUL_SIZE] <= c_writedatain[`MAT_MUL_SIZE-1:0];
+        end
+        else if (c_reg==29) begin //b_cols
+          matmul_masks[3*`MAT_MUL_SIZE-1:2*`MAT_MUL_SIZE] <= c_writedatain[`MAT_MUL_SIZE-1:0];
         end
       end  
     end

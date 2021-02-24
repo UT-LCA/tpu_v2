@@ -158,9 +158,9 @@ wire    [ LOG2NUMNONMEMVCREGS-1 : 0 ]   vc_c_reg;
 wire                [ VCWIDTH-1 : 0 ]   vc_c_writedatain;
 wire                                    vc_c_we;
 wire                [ VCWIDTH-1 : 0 ]   vl;
-//Masks for the matmul (4 masks. each is 8-bit. 
+//Masks for the matmul (3 masks. each is 8-bit.)
 //1-bit for each row/column element in the matmul. we have an 8x8 matmul)
-wire                [ VCWIDTH-1 : 0 ]   matmul_masks;
+wire         [3*`MAT_MUL_SIZE-1 : 0 ]   matmul_masks;
 
 wire       [ LOG2NUMVBASEREGS-1 : 0 ]   vbase_a_reg;
 wire                [ VCWIDTH-1 : 0 ]   vbase_a_readdataout;
@@ -960,7 +960,7 @@ reg is_cop2_s1;
       .c_writedatain(vc_c_writedatain), 
       .c_we(vc_c_we),
       .vl(vl),
-      //The reserved registers vc31 is used
+      //The reserved registers vc31, vc30, vc29 are used
       //for the matmul's masks.
       .matmul_masks(matmul_masks)
       );

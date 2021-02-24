@@ -15,7 +15,6 @@
 //IMP IMP IMP IMP IMP IMP IMP IMP IMP IMP IMP
 ///////////////////////////////////////////////////////////
 
-`define MAT_MUL_SIZE 8
 `define MASK_WIDTH 8
 `define LOG2_MAT_MUL_SIZE 3
 
