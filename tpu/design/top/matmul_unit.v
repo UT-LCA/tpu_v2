@@ -80,11 +80,13 @@ parameter NUMLANES=8;
  output   [PIPE_STAGES_MATMUL*NUMLANES-1:0] out_dst_mask;
 
 wire [PIPE_STAGES_MATMUL:1] ctrl_activate;
+wire [PIPE_STAGES_MATMUL:1] squash_activatepipe_NC;
 pipe #(1,PIPE_STAGES_MATMUL-1) activatepipe (
     .d(activate),
     .clk(clk),
     .resetn(resetn),
     .en(en),
+    .squash(squash_activatepipe_NC),
     .q(ctrl_activate));
 
 wire in_progress;
@@ -109,11 +111,13 @@ matmul_8x8 mat(
     .validity_mask_b_cols(validity_mask_b_cols)
 );
 
+wire [PIPE_STAGES_MATMUL:1] squash_dstpipe_NC;
 pipe #(REGIDWIDTH,PIPE_STAGES_MATMUL-1) dstpipe (
     .d(in_dst ),  
     .clk(clk),
     .resetn(resetn),
     .en(en[PIPE_STAGES_MATMUL-1:1] & {1'b1,{(PIPE_STAGES_MATMUL-2){~stall}}} ),
+    .squash(squash_dstpipe_NC),
     .q(out_dst));
 
 pipe #(1,PIPE_STAGES_MATMUL-1) dstwepipe (
@@ -124,11 +128,13 @@ pipe #(1,PIPE_STAGES_MATMUL-1) dstwepipe (
     .squash(squash[PIPE_STAGES_MATMUL-1:1]),
     .q(out_dst_we));
 
+wire [PIPE_STAGES_MATMUL:1] squash_dstmaskpipe_NC;
 pipe #(NUMLANES,PIPE_STAGES_MATMUL-1) dstmaskpipe (
     .d(vmask ),  
     .clk(clk),
     .resetn(resetn),
     .en(en[PIPE_STAGES_MATMUL-1:1] & {1'b1,{(PIPE_STAGES_MATMUL-2){~stall}}} ),
+    .squash(squash_dstmaskpipe_NC),
     .q(out_dst_mask));
 
 endmodule

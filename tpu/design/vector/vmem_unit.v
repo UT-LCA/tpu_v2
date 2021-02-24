@@ -349,6 +349,7 @@ integer p;
             ( (op_pattern[1] || ~op_memop)  ? vindex[m*VPUWIDTH +: VPUWIDTH] : 
                (vstrideoffset[m*CONTROLWIDTH +: CONTROLWIDTH]<<op_size));
 
+  wire [NUMLANES-1:0] vwritedata_shifter_squash_NC;
   velmshifter_jump #(NUMLANES,NUMPARALLELLANES,VPUWIDTH) vwritedatashifter(
       .clk(clk),
       .resetn(resetn),    //Don't use if not a store
@@ -356,11 +357,13 @@ integer p;
       .shift(shifter_shift),
       .dir_left(shifter_dirleft),
       .jump(shifter_jump),
+      .squash(vwritedata_shifter_squash_NC),
       .shiftin_left(0),
       .shiftin_right(0),
       .inpipe(vwritedata),
       .outpipe(vshifted_writedata));
 
+  wire [NUMLANES-1:0] vaddress_shifter_squash_NC;
   velmshifter_jump #(NUMLANES,NUMPARALLELLANES,CONTROLWIDTH) vaddressshifter(
       .clk(clk),
       .resetn(resetn), //consider forcing to 0 if not used
@@ -368,6 +371,7 @@ integer p;
       .shift(shifter_shift),
       .dir_left(shifter_dirleft),
       .jump(shifter_jump),
+      .squash(vaddress_shifter_squash_NC),
       .shiftin_left(0),
       .shiftin_right(0),
       .inpipe( address),
@@ -387,6 +391,7 @@ integer p;
       .outpipe(vshifted_mask));
 
   //Save spilled over masks for shifting instructions (can only shift by 1)
+  wire    [NUMLANES-1 : 0]  vmasks_save_inpipe_NC;
   velmshifter #(NUMLANES,1) vmaskssave(
       .clk(clk),
       .resetn(resetn && ~shifter_load),
@@ -396,6 +401,7 @@ integer p;
       .squash(0),
       .shiftin_left( vshifted_mask[0] ),
       .shiftin_right( vshifted_mask[NUMLANES-1] ),
+      .inpipe(vmasks_save_inpipe_NC),
       .outpipe(vshifted_masksave));
 
   //Stride is maximum of stride specified and cache line size 

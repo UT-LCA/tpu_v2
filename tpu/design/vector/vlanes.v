@@ -1529,12 +1529,14 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
         ctrl2_vf_wbsel,
         ctrl2_volatiledest
       }));
-
+  
+  wire [6:1] squash_ctrlmemoppipe_NC;
   pipe #(7,5) ctrlmemoppipe (
       .d( ctrl1_memunit_op ),
       .clk(clk),
       .resetn(resetn),
       .en( pipe_advance[6:1] & {4'b1,ctrl2_memunit_en,1'b1} ),
+      .squash(squash_ctrlmemoppipe_NC),
       //.squash( pipe_squash[6:1] ),
       .q( {ctrl_memunit_op[6],ctrl_memunit_op[5],ctrl_memunit_op[4],ctrl_memunit_op[3],ctrl_memunit_op[2],ctrl_memunit_op[1]} ));
 
@@ -1605,35 +1607,44 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       vs_in_saved<=vs_in;
     end
 
+  wire [6:2] squash_vcpipe_NC;
   pipe #(VCWIDTH,4) vcpipe (
       .d( (!pipe_advance_s2_r) ? vc_in_saved : vc_in ),
       .clk(clk),
       .resetn(resetn),
       .en( pipe_advance[6:2] & {4'b1,ctrl2_memunit_en} ),
+      .squash(squash_vcpipe_NC),
       .q( {vc[6],vc[5],vc[4],vc[3],vc[2]} ));
 
+  wire [6:2] squash_vlpipe_NC;
   pipe #(VCWIDTH,4) vlpipe (
       .d( (!pipe_advance_s2_r) ? vl_in_saved : vl_in ),
       .clk(clk),
       .resetn(resetn),
       .en( pipe_advance[6:2] & {4'b1,ctrl2_memunit_en} ),
+      .squash(squash_vlpipe_NC),
       .q( {vl[6],vl[5],vl[4],vl[3],vl[2]} ));
 
+  wire [6:2] squash_vbasepipe_NC;
   pipe #(VCWIDTH,4) vbasepipe (
       .d( (!pipe_advance_s2_r) ? vbase_in_saved : vbase_in ),
       .clk(clk),
       .resetn(resetn),
       .en( pipe_advance[6:2] & {4'b1,ctrl2_memunit_en} ),
+      .squash(squash_vbasepipe_NC),
       .q( {vbase[6],vbase[5],vbase[4],vbase[3],vbase[2]} ));
 
+  wire [6:2] squash_vincpipe_NC;
   pipe #(VCWIDTH,4) vincpipe (
       .d( (!pipe_advance_s2_r) ? vinc_in_saved : vinc_in ),
       .clk(clk),
       .resetn(resetn),
       .en( pipe_advance[6:2] & {4'b1,ctrl2_memunit_en} ),
+      .squash(squash_vincpipe_NC),
       .q( {vinc[6],vinc[5],vinc[4],vinc[3],vinc[2]} ));
 
-    //stride register also used for elmt shamt for vext/vhalf/etc in memunit
+  //stride register also used for elmt shamt for vext/vhalf/etc in memunit
+  wire [6:2] squash_vstridepipe_NC;
   pipe #(VCWIDTH,4) vstridepipe (
       .d( (ctrl2_memunit_en&~ctrl2_mem_en) ? 
             ((LOG2NUMLANES>0) ?
@@ -1642,6 +1653,7 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       .clk(clk),
       .resetn(resetn),
       .en( pipe_advance[6:2] & {4'b1,ctrl2_memunit_en} ),
+      .squash(squash_vstridepipe_NC),
       .q( {vstride[6],vstride[5],vstride[4],vstride[3],vstride[2]} ));
 
 
@@ -2336,11 +2348,13 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
 
     end
 
+    wire squash_aludstpipe_NC;
     pipe #(REGIDWIDTH,1) aludstpipe (
       .d( dst_s4[FU_ALU+bk] ),  
       .clk(clk),
       .resetn(resetn),
       .en( pipe_advance[4] ),
+      .squash(squash_aludstpipe_NC),
       .q({dst[FU_ALU+bk][5],dst[FU_ALU+bk][4]}));
 
     pipe #(1,3) aludstwepipe (
@@ -2351,18 +2365,22 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
       .squash( pipe_squash[6:4] ),
       .q({dst_we[FU_ALU+bk][5],dst_we[FU_ALU+bk][4]}));
 
+    wire squash_aludstmaskpipe_NC;
     pipe #(NUMLANES,1) aludstmaskpipe (
       .d( vmask[FU_ALU+bk] ),  
       .clk(clk),
       .resetn(resetn),
       .en( pipe_advance[4] ),
+      .squash(squash_aludstmaskpipe_NC),
       .q({dst_mask[FU_ALU+bk][5],dst_mask[FU_ALU+bk][4]}));
 
+    wire squash_faludstpipe_NC;
     pipe #(REGIDWIDTH,1) faludstpipe (
       .d( dst_s4[FU_FALU+bk] ),  
       .clk(clk),
       .resetn(resetn),
       .en( pipe_advance[4] ),
+      .squash(squash_faludstpipe_NC),
       .q({dst[FU_FALU+bk][5],dst[FU_FALU+bk][4]}));
 
     pipe #(1,3) faludstwepipe (
