@@ -81,9 +81,9 @@ register secondstagedir (shift_direction, clk,resetn,1'b1,shift_direction_2);
   .result({dum2,result})
  );
  defparam
-    local_shifter_inst1.LPM_WIDTH = WIDTH+1,
-    local_shifter_inst1.LPM_WIDTHDIST = (REGISTERBREAK>0) ? REGISTERBREAK : 1,
-    local_shifter_inst1.LPM_SHIFTTYPE ="ARITHMETIC";
+    local_shifter_inst2.LPM_WIDTH = WIDTH+1,
+    local_shifter_inst2.LPM_WIDTHDIST = (REGISTERBREAK>0) ? REGISTERBREAK : 1,
+    local_shifter_inst2.LPM_SHIFTTYPE ="ARITHMETIC";
 `else
 lpm_clshift shifter_inst2(
     .data({dum_,partial_result_}),

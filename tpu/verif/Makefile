@@ -45,9 +45,9 @@ compilework: work vregfile_control.dat
 	vcom ../design/top/devwrite.vhd
 	vcom ../design/top/devwriteack.vhd
 	vlog ${VLOG_ARGS} ../design/top/options.v
-	vlog ${VLOG_ARGS} ../design/top/spram1.v
-	vlog ${VLOG_ARGS} ../design/top/rams.v
-	vlog ${VLOG_ARGS} ../design/top/ram_wrapper.v
+	vlog ${VLOG_ARGS} ../design/local/spram1.v
+	vlog ${VLOG_ARGS} ../design/local/rams.v
+	vlog ${VLOG_ARGS} ../design/local/ram_wrapper.v
 	vlog ${VLOG_ARGS} ${LOCAL_SRC}
 	vlog ${VLOG_ARGS} +incdir+.. +incdir+../design/top +incdir+../design/vector +incdir+../design/scalar +incdir+../design/ddr ${SPREE_SRC}
 	vlog ${VLOG_ARGS} +incdir+.. +incdir+../design/top +incdir+../design/vector +incdir+../design/scalar +incdir+../design/ddr ${VESPA_SRC}

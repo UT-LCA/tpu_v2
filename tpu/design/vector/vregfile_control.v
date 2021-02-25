@@ -34,7 +34,7 @@ input [WIDTH-1:0] c_writedatain;
 input c_we;
 
 output [WIDTH-1:0] vl;
-output [WIDTH-1:0] matmul_masks;
+output [3*`MAT_MUL_SIZE-1:0] matmul_masks;
 
 reg [WIDTH-1:0] vl;
 reg [WIDTH-1:0] matmul_masks;
@@ -53,8 +53,8 @@ reg [WIDTH-1:0] matmul_masks;
 	    .data_b(0),
 	    .out_a(),
 	    .out_b(a_readdataout)
-        );
-        defparam
+      );
+      defparam
             reg_file1.AWIDTH=LOG2NUMREGS,
             reg_file1.NUM_WORDS=NUMREGS,
             reg_file1.DWIDTH=WIDTH;
@@ -126,8 +126,14 @@ reg [WIDTH-1:0] matmul_masks;
         if (c_reg==0) begin
           vl<=c_writedatain;
         end 
-        else if (c_reg==31) begin
-          matmul_masks<=c_writedatain;
+        else if (c_reg==31) begin //a_rows
+          matmul_masks[1*`MAT_MUL_SIZE-1:0*`MAT_MUL_SIZE] <= c_writedatain[`MAT_MUL_SIZE-1:0];
+        end
+        else if (c_reg==30) begin //a_cols, b_rows
+          matmul_masks[2*`MAT_MUL_SIZE-1:1*`MAT_MUL_SIZE] <= c_writedatain[`MAT_MUL_SIZE-1:0];
+        end
+        else if (c_reg==29) begin //b_cols
+          matmul_masks[3*`MAT_MUL_SIZE-1:2*`MAT_MUL_SIZE] <= c_writedatain[`MAT_MUL_SIZE-1:0];
         end
       end  
     end

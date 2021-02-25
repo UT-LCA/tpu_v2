@@ -1,8 +1,4 @@
 /*
-	###########################################################
-  # $Id: composit_sched_ai.s,v 1.1 1999/05/27 02:56:43 kozyraki Exp kozyraki $
-  ###########################################################
-
 	# Vector add
 	# int vector_add(
 	#	size_t n,	//elements to add
@@ -83,9 +79,13 @@ vector_add:
   nop
   nop
   #matmul masks 
-  #31:24 - a_rows, 23:16 - a_cols, 15:8 - b_rows, 7:0 - b_cols
-  li t3, 0xf0f0f0f0
+  # vc31 - a_rows
+  # vc30 - a_cols, b_rows
+  # vc29 - b_cols
+  li t3, 0xf0
   ctc2 t3, $vc31
+  ctc2 t3, $vc30
+  ctc2 t3, $vc29
 
 	#vadd.vv		c_v, a_v, b_v		# c = a + b
 	#vmullo.vv		c_v, a_v, b_v		# c = a * b
@@ -102,21 +102,3 @@ vector_add:
 	addu	sp, sp, 32
 
 	.end	vector_add
-
-    ###########################################################
-    # $Log: composit_sched_ai.s,v $
-    # Revision 1.1  1999/05/27 02:56:43  kozyraki
-    # Initial revision
-    #
-    # Revision 1.3  1999/05/27 02:42:58  kozyraki
-    # version that leads to  6.023 GOPS
-    #
-    # Revision 1.2  1999/05/24 19:04:01  kozyraki
-    # Scheduled version that takes into account the fact
-    # that it is better to send all multiplies to one FU
-    #
-    # Revision 1.1  1999/05/23 20:14:04  kozyraki
-    # Initial revision
-    #
-    ###########################################################
- 

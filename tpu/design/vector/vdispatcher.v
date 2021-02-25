@@ -62,6 +62,7 @@ output [ NUMENTRIES*WIDTHRDELM-1:0 ] rdelm;
 output [ NUMENTRIES*WIDTHWRELM-1:0 ] wrelm;
 output [ NUMENTRIES*WIDTHCOUNT-1:0 ] count;
 
+wire [NUMENTRIES*WIDTHINSTR-1:0 ] inparallel_data_inst_NC;
 vdispatcher_shift #(NUMENTRIES,WIDTHINSTR) vdispatcher_instr (
       .clk(clk),
       .resetn(resetn),      
@@ -70,8 +71,10 @@ vdispatcher_shift #(NUMENTRIES,WIDTHINSTR) vdispatcher_instr (
       .rotate(rotate),
       .squash({NUMENTRIES{1'b0}}),
       .inshift_data(inshift_instr),
+      .inparallel_data(inparallel_data_inst_NC),
       .outparallel_data(instr));
 
+wire [ NUMENTRIES-1:0 ] inparallel_data_first_NC;
 vdispatcher_shift #(NUMENTRIES,1) vdispatcher_first (
       .clk(clk),
       .resetn(resetn),      
@@ -80,8 +83,11 @@ vdispatcher_shift #(NUMENTRIES,1) vdispatcher_first (
       .rotate(rotate),
       .squash(increment&~{32'b0,shift&~rotate}),
       .inshift_data(inshift_first),
+      .inparallel_data(inparallel_data_first_NC),
       .outparallel_data(first));
 
+wire [ NUMENTRIES*WIDTHRDELM-1:0 ] inparallel_data_rdelm_NC;
+wire [ NUMENTRIES-1:0 ] squash_rdelm_NC;
 vdispatcher_add #(NUMENTRIES,WIDTHRDELM) vdispatcher_rdelm(
       .clk(clk),
       .resetn(resetn),      
@@ -89,11 +95,15 @@ vdispatcher_add #(NUMENTRIES,WIDTHRDELM) vdispatcher_rdelm(
       .shift(shift),
       .rotate(rotate),
       .increment(increment),
+      .squash(squash_rdelm_NC),
       .add_sub(rdelm_add_sub),
       .valuetoadd(rdelm_valuetoadd),
       .inshift_data(inshift_rdelm),
+      .inparallel_data(inparallel_data_rdelm_NC),
       .outparallel_data(rdelm));
 
+wire [ NUMENTRIES*WIDTHWRELM-1:0 ] inparallel_data_wrelm_NC;
+wire [ NUMENTRIES-1:0 ] squash_wrelm_NC;
 vdispatcher_add #(NUMENTRIES,WIDTHWRELM) vdispatcher_wrelm(
       .clk(clk),
       .resetn(resetn),      
@@ -101,11 +111,15 @@ vdispatcher_add #(NUMENTRIES,WIDTHWRELM) vdispatcher_wrelm(
       .shift(shift),
       .rotate(rotate),
       .increment(increment),
+      .squash(squash_wrelm_NC),
       .add_sub(wrelm_add_sub),
       .valuetoadd(wrelm_valuetoadd),
       .inshift_data(inshift_wrelm),
+      .inparallel_data(inparallel_data_wrelm_NC),
       .outparallel_data(wrelm));
 
+wire [ NUMENTRIES*WIDTHCOUNT-1:0 ] inparallel_data_count_NC;
+wire [ NUMENTRIES-1:0 ] squash_count_NC;
 vdispatcher_add #(NUMENTRIES,WIDTHCOUNT) vdispatcher_count(
       .clk(clk),
       .resetn(resetn),      
@@ -113,9 +127,11 @@ vdispatcher_add #(NUMENTRIES,WIDTHCOUNT) vdispatcher_count(
       .shift(shift),
       .rotate(rotate),
       .increment(increment),
+      .squash(squash_count_NC),
       .add_sub(count_add_sub),
       .valuetoadd(count_valuetoadd),
       .inshift_data(inshift_count),
+      .inparallel_data(inparallel_data_count_NC),
       .outparallel_data(count));
 
 

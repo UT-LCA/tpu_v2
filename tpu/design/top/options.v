@@ -89,5 +89,8 @@
 `define MAX_PIPE_STAGES 33
 `define MATMUL_STAGES 29
 
+/****************** SIZE OF THE MATMUL UNIT ***************/
+`define MAT_MUL_SIZE 8
+
 `endif
 

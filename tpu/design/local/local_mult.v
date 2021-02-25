@@ -23,9 +23,9 @@ wire signed [LPM_WIDTHA-1:0] signedinputA;
 wire signed [LPM_WIDTHB-1:0] signedinputB;
 wire signed [LPM_WIDTHP-1:0] signedoutputP;
 
-wire unsigned [LPM_WIDTHA-1:0] unsignedinputA;
-wire unsigned [LPM_WIDTHB-1:0] unsignedinputB;
-wire unsigned [LPM_WIDTHP-1:0] unsignedinputP;
+wire [LPM_WIDTHA-1:0] unsignedinputA;
+wire [LPM_WIDTHB-1:0] unsignedinputB;
+wire [LPM_WIDTHP-1:0] unsignedinputP;
 
 wire gated_clock;
 

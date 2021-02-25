@@ -84,6 +84,7 @@ output [NUMLANES*WIDTH-1:0] result;
   wire [((LOG2WIDTH==0) ? 1 : LOG2WIDTH)-1:0] ctrl_vshamt[3:1]; //3 pipe stages
 
   //Shift Register for all multiplier operands for lanes without multipliers
+  wire [WIDTH*NUMMULLANES-1:0] opA_elmshifter_shiftin_right_NC;
   velmshifter #(NUMLANES/NUMMULLANES,WIDTH*NUMMULLANES) opA_elmshifter (
     .clk(clk),
     .resetn(resetn),
@@ -92,10 +93,12 @@ output [NUMLANES*WIDTH-1:0] result;
     .dir_left(1'b0),
     .squash(1'b0),
     .shiftin_left({WIDTH*NUMMULLANES{1'b0}}),
+    .shiftin_right(opA_elmshifter_shiftin_right_NC), 
     .inpipe(opA),
     .outpipe(opA_buffered)
   );
 
+  wire [WIDTH*NUMMULLANES-1:0] opB_elmshifter_shiftin_right_NC;
   velmshifter #(NUMLANES/NUMMULLANES,WIDTH*NUMMULLANES) opB_elmshifter (
     .clk(clk),
     .resetn(resetn),
@@ -104,10 +107,12 @@ output [NUMLANES*WIDTH-1:0] result;
     .dir_left(1'b0),
     .squash(1'b0),
     .shiftin_left({WIDTH*NUMMULLANES{1'b0}}),
+    .shiftin_right(opB_elmshifter_shiftin_right_NC), 
     .inpipe(opB),
     .outpipe(opB_buffered)
   );
 
+  wire [NUMMULLANES-1:0] mask_elmshifter_shiftin_right_NC;
   velmshifter #(NUMLANES/NUMMULLANES,NUMMULLANES) mask_elmshifter (
     .clk(clk),
     .resetn(resetn),
@@ -116,6 +121,7 @@ output [NUMLANES*WIDTH-1:0] result;
     .dir_left(1'b0),
     .squash(1'b0),
     .shiftin_left({NUMMULLANES{1'b0}}),
+    .shiftin_right(mask_elmshifter_shiftin_right_NC), 
     //.inpipe(vmask), //DISABLE - always do all multiplications
     .inpipe({NUMLANES{1'b1}}),
     .outpipe(mask_buffered)
@@ -139,25 +145,31 @@ output [NUMLANES*WIDTH-1:0] result;
 
   assign stall=~done && (ctrl_activate[2]);
 
+  wire [3:1] oppipe_squash_NC; 
   pipe #(5,2) oppipe (
     .d(op),
     .clk(clk),
     .resetn(resetn),
     .en(en),
+    .squash(oppipe_squash_NC),
     .q({ctrl_op[3],ctrl_op[2],ctrl_op[1]}));
 
+  wire [3:1] activatepipe_squash_NC; 
   pipe #(1,2) activatepipe (
     .d(activate),
     .clk(clk),
     .resetn(resetn),
     .en(en),
+    .squash(activatepipe_squash_NC),
     .q({ctrl_activate[3],ctrl_activate[2],ctrl_activate[1]}));
 
+  wire [3:1] vshamtpipe_squash_NC; 
   pipe #(((LOG2WIDTH==0) ? 1 : LOG2WIDTH),2) vshamtpipe (
     .d(vshamt),
     .clk(clk),
     .resetn(resetn),
     .en(en),
+    .squash(vshamtpipe_squash_NC),
     .q({ctrl_vshamt[3],ctrl_vshamt[2],ctrl_vshamt[1]}));
 
   //============== Instantiate across lanes =============
@@ -191,6 +203,8 @@ output [NUMLANES*WIDTH-1:0] result;
 
 
   //Shift Register for all multiplier results
+  wire [NUMMULLANES*WIDTH-1:0] shiftin_right_result_elmshifter_NC;
+  wire [NUMLANES*WIDTH-1:0] inpipe_result_elmshifter_NC;
   velmshifter #(NUMLANES/NUMMULLANES,WIDTH*NUMMULLANES) result_elmshifter (
     .clk(clk),
     .resetn(resetn),
@@ -201,6 +215,8 @@ output [NUMLANES*WIDTH-1:0] result;
     //Enable/Disable rshifter for fixed-point multiply support
     //.shiftin_left(rshift_result),
     .shiftin_left(mul_result),
+    .shiftin_right(shiftin_right_result_elmshifter_NC),
+    .inpipe(inpipe_result_elmshifter_NC),
     .outpipe(result_buffered)
   );
 
@@ -211,11 +227,13 @@ output [NUMLANES*WIDTH-1:0] result;
   assign result=(result_tmp<<((NUMLANES/NUMMULLANES-1)*NUMMULLANES*WIDTH)) |
                 (result_buffered>>NUMMULLANES*WIDTH);
 
+  wire [2:1] dstpipe_squash_NC;
   pipe #(REGIDWIDTH,2) dstpipe (
     .d( in_dst ),  
     .clk(clk),
     .resetn(resetn),
     .en( en[2:1] & {1'b1,~stall} ),
+    .squash(dstpipe_squash_NC),
     .q(out_dst));
 
   pipe #(1,2) dstwepipe (
@@ -226,11 +244,13 @@ output [NUMLANES*WIDTH-1:0] result;
     .squash(squash[2:1]),
     .q(out_dst_we));
 
+  wire [2:1] dstmaskpipe_squash_NC;
   pipe #(NUMLANES,2) dstmaskpipe (
     .d( vmask ),  
     .clk(clk),
     .resetn(resetn),
     .en( en[2:1] & {1'b1,~stall} ),
+    .squash(dstmaskpipe_squash_NC),
     .q(out_dst_mask));
 
 
