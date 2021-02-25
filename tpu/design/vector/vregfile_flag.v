@@ -37,8 +37,11 @@ input [NUMBANKS*WIDTH-1:0] c_writedatain;
   begin : bank_gen
 `ifdef  USE_INHOUSE_LOGIC
 
-        dpram reg_file1(
+        ram_wrapper reg_file1(
 	    .clk(clk),
+            .resetn(resetn),
+            .rden_a(1'b0),
+            .rden_b(a_en[k]),
 	    .address_a(c_reg[k* LOG2NUMREGSPERBANK +: LOG2NUMREGSPERBANK]),
 	    .address_b(a_reg[k* LOG2NUMREGSPERBANK +: LOG2NUMREGSPERBANK]),
 	    .wren_a(c_we[k]),
@@ -53,8 +56,11 @@ input [NUMBANKS*WIDTH-1:0] c_writedatain;
             reg_file1.NUM_WORDS=NUMREGSPERBANK,
             reg_file1.DWIDTH=WIDTH;
 
-        dpram reg_file2(
+        ram_wrapper reg_file2(
 	    .clk(clk),
+            .resetn(resetn),
+            .rden_a(1'b0),
+            .rden_b(b_en[k]),
 	    .address_a(c_reg[k* LOG2NUMREGSPERBANK +: LOG2NUMREGSPERBANK]),
 	    .address_b(b_reg[k* LOG2NUMREGSPERBANK +: LOG2NUMREGSPERBANK]),
 	    .wren_a(c_we[k]),

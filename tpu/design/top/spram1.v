@@ -39,7 +39,7 @@ always@(posedge clk) begin
   if (wren) begin
       for(k=0; k < DWIDTH/32;k=k+1)begin
           for(i=0; i < 4 ;i=i+1)begin
-              if(byteen[4*k+i])
+              if(byteen[((DWIDTH/8-1)-(4*k+i))])
                   ram[addr+k][i*8+:8] <= data[32*k+i*8+:8];
           end
       end

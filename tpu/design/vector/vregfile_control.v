@@ -40,8 +40,11 @@ reg [WIDTH-1:0] vl;
 reg [WIDTH-1:0] matmul_masks;
 
 `ifdef USE_INHOUSE_LOGIC
-        dpram reg_file1(
+        ram_wrapper reg_file1(
 	    .clk(clk),
+            .resetn(resetn),
+            .rden_a(1'b0),
+            .rden_b(a_en),
 	    .address_a(c_reg[LOG2NUMREGS-1:0]),
 	    .address_b(a_reg[LOG2NUMREGS-1:0]),
 	    .wren_a(c_we),
@@ -57,7 +60,7 @@ reg [WIDTH-1:0] matmul_masks;
             reg_file1.DWIDTH=WIDTH;
     `ifdef TEST_BENCH
                 initial begin
-		    $readmemh("vregfile_control.dat",reg_file1.ram,'h0);
+		    $readmemh("vregfile_control.dat",reg_file1.dpram1.ram,'h0);
                 end
      `endif 
  `else

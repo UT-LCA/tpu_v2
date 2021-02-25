@@ -225,7 +225,7 @@ wire                        t_mem_fillwe;
 `ifdef USE_INHOUSE_LOGIC
  spram1 data0 (
     .clk(bus_clk),
-    .address(bus_address[29:8]),
+    .address(bus_address[28:7]),
     .wren(bus_wren),
     .data(bus_writedata_t),
     .byteen(bus_byteen_t),
@@ -300,7 +300,7 @@ wire                        t_mem_fillwe;
 //  assign mem_dirtywe=(mem_validout) & (mem_dirtyout);
 
   //Word muxing - assign byteena, datain, dataout
-  assign wordsel_saved=bus_address_saved[LOG2CACHELINESIZE-3-1:2];
+  assign wordsel_saved=bus_address_saved[LOG2CACHELINESIZE-3:3];
 
 
   always @*

@@ -31,8 +31,11 @@ input [WIDTH-1:0] c_writedatain;
 input c_we;
 
 `ifdef USE_INHOUSE_LOGIC
-        dpram reg_file1(
+        ram_wrapper reg_file1(
 	    .clk(clk),
+            .resetn(resetn),
+            .rden_a(1'b0),
+            .rden_b(a_en),
 	    .address_a(c_reg[LOG2NUMREGS-1:0]),
 	    .address_b(a_reg[LOG2NUMREGS-1:0]),
 	    .wren_a(c_we&(|c_reg)),
