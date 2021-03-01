@@ -95,13 +95,17 @@ parameter BANKREGIDWIDTH=VRIDWIDTH+LOG2MVL-LOG2NUMLANES-LOG2NUMBANKS;
 `define VRID_RANGE REGIDWIDTH-1:REGIDWIDTH-VRIDWIDTH
 `define VRELM_RANGE REGIDWIDTH-VRIDWIDTH-1:0
 
-// NUMFUS = ALU*NUMBANKS + MUL + MEM + FALU*MEMBANKS
-parameter NUMFUS=4+2*(NUMBANKS-1)*ALUPERBANK+1; //Adding 1 for matmul FU
+// NUMFUS = ALU*NUMBANKS + MUL + MEM + FALU*MEMBANKS + MATMUL(1) + BFLOAT
+// UNITS(2) + ACTIVATION
+parameter NUMFUS=4+2*(NUMBANKS-1)*ALUPERBANK+1+3; //Adding 1 for matmul FU
 parameter FU_ALU=0;
 parameter FU_MUL=FU_ALU+(NUMBANKS-1)*ALUPERBANK+1;
 parameter FU_MEM=FU_MUL+1;
 parameter FU_FALU=FU_MEM+1;
 parameter FU_MATMUL=FU_FALU+1;
+parameter FU_BFADDER = FU_MATMUL + 1;
+parameter FU_BFMULT = FU_BFADDER + 1;
+parameter FU_ACT = FU_BFMULT + 1;
 
 input clk;
 input resetn;
@@ -351,6 +355,9 @@ wire                    [LOG2MVL-1:0]   dst_start;
 reg          [ LANEWIDTH*NUMLANES-1 : 0 ]   vr_src1[NUMFUS-1:0];
 reg          [ LANEWIDTH*NUMLANES-1 : 0 ]   vr_src2[NUMFUS-1:0];
 wire         [ LANEWIDTH*NUMLANES-1 : 0 ]   matmul_out;
+wire         [ LANEWIDTH*NUMLANES-1 : 0 ]   bfadder_result_s5;
+wire         [ LANEWIDTH*NUMLANES-1 : 0 ]   bfmult_result_s5;
+wire         [ LANEWIDTH*NUMLANES-1 : 0 ]   act_result_s5;
 reg                [ NUMLANES-1 : 0 ]   vf_src1[NUMFUS-1:0];
 reg                [ NUMLANES-1 : 0 ]   vf_src2[NUMFUS-1:0];
 reg                [ NUMLANES-1 : 0 ]   vmask[NUMFUS-1:0];
@@ -390,6 +397,9 @@ reg [1:0] ctrl1_satsum_op;
 reg [3:0] ctrl1_satsize_op;
 reg [4:0] ctrl1_mulshift_op;
 reg ctrl1_matmul_en;
+reg ctrl1_bfadder_en;
+reg ctrl1_bfmult_en;
+reg ctrl1_act_en;
 reg ctrl1_memunit_en;
 reg ctrl1_mem_en;
 reg [6:0] ctrl1_memunit_op;
@@ -432,6 +442,9 @@ wire ctrl2_volatiledest;
 wire ctrl2_vf_a_sel; //0-0/1 from instr, 1-src1
 wire ctrl2_mulshift_en;
 wire ctrl2_matmul_en;
+wire ctrl2_bfadder_en;
+wire ctrl2_bfmult_en;
+wire ctrl2_act_en;
 wire ctrl2_alufalu_en;
 
 reg [NUMBANKS-1:0] ctrl3_vr_a_en; // SRC1
@@ -458,6 +471,9 @@ reg [NUMBANKS-1:0] ctrl3_volatiledest;
 reg [NUMBANKS-1:0] ctrl3_vf_a_sel; //0-0/1 from instr, 1-src1
 reg [NUMBANKS-1:0] ctrl3_mulshift_en;
 reg [NUMBANKS-1:0] ctrl3_matmul_en;
+reg [NUMBANKS-1:0] ctrl3_bfadder_en;
+reg [NUMBANKS-1:0] ctrl3_bfmult_en;
+reg [NUMBANKS-1:0] ctrl3_act_en;
 reg [NUMBANKS-1:0] ctrl3_alufalu_en;
 
 reg ctrl4_mem_dir_left;
@@ -476,6 +492,9 @@ reg ctrl4_volatiledest;
 reg ctrl4_vf_a_sel[(NUMBANKS-1)*ALUPERBANK:0]; //0-0/1 from instr, 1-src1
 reg ctrl4_mulshift_en;
 reg ctrl4_matmul_en;
+reg ctrl4_bfadder_en;
+reg ctrl4_bfmult_en;
+reg ctrl4_act_en;
 
 wire ctrl5_mem_en;
 
@@ -1235,6 +1254,9 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
     ctrl1_mulshift_op=MULOP_ZERO;
     ctrl1_memunit_op=0;
     ctrl1_matmul_en=0;
+    ctrl1_bfadder_en = 1'b0;
+    ctrl1_bfmult_en = 1'b0;
+    ctrl1_act_en = 1'b0;
     ctrl1_flagalu_op=FLAGOP_CLR;
     casez(ir_op)
       COP2_VADD:      ctrl1_alu_op=ALUOP_ADD^ALUOP_ZERO;
@@ -1244,6 +1266,9 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VMULHI:  ctrl1_mulshift_op=MULOP_MULHI;
       COP2_VMULHI_U:ctrl1_mulshift_op=MULOP_MULUHI;
       COP2_VDIV:    ctrl1_matmul_en=1'b1;  //Note: This is a hack. We're using VDIV opcode for matmul operation
+      COP2_VBFADD:    ctrl1_bfadder_en = 1'b1;
+      COP2_VBFMULT:   ctrl1_bfmult_en = 1'b1;
+      COP2_VACT:      ctrl1_act_en = 1'b1;
       //COP2_VDIV_U,
       //COP2_VMOD,
       //COP2_VMOD_U,
@@ -1425,6 +1450,7 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       1+
       1+
       1+
+      3+
       1
     ) pipe1regwsquash (
       .d( {
@@ -1440,6 +1466,9 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
         ctrl1_mem_en,
         |ctrl1_mulshift_op,
         ctrl1_matmul_en,
+        ctrl1_bfadder_en,
+        ctrl1_bfmult_en,
+        ctrl1_act_en,
         (ctrl1_alu_op!=(ALUOP_ZERO^ALUOP_ZERO)) || ctrl1_vf_c_we
       }),
       .clk(clk),
@@ -1459,6 +1488,9 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
         ctrl2_mem_en,
         ctrl2_mulshift_en,
         ctrl2_matmul_en,
+        ctrl2_bfadder_en,
+        ctrl2_bfmult_en,
+        ctrl2_act_en,
         ctrl2_alufalu_en
         })
       );
@@ -1664,6 +1696,9 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
     (|(ctrl3_memunit_en&~last_subvector) && ctrl2_memunit_en) ||
     (|(ctrl3_mulshift_en&~last_subvector) && ctrl2_mulshift_en) ||
     (|(ctrl3_matmul_en&~last_subvector) && ctrl2_matmul_en) ||
+    (|(ctrl3_bfadder_en&~last_subvector) && ctrl2_bfadder_en) ||
+    (|(ctrl3_bfmult_en&~last_subvector) && ctrl2_bfmult_en) ||
+    (|(ctrl3_act_en&~last_subvector) && ctrl2_act_en) ||
     (|(ctrl3_alufalu_en&~last_subvector) && ctrl2_alufalu_en && ALUPERBANK==0)||
     //Entry 0 is taken
     (dispatcher_rotate && ctrl2_useslanes);
@@ -1732,6 +1767,9 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
           (pipe_squash[2]) ? 1'b0 : ctrl2_mem_en,
           (pipe_squash[2]) ? 1'b0 : ctrl2_mulshift_en,
           (pipe_squash[2]) ? 1'b0 : ctrl2_matmul_en,
+          (pipe_squash[2]) ? 1'b0 : ctrl2_bfadder_en,
+          (pipe_squash[2]) ? 1'b0 : ctrl2_bfmult_en,
+          (pipe_squash[2]) ? 1'b0 : ctrl2_act_en,
           (pipe_squash[2]) ? 1'b0 : ctrl2_alufalu_en,
           dst_s2,
           src1_s2,
@@ -1879,6 +1917,9 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
         ctrl3_mem_en[bi],
         ctrl3_mulshift_en[bi],
         ctrl3_matmul_en[bi],
+        ctrl3_bfadder_en[bi],
+        ctrl3_bfmult_en[bi],
+        ctrl3_act_en[bi],
         ctrl3_alufalu_en[bi],
         _dst_s3[bi],
         _src1_s3[bi],
@@ -1946,6 +1987,9 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
       dst_we_s4=0;
       ctrl4_mulshift_en=0;
       ctrl4_matmul_en=0;
+      ctrl4_bfadder_en=0;
+      ctrl4_bfmult_en=0;
+      ctrl4_act_en=0;
       ctrl4_memunit_en=0;
       ctrl4_mem_en=0;
       ctrl4_volatiledest=0;
@@ -1955,6 +1999,9 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
       dst_we_s4=0;
       ctrl4_mulshift_en=0;
       ctrl4_matmul_en=0;
+      ctrl4_bfadder_en=0;
+      ctrl4_bfmult_en=0;
+      ctrl4_act_en=0;
       ctrl4_memunit_en=0;
       ctrl4_mem_en=|ctrl3_mem_en;
       ctrl4_volatiledest=0;
@@ -1989,7 +2036,7 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
             ctrl4_mulshift_op=ctrl3_mulshift_op[b3];
             ctrl4_rshiftnonzero=ctrl3_rshiftnonzero[b3];
           end
-          if (ctrl3_matmul_en[b3])    //is matmul
+          else if (ctrl3_matmul_en[b3])    //is matmul
           begin
             D_instr_s4[FU_MATMUL]=D_instr_s3[b3];
             D_last_subvector_s4[FU_MATMUL]=last_subvector[b3];
@@ -2003,6 +2050,51 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
             src1scalar_s4[FU_MATMUL]=src1scalar_s3[b3];
             src2scalar_s4[FU_MATMUL]=src2scalar_s3[b3];
             ctrl4_ismasked[FU_MATMUL]=ctrl3_ismasked[b3];
+          end
+          else if (ctrl3_bfadder_en[b3])    //is bfloat addition
+          begin
+            D_instr_s4[FU_BFADDER]=D_instr_s3[b3];
+            D_last_subvector_s4[FU_BFADDER]=last_subvector[b3];
+            ctrl4_bfadder_en=ctrl3_bfadder_en[b3];
+            banksel_s4[FU_BFADDER]=b3;
+            vs_s4[FU_BFADDER]=vs_s3[b3];
+            vc_s4[FU_BFADDER]=vc_s3[b3];
+            dst_s4[FU_BFADDER]=dst_s3[b3];
+            dst_we_s4[FU_BFADDER]=ctrl3_vr_c_we[b3];
+            vlane_en[FU_BFADDER]=lane_en[b3];
+            src1scalar_s4[FU_BFADDER]=src1scalar_s3[b3];
+            src2scalar_s4[FU_BFADDER]=src2scalar_s3[b3];
+            ctrl4_ismasked[FU_BFADDER]=ctrl3_ismasked[b3];
+          end
+          else if (ctrl3_bfmult_en[b3])    //is bfloat addition
+          begin
+            D_instr_s4[FU_BFMULT]=D_instr_s3[b3];
+            D_last_subvector_s4[FU_BFMULT]=last_subvector[b3];
+            ctrl4_bfmult_en = ctrl3_bfmult_en[b3];
+            banksel_s4[FU_BFMULT]=b3;
+            vs_s4[FU_BFMULT]=vs_s3[b3];
+            vc_s4[FU_BFMULT]=vc_s3[b3];
+            dst_s4[FU_BFMULT]=dst_s3[b3];
+            dst_we_s4[FU_BFMULT]=ctrl3_vr_c_we[b3];
+            vlane_en[FU_BFMULT]=lane_en[b3];
+            src1scalar_s4[FU_BFMULT]=src1scalar_s3[b3];
+            src2scalar_s4[FU_BFMULT]=src2scalar_s3[b3];
+            ctrl4_ismasked[FU_BFMULT]=ctrl3_ismasked[b3];
+          end
+          else if (ctrl3_act_en[b3])    //is bfloat addition
+          begin
+            D_instr_s4[FU_BFMULT]=D_instr_s3[b3];
+            D_last_subvector_s4[FU_BFMULT]=last_subvector[b3];
+            ctrl4_act_en = ctrl3_act_en[b3];
+            banksel_s4[FU_BFMULT]=b3;
+            vs_s4[FU_BFMULT]=vs_s3[b3];
+            vc_s4[FU_BFMULT]=vc_s3[b3];
+            dst_s4[FU_BFMULT]=dst_s3[b3];
+            dst_we_s4[FU_BFMULT]=ctrl3_vr_c_we[b3];
+            vlane_en[FU_BFMULT]=lane_en[b3];
+            src1scalar_s4[FU_BFMULT]=src1scalar_s3[b3];
+            src2scalar_s4[FU_BFMULT]=src2scalar_s3[b3];
+            ctrl4_ismasked[FU_BFMULT]=ctrl3_ismasked[b3];
           end
           else if (ctrl3_memunit_en[b3] && !ctrl3_mem_en[b3]) //is memunit shift
           begin
@@ -2431,8 +2523,46 @@ matmul_unit #(REGIDWIDTH,`MATMUL_STAGES,NUMLANES) u_matmul(
 .out_dst_mask(dst_mask_matmul)
 );
  
+///////////////////////////
+// Bfloat unit
+///////////////////////////
+genvar g_func;
+  generate
+  for(g_func =0; g_func <NUMLANES; g_func = g_func+1) begin
+    bfloat_adder #(REGIDWIDTH) bf_add(
+    .clk(clk),
+    .resetn(resetn),
+    .en(ctrl4_bfadder_en),
+    .stall(stall_bf_adder),
+    .a(vr_src1[FU_BFADDER][g_func * LANEWIDTHE +: LANEWIDTH]),
+    .b(vr_src2[FU_BFADDER][g_func * LANEWIDTHE +: LANEWIDTH]),
+    .out(bfadder_result_s5[g_func*LANEWIDTH +: LANEWIDTH])
+    );
+    
+    bfloat_mult #(REGIDWIDTH) bf_mult(
+    .clk(clk),
+    .resetn(resetn),
+    .en(ctrl4_bfmult_en),
+    .stall(stall_bf_adder),
+    .a(vr_src1[FU_BFMULT][g_func * LANEWIDTHE +: LANEWIDTH]),
+    .b(vr_src2[FU_BFMULT][g_func * LANEWIDTHE +: LANEWIDTH]),
+    .out(bfmult_result_s5[g_func*LANEWIDTH +: LANEWIDTH])
+    );
+ 
+///////////////////////////
+// activation unit
+///////////////////////////
 
-
+    activation #(REGIDWIDTH) inst_activation(
+    .clk(clk),
+    .resetn(resetn),
+    .en(ctrl4_act_en),
+    .stall(stall_bf_adder),
+    .a(vr_src1[FU_ACT][g_func * LANEWIDTHE +: LANEWIDTH]),
+    .out(act_result_s5[g_func*LANEWIDTH +: LANEWIDTH])
+    );
+  end
+ endgenerate
 /******************************************************************************/
 /************************** WB Pipeline Stage ********************************/
 /******************************************************************************/
@@ -2459,6 +2589,22 @@ matmul_unit #(REGIDWIDTH,`MATMUL_STAGES,NUMLANES) u_matmul(
   assign wb_dst_mask[FU_MUL]=dst_mask[FU_MUL][5];
   assign D_wb_last_subvector[FU_MUL]=D_last_subvector_s5[FU_MUL];
 
+
+  assign wb_dst[FU_BFADDER] = dst[FU_BFADDER][5];
+  assign wb_dst_we[FU_BFADDER] = dst_we[FU_BFADDER][5] && ~pipe_squash[5];
+  assign wb_dst_mask[FU_BFADDER] = dst_mask[FU_BFADDER][5];
+  assign D_wb_last_subvector[FU_BFADDER] = D_last_subvector_s5[FU_BFADDER];
+
+  assign wb_dst[FU_BFMULT] = dst[FU_BFMULT][5];
+  assign wb_dst_we[FU_BFMULT] = dst_we[FU_BFMULT][5] && ~pipe_squash[5];
+  assign wb_dst_mask[FU_BFMULT] = dst_mask[FU_BFMULT][5];
+  assign D_wb_last_subvector[FU_BFMULT] = D_last_subvector_s5[FU_BFMULT];
+
+  assign wb_dst[FU_ACT] = dst[FU_ACT][5];
+  assign wb_dst_we[FU_ACT] = dst_we[FU_ACT][5] && ~pipe_squash[5];
+  assign wb_dst_mask[FU_ACT] = dst_mask[FU_ACT][5];
+  assign D_wb_last_subvector[FU_ACT] = D_last_subvector_s5[FU_ACT];
+
   assign wb_dst[FU_MATMUL]=dst[FU_MATMUL][5];
   assign wb_dst_we[FU_MATMUL]=dst_we[FU_MATMUL][5] && ~pipe_squash[5];
   assign wb_dst_mask[FU_MATMUL]=dst_mask[FU_MATMUL][5];
@@ -2472,6 +2618,9 @@ matmul_unit #(REGIDWIDTH,`MATMUL_STAGES,NUMLANES) u_matmul(
     begin
       vr_c_we[bw]=(wb_dst_we[FU_MUL] && `LO(wb_dst[FU_MUL],LOG2NUMBANKS)==bw) ||
                   (wb_dst_we[FU_MATMUL] && `LO(wb_dst[FU_MATMUL],LOG2NUMBANKS)==bw) ||
+                  (wb_dst_we[FU_BFADDER] && `LO(wb_dst[FU_BFADDER],LOG2NUMBANKS)==bw) ||
+                  (wb_dst_we[FU_BFMULT] && `LO(wb_dst[FU_BFMULT],LOG2NUMBANKS)==bw) ||
+                  (wb_dst_we[FU_ACT] && `LO(wb_dst[FU_ACT],LOG2NUMBANKS)==bw) ||
                   (wb_dst_we[FU_MEM] && `LO(wb_dst[FU_MEM],LOG2NUMBANKS)==bw) ||
                   (wb_dst_we[FU_ALU] && `LO(wb_dst[FU_ALU],LOG2NUMBANKS)==bw && ALUPERBANK==0) ||
                   (wb_dst_we[FU_ALU+bw] && ALUPERBANK!=0);
@@ -2495,6 +2644,31 @@ matmul_unit #(REGIDWIDTH,`MATMUL_STAGES,NUMLANES) u_matmul(
         vr_c_writedatain[bw]= matmul_out;
         D_last_subvector_done[bw]=D_wb_last_subvector[FU_MATMUL];
       end      
+      //Take bfadder output
+      else if (wb_dst_we[FU_BFADDER] && `LO(wb_dst[FU_BFADDER],LOG2NUMBANKS)==bw)
+      begin
+        vmask_final[bw]=wb_dst_mask[FU_BFADDER];
+        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_BFADDER]>>LOG2NUMBANKS;
+        vr_c_reg[bw]= wb_dst[FU_BFADDER];
+        vr_c_writedatain[bw]= bfadder_result_s5;
+        D_last_subvector_done[bw]=D_wb_last_subvector[FU_BFADDER];
+      end
+      else if (wb_dst_we[FU_BFMULT] && `LO(wb_dst[FU_BFMULT],LOG2NUMBANKS)==bw)
+      begin
+        vmask_final[bw]=wb_dst_mask[FU_BFMULT];
+        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_BFMULT]>>LOG2NUMBANKS;
+        vr_c_reg[bw]= wb_dst[FU_BFMULT];
+        vr_c_writedatain[bw]= bfmult_result_s5;
+        D_last_subvector_done[bw]=D_wb_last_subvector[FU_BFMULT];
+      end
+      else if (wb_dst_we[FU_ACT] && `LO(wb_dst[FU_ACT],LOG2NUMBANKS)==bw)
+      begin
+        vmask_final[bw]=wb_dst_mask[FU_ACT];
+        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_ACT]>>LOG2NUMBANKS;
+        vr_c_reg[bw]= wb_dst[FU_ACT];
+        vr_c_writedatain[bw]= act_result_s5;
+        D_last_subvector_done[bw]=D_wb_last_subvector[FU_ACT];
+      end
       //Take multiplier output
       else if (wb_dst_we[FU_MUL] && `LO(wb_dst[FU_MUL],LOG2NUMBANKS)==bw)
       begin
