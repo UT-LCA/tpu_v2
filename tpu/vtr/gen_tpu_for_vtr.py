@@ -93,7 +93,6 @@ def create_one_file(TOT, infile, outfile, possible_dirs):
     #Go over each line
     for line in infile:
         
-        include_line = re.search(r'`include\s*".*"', line)
         include_line = re.search(r'`include\s*"(.*)"', line)
         #TESTING include_line = None
 
@@ -523,7 +522,7 @@ if __name__ == "__main__":
                      "tpu/design/top/", \
                      "tpu/vtr/"]
     
-    vector_all_fhandle.write("`define USE_INHOUSE_LOGIC\n")
+    #vector_all_fhandle.write("`define USE_INHOUSE_LOGIC\n")
     create_one_file(TOT,vector_main_fhandle, vector_all_fhandle, possible_dirs)
     vector_main_fhandle.close()
     
