@@ -5,9 +5,6 @@ import argparse
 ##################################################
 # Globals
 ##################################################
-#name of top-level directory of the repo
-TOT = ""
-
 #dictionary of bit_vector/array instances.
 #key - file+array identifier
 #value - array object
@@ -88,10 +85,68 @@ class bit_vector:
 # we find another file included in a file (`include)
 # this function is called again.
 ##################################################
-def print_contents(TOT, infile, outfile, possible_dirs):
+def create_one_file(TOT, infile, outfile, possible_dirs):
     outfile.write("//////////////////////////////////////////////////////////////////////\n")
     outfile.write("//// Starting contents of file: {}\n".format(infile.name))
     outfile.write("//////////////////////////////////////////////////////////////////////\n")
+
+    #Go over each line
+    for line in infile:
+        
+        include_line = re.search(r'`include "(.*)"', line)
+        #TESTING include_line = None
+
+        #`timescale`
+        timescale_line = re.search(r'`timescale', line)
+
+        #`define SIMULATION_MEMORY`
+        sim_mem_def_line = re.match(r'`define SIMULATION_MEMORY', line)
+   
+        #A `include line. We just call this function again
+        if include_line is not None:
+            included_filename = include_line.group(1)
+
+            # Special handling of vlanes.v
+            if included_filename == "vlanes.v":
+                included_filename = "vlanes.v.temp"
+
+            outfile.write("//////////////////////////////////////////////////////////////////////\n")
+            outfile.write("//// Starting contents of included file: {}\n".format(included_filename))
+            outfile.write("//////////////////////////////////////////////////////////////////////\n")
+            print(included_filename)
+
+            #check for file being present in the list of possible directories
+            found_dir = ""
+            for dir in possible_dirs:
+                if (os.path.exists(TOT+dir+included_filename)):
+                    found_dir = dir  
+                    break
+            if found_dir == "":
+                print("File {} not found in possible directories {}".format(included_filename, str(possible_dirs)))
+                raise SystemExit(0)
+            else:
+                print("File {} found in directory {}".format(included_filename, found_dir))
+
+            #Recursive call
+            included_f = open(TOT+found_dir+included_filename, "r")
+            create_one_file(TOT,included_f, outfile, possible_dirs)
+            outfile.write("//////////////////////////////////////////////////////////////////////\n")
+            outfile.write("//// Finish contents of included file: {}\n".format(included_filename))
+            outfile.write("//////////////////////////////////////////////////////////////////////\n")
+
+        #For these lines, we don't want to print them in output file
+        elif timescale_line is not None or sim_mem_def_line is not None:
+            continue
+            
+        #If we don't meet any of the criteria above, just write it to outfile
+        else:
+            outfile.write(line) 
+
+
+##################################################
+# Process the case statements in infile 
+##################################################
+def process_case_stmt(infile, outfile):
     capture_case_item_code = False
     case_stmt_start = False
     case_item_list = []
@@ -102,17 +157,87 @@ def print_contents(TOT, infile, outfile, possible_dirs):
     for line in infile:
         line_num = line_num+1
         
+        c_stmt_begin = None
+        c_stmt_end = None
+
+        c_stmt_begin = re.search(r'((\bcase\b)|(\bcasez\b))\(.*\)', line)
+        c_stmt_end = re.search(r'endcase', line)
+
+        #Case statement handling begins. ODIN doesn't support multiple case_items
+        #separated by comma. See: https://github.com/verilog-to-routing/vtr-verilog-to-routing/issues/1676
+        #So, we are converting to having single case_item only.
+        if c_stmt_begin is not None:
+            case_stmt_start = True
+            #Replace casez with case while we're at it. ODIN doesn't like casez.
+            outfile.write(re.sub(r'casez', 'case', line))
+        elif c_stmt_end is not None:
+            case_stmt_start = False
+            outfile.write(line) 
+        elif case_stmt_start is True:
+            #Is this a line that has one of the multiple case_items
+            #Assumption: one case item mentioned per line
+            #Eg: COP2_VADD,
+            case_item_multi = re.match(r'\s+([A-Z\d_]*),\s*$', line)
+            if case_item_multi is not None:
+                case_item_list.append(case_item_multi.group(1))
+                continue
+
+            #Is this a line that has the last case_item in a multi
+            #case item list or the only case_item in a non-multi case
+            #item list
+            case_item_single = re.match(r'\s+([A-Z\d_]*):\s*$', line)
+            if case_item_single is not None:
+                case_item_list.append(case_item_single.group(1))
+                continue
+
+            #We created a list containing the names of case_items for this
+            #piece of code
+            #Assumption: Each case_item's code is enclosed in begin and end
+            if len(case_item_list) > 0:
+                #We will capture the contents between the begin and end.
+                #These are to be copied for each case_item
+                begin_in_case = re.search(r'\s+begin', line)
+                if begin_in_case is not None:
+                    captured_case_items.append(line)
+                    capture_case_item_code = True
+                    continue
+                end_in_case = re.search(r'\s+end', line)
+                if end_in_case is not None:
+                    captured_case_items.append(line)
+                    capture_case_item_code = False
+                    #Start printing each case_item's code one by one.
+                    #Basically, we just copy all lines in begin-end over
+                    #and over for each case_item. 
+                    for case_item in case_item_list:
+                        outfile.write("    "+case_item+":\n")
+                        outfile.write(''.join(captured_case_items))
+                    case_item_list = []
+                    captured_case_items = []
+                    continue
+                if capture_case_item_code is True:
+                    captured_case_items.append(line)
+                    continue
+            outfile.write(line)
+        
+        #If we don't meet any of the criteria above, just write it to outfile
+        else:
+            outfile.write(line) 
+
+
+
+##################################################
+# Process arrays and change them to bitvectors
+##################################################
+def process_arrays(infile, outfile):
+    line_num = 0
+
+    #Go over each line
+    for line in infile:
+        line_num = line_num+1
+        
         ############################################### 
         # First, we have regex to identify type of line
         ############################################### 
-        include_line = re.search(r'`include "(.*)"', line)
-        #TESTING include_line = None
-
-        #`timescale`
-        timescale_line = re.search(r'`timescale', line)
-
-        #`define SIMULATION_MEMORY`
-        sim_mem_def_line = re.match(r'`define SIMULATION_MEMORY', line)
 
         #declaration of an array
         #eg:wire  [ VCWIDTH-1 : 0 ]   vc[`MAX_PIPE_STAGES-1:2];
@@ -135,15 +260,6 @@ def print_contents(TOT, infile, outfile, possible_dirs):
 
         #io's
         io_line = re.search(r'input|output', line)
-
-        #only handle case statements in vlanes.v file.
-        #if we need to handle them in other files, we can add those.
-        c_stmt_begin = None
-        c_stmt_end = None
-
-        if "vlanes.v" in infile.name:
-            c_stmt_begin = re.search(r'((\bcase\b)|(\bcasez\b))\(.*\)', line)
-            c_stmt_end = re.search(r'endcase', line)
 
         ############################################### 
         # Now we start processing lines based on what we found in them
@@ -186,7 +302,7 @@ def print_contents(TOT, infile, outfile, possible_dirs):
             # Create declaration of new bitvector
             bit_vector_dim_min = "0"
             bit_vector_dim_max = bit_vector_len+"-1"
-            bit_vector_decl = "["+bit_vector_dim_max+" : "+bit_vector_dim_min+"] "+array_identifier+";\n"
+            bit_vector_decl = array_decl_line.group(1)+" ["+bit_vector_dim_max+" : "+bit_vector_dim_min+"] "+array_identifier+";\n"
             outfile.write(bit_vector_decl)
 
             # Create array/bitvector object and store in dict
@@ -291,95 +407,7 @@ def print_contents(TOT, infile, outfile, possible_dirs):
                     line = re.sub(re.escape(array_usage), bitvector_usage, line)
             outfile.write(line)
 
-        #Case statement handling begins. ODIN doesn't support multiple case_items
-        #separated by comma. See: https://github.com/verilog-to-routing/vtr-verilog-to-routing/issues/1676
-        #So, we are converting to having single case_item only.
-        elif c_stmt_begin is not None:
-            case_stmt_start = True
-            #Replace casez with case while we're at it. ODIN doesn't like casez.
-            outfile.write(re.sub(r'casez', 'case', line))
-        elif c_stmt_end is not None:
-            case_stmt_start = False
-            outfile.write(line) 
-        elif case_stmt_start is True:
-            #Is this a line that has one of the multiple case_items
-            #Assumption: one case item mentioned per line
-            #Eg: COP2_VADD,
-            case_item_multi = re.match(r'\s+([A-Z\d_]*),\s*$', line)
-            if case_item_multi is not None:
-                case_item_list.append(case_item_multi.group(1))
-                continue
-
-            #Is this a line that has the last case_item in a multi
-            #case item list or the only case_item in a non-multi case
-            #item list
-            case_item_single = re.match(r'\s+([A-Z\d_]*):\s*$', line)
-            if case_item_single is not None:
-                case_item_list.append(case_item_single.group(1))
-                continue
-
-            #We created a list containing the names of case_items for this
-            #piece of code
-            #Assumption: Each case_item's code is enclosed in begin and end
-            if len(case_item_list) > 0:
-                #We will capture the contents between the begin and end.
-                #These are to be copied for each case_item
-                begin_in_case = re.search(r'\s+begin', line)
-                if begin_in_case is not None:
-                    captured_case_items.append(line)
-                    capture_case_item_code = True
-                    continue
-                end_in_case = re.search(r'\s+end', line)
-                if end_in_case is not None:
-                    captured_case_items.append(line)
-                    capture_case_item_code = False
-                    #Start printing each case_item's code one by one.
-                    #Basically, we just copy all lines in begin-end over
-                    #and over for each case_item. 
-                    for case_item in case_item_list:
-                        outfile.write("    "+case_item+":\n")
-                        outfile.write(''.join(captured_case_items))
-                    case_item_list = []
-                    captured_case_items = []
-                    continue
-                if capture_case_item_code is True:
-                    captured_case_items.append(line)
-                    continue
-            outfile.write(line)
-        
-        #A `include line. We just call this function again
-        elif include_line is not None:
-            included_filename = include_line.group(1)
-            outfile.write("//////////////////////////////////////////////////////////////////////\n")
-            outfile.write("//// Starting contents of included file: {}\n".format(included_filename))
-            outfile.write("//////////////////////////////////////////////////////////////////////\n")
-            print(included_filename)
-
-            #check for file being present in the list of possible directories
-            found_dir = ""
-            for dir in possible_dirs:
-                if (os.path.exists(TOT+dir+included_filename)):
-                    found_dir = dir  
-                    break
-            if found_dir == "":
-                print("File {} not found in possible directories".format(included_filename))
-                raise SystemExit(0)
-            else:
-                print("File {} found in directory {}".format(included_filename, found_dir))
-
-            #Recursive call
-            included_f = open(TOT+found_dir+included_filename, "r")
-            print_contents(TOT,included_f, outfile, possible_dirs)
-            outfile.write("//////////////////////////////////////////////////////////////////////\n")
-            outfile.write("//// Finish contents of included file: {}\n".format(included_filename))
-            outfile.write("//////////////////////////////////////////////////////////////////////\n")
-
-        #For these lines, we don't want to print them in output files
-        elif timescale_line is not None or sim_mem_def_line is not None:
-            continue
-            
-        #If we don't meet any of the criteria above, that means the line is most
-        #likely going to be parsed correctly by ODIN. So, just write it to outfile
+        #If we don't meet any of the criteria above, just write it to outfile
         else:
             outfile.write(line) 
 
@@ -395,48 +423,50 @@ def parse_args():
                         default="/export/aman/tpu_v2/",
                         type=str,
                         help='Top of the git repo')
+    parser.add_argument("-o",
+                        "--outfile",
+                        action='store',
+                        default="vector_all.v",
+                        type=str,
+                        help='Name of output file')
     args = parser.parse_args()
-    global TOT
-    TOT = args.tot
+    return args
 
 ##################################################
 # main()
 ##################################################
 if __name__ == "__main__":
-    parse_args()
+    #####################################
+    #Parse command line arguments
+    #####################################
+    args = parse_args()
+    TOT = args.tot
+    outfile_name = args.outfile
 
     #TODO: For now, I'm just handling the vector part of the code
     #and collecting it in a vector_all file. We need to collect
     #the code for full TPU in one file.
 
     #####################################
-    #Scalar processor
+    #Files to process
     #####################################
+
+    #Special handling of vlanes.v file
+    #We need to handle case statements in vlanes.v file.
+    #if we need to handle them in other files, we can add those.
+    vlanes_in_fname = TOT+"tpu/design/vector/vlanes.v"
+    vlanes_in_fhandle = open(vlanes_in_fname, "r")
+    vlanes_out_fname = "vlanes.v.temp"
+    vlanes_out_fhandle = open(vlanes_out_fname, "w")
+    process_case_stmt(vlanes_in_fhandle, vlanes_out_fhandle)
+    vlanes_in_fhandle.close()
+    vlanes_out_fhandle.close()
+
     #Name of the output file
-    #scalar_all_fname = "scalar_all.v"
-    #scalar_all_fhandle = open(scalar_all_fname, "w")
-    #
-    #Name of the main scalar processor file that hierarchically includes
-    #scalar_dir = TOT+"tpu/design/scalar/"
-    #the other code
-    #scalar_main_fname = scalar_dir+"system.v"
-    #scalar_main_fhandle = open(scalar_main_fname, "r")
-    #
-    #Directories where the included files can be found
-    #possible_dirs = ["tpu/design/scalar/", \
-    #                 "tpu/design/top/"]
-    #
-    #scalar_all_fhandle.write("`define USE_INHOUSE_LOGIC\n")
-    #print_contents(TOT,scalar_main_fhandle, scalar_all_fhandle, possible_dirs)
-    
-    #####################################
-    #Vector processor
-    #####################################
-    #Name of the output file
-    vector_all_fname = "vector_all.v"
+    vector_all_fname = outfile_name +".1"
     vector_all_fhandle = open(vector_all_fname, "w")
     
-    #Name of the main scalar processor file that hierarchically includes
+    #Name of the main processor file that hierarchically includes other files
     vector_dir = TOT+"tpu/design/vector/"
     vector_main_fname = vector_dir+"vpu.v"
     #TESTING vector_main_fname = vector_dir+"vlanes.v"
@@ -444,10 +474,12 @@ if __name__ == "__main__":
     
     #Directories where the included files can be found
     possible_dirs = ["tpu/design/vector/", \
-                     "tpu/design/top/"]
+                     "tpu/design/top/", \
+                     "tpu/vtr/"]
     
     vector_all_fhandle.write("`define USE_INHOUSE_LOGIC\n")
-    print_contents(TOT,vector_main_fhandle, vector_all_fhandle, possible_dirs)
+    create_one_file(TOT,vector_main_fhandle, vector_all_fhandle, possible_dirs)
+    vector_main_fhandle.close()
     
     #####################################
     #Adding contents of local modules. These are to be added separately
@@ -461,8 +493,8 @@ if __name__ == "__main__":
     
     for local_fname in local_file_list:
         local_fhandle = open(TOT+local_fname, "r")
-        print_contents(TOT,local_fhandle, vector_all_fhandle, possible_dirs)
-        #print_contents(TOT,local_fhandle, scalar_all_fhandle, possible_dirs)
+        create_one_file(TOT,local_fhandle, vector_all_fhandle, possible_dirs)
+        local_fhandle.close()
     
     #####################################
     #Adding contents of components (from scalar into vector)
@@ -471,9 +503,18 @@ if __name__ == "__main__":
     
     for components_fname in components_file_list:
         components_fhandle = open(TOT+components_fname, "r")
-        print_contents(TOT,components_fhandle, vector_all_fhandle, possible_dirs)
+        create_one_file(TOT,components_fhandle, vector_all_fhandle, possible_dirs)
+        components_fhandle.close()
+
+    vector_all_fhandle.close()
     
-    #Commenting this for now. Somehow multiple lines get deleted if this is done from inside the script
-    #So, we are doing this outside now in a csh script
-    #os.system("dos2unix {}".format(vector_all_fname))
-    #os.system("dos2unix {}".format(scalar_all_fname))
+    #####################################
+    #Now let's post process the one file we've created
+    #####################################
+    in_fname = outfile_name +".1"
+    in_fhandle = open(in_fname, "r")
+    out_fname = outfile_name 
+    out_fhandle = open(out_fname, "w")
+    process_arrays(in_fhandle, out_fhandle)
+    in_fhandle.close()
+    out_fhandle.close()
