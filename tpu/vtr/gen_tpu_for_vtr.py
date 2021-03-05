@@ -93,7 +93,8 @@ def create_one_file(TOT, infile, outfile, possible_dirs):
     #Go over each line
     for line in infile:
         
-        include_line = re.search(r'`include "(.*)"', line)
+        include_line = re.search(r'`include\s*".*"', line)
+        include_line = re.search(r'`include\s*"(.*)"', line)
         #TESTING include_line = None
 
         #`timescale`
@@ -249,11 +250,14 @@ def process_arrays(infile, outfile):
 
         #lines using an array
         #arr[]
-        array_line_type1 = re.findall(r'[\w]+\s*\[\w*?\]', line)
+        array_line_type1 = re.findall(r'[\w]+\s*\[[\w\-:\* ]*?\]', line)
         #arr[][]
-        array_line_type2 = re.findall(r'[\w]+\s*\[\w*?\]\s*\[\w*?\]', line)
+        array_line_type2 = re.findall(r'[\w]+\s*\[[\w\-:\* ]*?\]\s*\[[\w\-:\* ]*?\]', line)
         #TODO: What if we have a line that has both arr[] and arr[][].
         #Example: vs[2] & vc[2][VCWIDTH-1]
+
+        #arr[][ something +: something]
+        array_line_type3 = re.findall(r'[\w]+\s*\[\s*[\w\-:\* ]*?\s*\]\s*\[\s*[\w\-\* ]*?\s*\+:\s*[\w\-\* ]*?\s*\]', line)
 
         #comments
         comment_line = re.search(r'^\s*//', line)
@@ -317,10 +321,50 @@ def process_arrays(infile, outfile):
                                  unpacked_dim_max)
             dict_of_bit_vector[infile.name + ":" + array_identifier] = bvt_obj
 
+        # Lines with array references of type 3 (arr[][something +: something])
+        elif len(array_line_type3) != 0:
+            for array_usage in array_line_type3:
+                m = re.search(r'([\w]+)\s*\[(\s*[\w\-:\* ]*?)\s*\]\s*\[(\s*[\w\-\* ]*?\s*\+:\s*[\w\-\* ]*?)\s*\]', array_usage)
+                #If we are here, this search should return something because we just used the same regex
+                assert (m is not None)
+
+                name = m.group(1)
+
+                #If this array doesn't exist in the dict, that means it's not really an array
+                #could be a bitvector
+                key = infile.name + ":" + name
+                if key not in dict_of_bit_vector:
+                    #print("Found usage of x[], but this must be a bitvector")
+                    pass
+                else:
+                    #Find the msb and lsb of each dimension of the array
+                    #print("Found usage of x[], that is an array. Replacing it with bitvector")
+                    #alu_dst[4][bd*REGIDWIDTH +: REGIDWIDTH] -> alu_dst[None:4][None:bd*REGWIDTH]
+                    if "+:" in m.group(3) and "+:" not in m.group(2):
+                        unpacked_ref_max = None
+                        unpacked_ref_min = m.group(2)
+                        packed_ref_max = None
+                        vals = m.group(3).split("+:")
+                        assert(len(vals) == 2), "Line number is {}. Line is {}".format(line_num, line)
+                        packed_ref_min = vals[0]
+                        length = vals[1]
+                    else:
+                        assert(0), "Shouldn't have reached here. Line number is {}. Line is {}. Array usage is {}".format(line_num, line, array_usage)
+
+                    #Calculate the msb and lsb of the new bitvector
+                    (max, min) = dict_of_bit_vector[key].gen_bitvector_based_ref(unpacked_ref_max, unpacked_ref_min, packed_ref_max, packed_ref_min)
+                    bitvector_usage = name + "[(" + min + ") +: (" + length + ")]"
+
+                    #Replace the array reference with the new bitvector reference
+                    line = re.sub(re.escape(array_usage), bitvector_usage, line)
+            outfile.write(line)
+
+
+
         # Lines with array references of type 2 (arr[][])
         elif len(array_line_type2) != 0:
             for array_usage in array_line_type2:
-                m = re.search(r'([\w\d]+)\s*\[(.*?)\]\s*\[(.*?)\]', array_usage)
+                m = re.search(r'([\w]+)\s*\[([\w\-:\* ]*?)\]\s*\[([\w\-:\* ]*?)\]', array_usage)
                 #If we are here, this search should return something because we just used the same regex
                 assert (m is not None)
                 name = m.group(1)
@@ -372,7 +416,7 @@ def process_arrays(infile, outfile):
         # Lines with array references of type 1 (arr[])
         elif len(array_line_type1) != 0:
             for array_usage in array_line_type1:
-                m = re.search(r'([\w\d]+)\s*\[(.*?)\]', array_usage)
+                m = re.search(r'([\w]+)\s*\[([\w\-:\* ]*?)\]', array_usage)
                 #If we are here, this search should return something because we just used the same regex
                 assert (m is not None)
                 name = m.group(1)
@@ -451,6 +495,7 @@ if __name__ == "__main__":
     #Files to process
     #####################################
 
+    print("Processing to handle case statements in vlanes.v...")
     #Special handling of vlanes.v file
     #We need to handle case statements in vlanes.v file.
     #if we need to handle them in other files, we can add those.
@@ -462,6 +507,7 @@ if __name__ == "__main__":
     vlanes_in_fhandle.close()
     vlanes_out_fhandle.close()
 
+    print("Processing to create one file...")
     #Name of the output file
     vector_all_fname = outfile_name +".1"
     vector_all_fhandle = open(vector_all_fname, "w")
@@ -511,6 +557,7 @@ if __name__ == "__main__":
     #####################################
     #Now let's post process the one file we've created
     #####################################
+    print("Processing to handle arrays...")
     in_fname = outfile_name +".1"
     in_fhandle = open(in_fname, "r")
     out_fname = outfile_name 
