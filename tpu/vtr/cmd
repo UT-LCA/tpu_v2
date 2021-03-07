@@ -1,3 +1,4 @@
-python gen_tpu_for_vtr.py
-dos2unix vector_all.v
-\cp vector_all.v /export/aman/vtr_aman/vtr-verilog-to-routing/vtr_flow/benchmarks/verilog/ml_benchmarks
+python3 local_fifo.py
+dos2unix ~/Desktop/utexas_thesis/tpu_v2/tpu/vtr/verilog/local_fifo.v
+\cp ~/Desktop/utexas_thesis/tpu_v2/tpu/vtr/verilog/local_local_fifo.v ~/Desktop/utexas_thesis/vtr-verilog-to-routing/vtr_flow/benchmarks/verilog/ml_benchmarks/tpu_subunits
+~/Desktop/utexas_thesis/vtr-verilog-to-routing/vtr_flow/scripts/run_vtr_task.py ~/Desktop/utexas_thesis/vtr-verilog-to-routing/vtr_flow/tasks/tpu
