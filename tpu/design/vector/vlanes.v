@@ -492,9 +492,11 @@ reg ctrl4_mem_en;
 reg [6:0] ctrl4_memunit_op;
 reg [NUMFUS-1:0] ctrl4_ismasked;
 reg [2:0] ctrl4_flagalu_op[(NUMBANKS-1)*ALUPERBANK:0];
-reg ctrl4_vf_wbsel[(NUMBANKS-1)*ALUPERBANK:0];   //0-flag ALU, 1-normal ALU
+//reg ctrl4_vf_wbsel[(NUMBANKS-1)*ALUPERBANK:0];   //0-flag ALU, 1-normal ALU
+reg [(NUMBANKS-1)*ALUPERBANK:0] ctrl4_vf_wbsel;   //0-flag ALU, 1-normal ALU
 reg ctrl4_volatiledest;
-reg ctrl4_vf_a_sel[(NUMBANKS-1)*ALUPERBANK:0]; //0-0/1 from instr, 1-src1
+//reg ctrl4_vf_a_sel[(NUMBANKS-1)*ALUPERBANK:0]; //0-0/1 from instr, 1-src1
+reg [(NUMBANKS-1)*ALUPERBANK:0] ctrl4_vf_a_sel; //0-0/1 from instr, 1-src1
 reg ctrl4_mulshift_en;
 reg ctrl4_matmul_en;
 reg ctrl4_trp_en;
@@ -836,7 +838,9 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VEXT_VV,
       COP2_VEXT_SV,
       COP2_VEXT_U_SV:
+        begin
           ctrl1_vr_a_en=1;
+        end
       COP2_VCOMPRESS,
       COP2_VEXPAND:
         begin
@@ -1314,14 +1318,12 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VSAT_U_H: ctrl1_satsize_op=SATSIZEOP_VSATUH;
       COP2_VSAT_U_W: ctrl1_satsize_op=SATSIZEOP_VSATUW;
       COP2_VSADD: begin ctrl1_alu_op=ALUOP_ADD^ALUOP_ZERO; ctrl1_satsum_op=SATSUMOP_VS; end
-      COP2_VSADD_U: 
-        begin 
+      COP2_VSADD_U: begin 
           ctrl1_alu_op=ALUOP_ADDU^ALUOP_ZERO; 
           ctrl1_satsum_op=SATSUMOP_VSU; 
         end
       COP2_VSSUB: begin ctrl1_alu_op=ALUOP_SUB^ALUOP_ZERO; ctrl1_satsum_op=SATSUMOP_VS; end
-      COP2_VSSUB_U:
-        begin 
+      COP2_VSSUB_U: begin 
           ctrl1_alu_op=ALUOP_SUBU^ALUOP_ZERO;
           ctrl1_satsum_op=SATSUMOP_VSU; 
         end
@@ -1968,11 +1970,15 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
       alive_s3[bi]=~count[(bi+1)*(LOG2MVL-LOG2NUMLANES+1)-1];
 
       for (i=0; i<NUMLANES; i=i+1)
-        lane_en[bi][i]= (LOG2NUMLANES==0) || //Support 1 lane
-          ~((first_subvector[bi]) && 
-              i<`LO(rdelm[bi*LOG2MVL +: LOG2MVL],LOG2NUMLANES) ||
-            (last_subvector[bi]) && 
-              i>src_limit_s3[bi][((LOG2NUMLANES>0) ? LOG2NUMLANES : 1)-1:0] );
+        lane_en[bi][i]= (LOG2NUMLANES==0);
+        //amana: Removed support for 1 lane. This is not a usecase for us. 
+        //The code was just causing errors with the parser to convert code 
+        //to VTR compatible code.
+        // || //Support 1 lane
+        //  ~((first_subvector[bi]) && 
+        //      i<`LO(rdelm[bi*LOG2MVL +: LOG2MVL],LOG2NUMLANES) ||
+        //    (last_subvector[bi]) && 
+        //      i>src_limit_s3[bi][((LOG2NUMLANES>0) ? LOG2NUMLANES : 1)-1:0] );
     end
 
 

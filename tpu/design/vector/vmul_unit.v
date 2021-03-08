@@ -81,7 +81,9 @@ output [NUMLANES*WIDTH-1:0] result;
   reg  done;
   wire [4:0] ctrl_op[3:1];                  //3 pipe stages
   wire [3:1] ctrl_activate;                 //3 pipe stages
-  wire [((LOG2WIDTH==0) ? 1 : LOG2WIDTH)-1:0] ctrl_vshamt[3:1]; //3 pipe stages
+  //amana: Making modification for VTR
+  //wire [((LOG2WIDTH==0) ? 1 : LOG2WIDTH)-1:0] ctrl_vshamt[3:1]; //3 pipe stages
+  wire [((LOG2WIDTH==0) ? 1*3 : LOG2WIDTH*3)-1:0] ctrl_vshamt; //3 pipe stages
 
   //Shift Register for all multiplier operands for lanes without multipliers
   wire [WIDTH*NUMMULLANES-1:0] opA_elmshifter_shiftin_right_NC;
@@ -170,7 +172,8 @@ output [NUMLANES*WIDTH-1:0] result;
     .resetn(resetn),
     .en(en),
     .squash(vshamtpipe_squash_NC),
-    .q({ctrl_vshamt[3],ctrl_vshamt[2],ctrl_vshamt[1]}));
+    //.q({ctrl_vshamt[3],ctrl_vshamt[2],ctrl_vshamt[1]}));
+    .q(ctrl_vshamt));
 
   //============== Instantiate across lanes =============
   genvar k;
@@ -189,11 +192,13 @@ output [NUMLANES*WIDTH-1:0] result;
       .result(mul_result[WIDTH*k +: WIDTH])
       );
 
+    wire temp;
+    assign temp = ctrl_vshamt[2*LOG2WIDTH-1 : LOG2WIDTH-1];
     vlane_barrelshifter #(WIDTH,(LOG2WIDTH>0)?LOG2WIDTH:1) vshift(
       .clk(clk),
       .resetn(resetn),
       .opB(mul_result[WIDTH*(k+1)-1:WIDTH*k]),
-      .sa( ctrl_vshamt[2][((LOG2WIDTH>0) ? LOG2WIDTH-1:0) : 0] ),
+      .sa(temp),
       .op({~ctrl_op[2][1] ,1'b1}),
       .result(rshift_result[WIDTH*(k+1)-1:WIDTH*k])
       );
