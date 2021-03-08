@@ -1,7 +1,7 @@
 BASE_DIR = ~/Desktop/utexas_thesis
-BASE_FILE_NAME = vlane_alu
+BASE_FILE_NAME = data_mem_bus_int
 
-SUB_DIR = vector
+SUB_DIR = scalar
 
 VTR_VERILOG_DIR = $(BASE_DIR)/vtr-verilog-to-routing/vtr_flow/benchmarks/verilog/ml_benchmarks/tpu_subunits/$(SUB_DIR)
 VTR_TASK_DIR = $(BASE_DIR)/vtr-verilog-to-routing/vtr_flow/tasks
