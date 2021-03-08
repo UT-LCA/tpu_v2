@@ -4,6 +4,14 @@ VLOG_ARGS=+define+TEST_BENCH=1
 # List all source files, note many files use `include to include dependencies
 SPREE_SRC= ../design/scalar/system.v
 VESPA_SRC= ../design/vector/vpu.v
+
+BFLOAT_SRC = ../design/bfloat/bfloat_adder.v \
+             ../design/bfloat/bfloat_mult.v \
+             ../design/bfloat/activation.v \
+             ../design/bfloat/reduction_unit.v \
+	     ../design/bfloat/transpose.v \
+             ../design/bfloat/trp_unit.v 
+
 TESTBENCH_SRC= de3_test_bench.v
 DDR_SRC=  ../design/ddr/alt_mem_phy_defines.v \
           ../design/ddr/altmemddr.v \
@@ -49,6 +57,7 @@ compilework: work vregfile_control.dat
 	vlog ${VLOG_ARGS} ../design/local/rams.v
 	vlog ${VLOG_ARGS} ../design/local/ram_wrapper.v
 	vlog ${VLOG_ARGS} ${LOCAL_SRC}
+	vlog ${VLOG_ARGS} +incdir+.. +incdir+../design/top +incdir+../design/vector +incdir+../design/scalar +incdir+../design/ddr ${BFLOAT_SRC}
 	vlog ${VLOG_ARGS} +incdir+.. +incdir+../design/top +incdir+../design/vector +incdir+../design/scalar +incdir+../design/ddr ${SPREE_SRC}
 	vlog ${VLOG_ARGS} +incdir+.. +incdir+../design/top +incdir+../design/vector +incdir+../design/scalar +incdir+../design/ddr ${VESPA_SRC}
 	vlog ${VLOG_ARGS} +incdir+.. +incdir+../design/top +incdir+../design/vector +incdir+../design/scalar +incdir+../design/ddr ${DDR_SRC}

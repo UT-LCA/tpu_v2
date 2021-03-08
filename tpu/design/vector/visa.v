@@ -8,6 +8,7 @@ parameter COP2_VDIV           = 'b10zz000110; //Using as matmul
 parameter COP2_VBFADD         = 'b0100000001; //Using BF16 add
 parameter COP2_VBFMULT        = 'b0100000010; //Using BF16 MULT
 parameter COP2_VACT           = 'b0100000011; //Using ACT
+parameter COP2_VTRP           = 'b0100000100; //Using ACT
 parameter COP2_VDIV_U         = 'b10zz000111;
 parameter COP2_VMOD           = 'b10zz001000;
 parameter COP2_VMOD_U         = 'b10zz001001;
