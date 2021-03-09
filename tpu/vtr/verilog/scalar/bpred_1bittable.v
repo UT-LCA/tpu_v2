@@ -5,27 +5,23 @@ module branchpredict_32_4096_12_1 ( clk, resetn,
     result_rdy,
     result,
     pc_result);
-parameter PCWIDTH=32;
-parameter TABLEDEPTH=4096;
-parameter LOG2TABLEDEPTH=12;
-parameter TABLEWIDTH=1;
 
 input clk;
 input resetn;
 
 // Prediction Port
 input predict;                  // When high tells predictor to predict in next cycle
-input [PCWIDTH-1:0] pc_predict; // The PC value for which to predict 
+input [32-1:0] pc_predict; // The PC value for which to predict 
 output prediction;              // The actual prediction 1-taken, 0-nottaken
 
 // Prediction Result Port - tells us if the prediction made at pc_result was taken
 input result_rdy;               // The branch has been resolved when result_rdy goes hi
-input [PCWIDTH-1:0] pc_result;  // The PC value that this result is for
+input [32-1:0] pc_result;  // The PC value that this result is for
 input result;                   // The actual result 1-taken, 0-nottaken
 
-wire [LOG2TABLEDEPTH-1:0] address_b;
+wire [12-1:0] address_b;
 
-assign address_b=pc_predict[LOG2TABLEDEPTH+2-1:2];
+assign address_b=pc_predict[12+2-1:2];
 
 `ifndef USE_INHOUSE_LOGIC
     `define USE_INHOUSE_LOGIC
@@ -34,7 +30,7 @@ assign address_b=pc_predict[LOG2TABLEDEPTH+2-1:2];
 `ifdef USE_INHOUSE_LOGIC
     dpram_12_4096_1 pred_table(
 	.clk(clk),
-	.address_a(pc_result[LOG2TABLEDEPTH+2-1:2]),
+	.address_a(pc_result[12+2-1:2]),
 	.address_b(address_b),
 	.wren_a(result_rdy),
 	.wren_b(0),
@@ -43,10 +39,6 @@ assign address_b=pc_predict[LOG2TABLEDEPTH+2-1:2];
 	.out_a(),
 	.out_b(prediction)
     );
-//    defparam
-//        reg_file1.AWIDTH=LOG2TABLEDEPTH,
-//        reg_file1.NUM_WORDS=TABLEDEPTH,
-//        reg_file1.DWIDTH=TABLEWIDTH;
 
 `else
 

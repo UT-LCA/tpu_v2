@@ -1,5 +1,5 @@
 BASE_DIR = ~/Desktop/utexas_thesis
-BASE_FILE_NAME = data_mem_bus_int
+BASE_FILE_NAME = merge26lo
 
 SUB_DIR = scalar
 
