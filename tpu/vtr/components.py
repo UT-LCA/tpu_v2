@@ -323,7 +323,7 @@ endmodule'''
     def write (self, width, val):
         self.fp.write(self.make_str(width, val))
 
-class const():
+class branch_detector():
     def __init__(self, fp):
         self.fp = fp
 
@@ -338,10 +338,13 @@ input [5:0] func;
 output is_branch;
 
 wire is_special;
+wire [5:0] func_local;
+
+assign func_local = func & 6'b111000;
 
 assign is_special=!(|opcode);
 assign is_branch=((!(|opcode[5:3])) && !is_special) || 
-                  ((is_special)&&(func[5:3]==3'b001));
+                  ((is_special)&&(func_local==6'b001000));
 
 endmodule'''       
 

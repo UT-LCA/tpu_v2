@@ -1,7 +1,7 @@
 from dpram import dpram
 import parser
 
-class bpred_1bittable():
+class branchpredict():
     def __init__(self, fp):
         self.fp = fp
 
@@ -14,27 +14,33 @@ module branchpredict_{PCWIDTH}_{TABLEDEPTH}_{LOG2TABLEDEPTH}_{TABLEWIDTH} ( clk,
     result_rdy,
     result,
     pc_result);
-parameter PCWIDTH={PCWIDTH};
-parameter TABLEDEPTH={TABLEDEPTH};
-parameter LOG2TABLEDEPTH={LOG2TABLEDEPTH};
-parameter TABLEWIDTH={TABLEWIDTH};
 
 input clk;
 input resetn;
 
 // Prediction Port
 input predict;                  // When high tells predictor to predict in next cycle
-input [PCWIDTH-1:0] pc_predict; // The PC value for which to predict 
+input [{PCWIDTH}-1:0] pc_predict; // The PC value for which to predict 
 output prediction;              // The actual prediction 1-taken, 0-nottaken
 
 // Prediction Result Port - tells us if the prediction made at pc_result was taken
 input result_rdy;               // The branch has been resolved when result_rdy goes hi
-input [PCWIDTH-1:0] pc_result;  // The PC value that this result is for
+input [{PCWIDTH}-1:0] pc_result;  // The PC value that this result is for
 input result;                   // The actual result 1-taken, 0-nottaken
 
-wire [LOG2TABLEDEPTH-1:0] address_b;
+wire resetn_nc;
+wire predict_nc;
+wire [{PCWIDTH}-1:0] pc_predict_local;
+wire [{PCWIDTH}-1:0] pc_result_local;
 
-assign address_b=pc_predict[LOG2TABLEDEPTH+2-1:2];
+assign resetn_nc = resetn;
+assign predict_nc = predict;
+assign pc_predict_local = pc_predict;
+assign pc_result_local = pc_result;
+
+wire [{LOG2TABLEDEPTH}-1:0] address_b;
+
+assign address_b=pc_predict_local[{LOG2TABLEDEPTH}+2-1:2];
 
 `ifndef USE_INHOUSE_LOGIC
     `define USE_INHOUSE_LOGIC
@@ -43,7 +49,7 @@ assign address_b=pc_predict[LOG2TABLEDEPTH+2-1:2];
 `ifdef USE_INHOUSE_LOGIC
     dpram_{LOG2TABLEDEPTH}_{TABLEDEPTH}_{TABLEWIDTH} pred_table(
 	.clk(clk),
-	.address_a(pc_result[LOG2TABLEDEPTH+2-1:2]),
+	.address_a(pc_result_local[{LOG2TABLEDEPTH}+2-1:2]),
 	.address_b(address_b),
 	.wren_a(result_rdy),
 	.wren_b(0),
@@ -52,10 +58,6 @@ assign address_b=pc_predict[LOG2TABLEDEPTH+2-1:2];
 	.out_a(),
 	.out_b(prediction)
     );
-//    defparam
-//        reg_file1.AWIDTH=LOG2TABLEDEPTH,
-//        reg_file1.NUM_WORDS=TABLEDEPTH,
-//        reg_file1.DWIDTH=TABLEWIDTH;
 
 `else
 
@@ -115,7 +117,7 @@ endmodule'''
 
 if __name__ == '__main__':
     fp = open(parser.parse(), "w")
-    uut = bpred_1bittable(fp)
+    uut = branchpredict(fp)
     uut.write(32, 4096, 12, 1)
     fp.close()
     fp = open(parser.parse(), "a")
