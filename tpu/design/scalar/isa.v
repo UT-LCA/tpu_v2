@@ -36,10 +36,10 @@ parameter     OP_LBU          = 6'b100100;
 parameter     OP_LHU          = 6'b100101;
 parameter     OP_LWR          = 6'b100110;
 
-parameter     OP_SB           = 6'b101x00;
-parameter     OP_SH           = 6'b101x01;
+parameter     OP_SB           = 6'b101000;
+parameter     OP_SH           = 6'b101001;
 parameter     OP_SWL          = 6'b101010;
-parameter     OP_SW           = 6'b101x11;
+parameter     OP_SW           = 6'b101011;
 parameter     OP_SWR          = 6'b101110;
 
 /****** FUNCTION CLASS - bits 5...0 *******/
@@ -50,18 +50,18 @@ parameter     FUNC_SLLV       = 6'b000100;
 parameter     FUNC_SRLV       = 6'b000110;
 parameter     FUNC_SRAV       = 6'b000111;
 
-parameter     FUNC_JR         = 6'b001xx0;
-parameter     FUNC_JALR       = 6'b001xx1;
+parameter     FUNC_JR         = 6'b001000;
+parameter     FUNC_JALR       = 6'b001001;
 
-parameter     FUNC_MFHI       = 6'bx10x00;
-parameter     FUNC_MTHI       = 6'bx10x01;
-parameter     FUNC_MFLO       = 6'bx10x10;
-parameter     FUNC_MTLO       = 6'bx10x11;
+parameter     FUNC_MFHI       = 6'b010000;
+parameter     FUNC_MTHI       = 6'b010001;
+parameter     FUNC_MFLO       = 6'b010010;
+parameter     FUNC_MTLO       = 6'b010011;
 
-parameter     FUNC_MULT       = 6'bx11x00;
-parameter     FUNC_MULTU      = 6'bx11x01;
-parameter     FUNC_DIV        = 6'bx11x10;
-parameter     FUNC_DIVU       = 6'bx11x11;
+parameter     FUNC_MULT       = 6'b011000;
+parameter     FUNC_MULTU      = 6'b011001;
+parameter     FUNC_DIV        = 6'b011010;
+parameter     FUNC_DIVU       = 6'b011011;
 
 parameter     FUNC_ADD        = 6'b100000;
 parameter     FUNC_ADDU       = 6'b100001;

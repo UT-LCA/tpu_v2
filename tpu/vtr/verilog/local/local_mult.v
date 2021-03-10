@@ -7,20 +7,16 @@ aclr,
 result
 );
 
-parameter LPM_WIDTHA = 64;
-parameter LPM_WIDTHB = 64;
-parameter LPM_WIDTHP = 128;
-
-input [LPM_WIDTHA-1:0] dataa;
-input [LPM_WIDTHB-1:0] datab;
+input [64-1:0] dataa;
+input [64-1:0] datab;
 input clock;
 input clken;
 input aclr;
-output reg [LPM_WIDTHP-1:0] result;
+output reg [128-1:0] result;
 
-wire [LPM_WIDTHA-1:0] unsignedinputA;
-wire [LPM_WIDTHB-1:0] unsignedinputB;
-wire [LPM_WIDTHP-1:0] unsignedoutputP;
+wire [64-1:0] unsignedinputA;
+wire [64-1:0] unsignedinputB;
+wire [128-1:0] unsignedoutputP;
 
 wire gated_clock;
 

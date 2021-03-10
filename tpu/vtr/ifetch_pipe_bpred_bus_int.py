@@ -2,7 +2,7 @@ from components import register
 from components import pipereg
 from components import branch_detector
 from bpred_1bittable import branchpredict
-from dpram import dpram
+from rams import dpram
 import parser
 
 class ifetch():
@@ -298,7 +298,7 @@ always@(posedge clk or negedge resetn)
 reg [2:0] debug;
 
 //always@(prediction_saved or predict_en_saved or prediction or en or predict_en or ctrl_load or predict_result_rdy or pc_plus_1 or load_data or we or predict_tgt_pc or pc_rollback or pc_rollbacknottaken or pc or pc_advance)
-always@*
+always@(*)
   begin
     if (interrupt)
     begin   // If interrupt occurs, jump to {EXCEPTION_ADDRESS}
