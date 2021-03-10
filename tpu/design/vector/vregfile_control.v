@@ -33,11 +33,8 @@ output [WIDTH-1:0] a_readdataout;
 input [WIDTH-1:0] c_writedatain;
 input c_we;
 
-output [WIDTH-1:0] vl;
-output [3*`MAT_MUL_SIZE-1:0] matmul_masks;
-
-reg [WIDTH-1:0] vl;
-reg [WIDTH-1:0] matmul_masks;
+output reg [WIDTH-1:0] vl;
+output reg [3*`MAT_MUL_SIZE-1:0] matmul_masks;
 
 `ifdef USE_INHOUSE_LOGIC
         ram_wrapper reg_file1(
