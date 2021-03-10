@@ -23,14 +23,17 @@ output reg [(DWIDTH-1):0] out;
 integer i;
 integer k;
 
-reg [32-1:0] ram[67108864-1:0];
+//reg [32-1:0] ram[67108864-1:0];
+reg [32-1:0] ram[4096-1:0];
 reg [25:0] addr;
  
 initial
  begin
    //This is TOO big for 256 MB RAM!  We right shift data by 1
-   $readmemh("instr.dat",ram,'h100_0000);
-   $readmemh("data.dat",ram,'h400_0000>>1);
+  // $readmemh("instr.dat",ram,'h100_0000);
+   $readmemh("instr.dat",ram,'h100);
+  // $readmemh("data.dat",ram,'h400_0000>>1);
+   $readmemh("data.dat",ram,'h400>>1);
  end
 
 always@(*) begin
