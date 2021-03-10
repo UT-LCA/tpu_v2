@@ -18,7 +18,7 @@ input [(DWIDTH/8)-1:0] byteen;
 input [(DWIDTH-1):0] data;
 output reg [(DWIDTH-1):0] out;
 
-`ifdef SIMULATION_MEMORY
+//`ifdef SIMULATION_MEMORY
 
 integer i;
 integer k;
@@ -52,9 +52,10 @@ always@(posedge clk) begin
       end
   end
 end
-`else
+//`else
 
-single_port_ram u_single_port_ram(
+/*
+//single_port_ram u_single_port_ram(
 .addr(address),
 .we(wren),
 .data(data),
@@ -63,4 +64,5 @@ single_port_ram u_single_port_ram(
 );
 
 `endif
+*/
 endmodule

@@ -24,6 +24,7 @@ DDR_SRC=  ../design/ddr/alt_mem_phy_defines.v \
 LOCAL_SRC= ../design/local/local_add_sub.v \
            ../design/local/local_mult.v \
            ../design/local/local_fifo.v \
+           ../design/local/dpram1.v \
            ../design/local/local_shifter.v
 compile: plifs.sl virtualtype.do filesystem_standalone compilelib compilework
 
