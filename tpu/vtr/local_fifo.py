@@ -1,4 +1,4 @@
-from dpram import dpram
+from rams import dpram
 import math
 import parser
 

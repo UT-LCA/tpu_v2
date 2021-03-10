@@ -83,23 +83,19 @@ endmodulemodule dpram_2_4_8 (
 	out_b
 );
 
-parameter AWIDTH = 2;
-parameter NUM_WORDS = 4;
-parameter DWIDTH = 8;
-
 input clk;
-input [(AWIDTH-1):0] address_a;
-input [(AWIDTH-1):0] address_b;
+input [(2-1):0] address_a;
+input [(2-1):0] address_b;
 input  wren_a;
 input  wren_b;
-input [(DWIDTH-1):0] data_a;
-input [(DWIDTH-1):0] data_b;
-output reg [(DWIDTH-1):0] out_a;
-output reg [(DWIDTH-1):0] out_b;
+input [(8-1):0] data_a;
+input [(8-1):0] data_b;
+output reg [(8-1):0] out_a;
+output reg [(8-1):0] out_b;
 
 `ifdef SIMULATION_MEMORY
 
-reg [DWIDTH-1:0] ram[NUM_WORDS-1:0];
+reg [8-1:0] ram[4-1:0];
 
 always @ (posedge clk) begin 
   if (wren_a) begin

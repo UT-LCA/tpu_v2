@@ -285,7 +285,7 @@ always@(posedge clk or negedge resetn)
 reg [2:0] debug;
 
 //always@(prediction_saved or predict_en_saved or prediction or en or predict_en or ctrl_load or predict_result_rdy or pc_plus_1 or load_data or we or predict_tgt_pc or pc_rollback or pc_rollbacknottaken or pc or pc_advance)
-always@*
+always@(*)
   begin
     if (interrupt)
     begin   // If interrupt occurs, jump to 67108896
@@ -381,9 +381,7 @@ branchpredict_32_4096_12_1 bpredictor (
 
 assign prediction=(pcwrop!=1) ? prediction_tmp :1;
 
-endmodule
-
-/****************************************************************************
+endmodule/****************************************************************************
           Generic Register
 ****************************************************************************/
 module register_32(d,clk,resetn,en,q);
@@ -403,9 +401,7 @@ begin
 		q<=d;
 end
 
-endmodule
-
-/****************************************************************************
+endmodule/****************************************************************************
           Generic Register
 ****************************************************************************/
 module register_2(d,clk,resetn,en,q);
@@ -425,9 +421,7 @@ begin
 		q<=d;
 end
 
-endmodule
-
-/****************************************************************************
+endmodule/****************************************************************************
           Branch detector
 ****************************************************************************/
 module branch_detector(opcode, func, is_branch);
@@ -444,9 +438,7 @@ assign is_special=!(|opcode);
 assign is_branch=((!(|opcode[5:3])) && !is_special) || 
                   ((is_special)&&(func_local==6'b001000));
 
-endmodule
-
-/****************************************************************************
+endmodule/****************************************************************************
           Generic Pipelined Register
 
           - Special component, components starting with "pipereg" have
@@ -471,9 +463,7 @@ begin
     q<=d;
 end
 
-endmodule
-
-module branchpredict_32_4096_12_1 ( clk, resetn,
+endmodulemodule branchpredict_32_4096_12_1 ( clk, resetn,
     predict,
     prediction,
     pc_predict,
@@ -487,7 +477,8 @@ input resetn;
 // Prediction Port
 input predict;                  // When high tells predictor to predict in next cycle
 input [32-1:0] pc_predict; // The PC value for which to predict 
-output prediction;              // The actual prediction 1-taken, 0-nottaken
+output reg prediction;              // The actual prediction 1-taken, 0-nottaken
+wire prediction_temp;
 
 // Prediction Result Port - tells us if the prediction made at pc_result was taken
 input result_rdy;               // The branch has been resolved when result_rdy goes hi
@@ -513,6 +504,8 @@ assign address_b=pc_predict_local[12+2-1:2];
 `endif
 
 `ifdef USE_INHOUSE_LOGIC
+    wire [1-1:0] pred_table_out_a_nc;
+
     dpram_12_4096_1 pred_table(
 	.clk(clk),
 	.address_a(pc_result_local[12+2-1:2]),
@@ -521,10 +514,15 @@ assign address_b=pc_predict_local[12+2-1:2];
 	.wren_b(0),
 	.data_a(result),
 	.data_b(0),
-	.out_a(),
-	.out_b(prediction)
+	.out_a(pred_table_out_a_nc),
+	.out_b(prediction_temp)
     );
-
+  // HACK...HACK....HACK
+  // Somehow abc was thinking that output of dpram is a combinational port. Though the port is sequential as per the architecture file (agilex_arch.auto_layout.xml). The input address (address_b, pc_predict) comes from the parent module and the output data (out_b, prediction) goes to parent module without any logic in between. The output and input of a dpram are connected combinatoraly in the parent module. So abc thinks that here is a combinatoral loop.
+    always @(posedge clk)
+    begin
+        prediction <= prediction_temp;
+    end
 `else
 
 	altsyncram	pred_table(
@@ -574,9 +572,7 @@ assign address_b=pc_predict_local[12+2-1:2];
 		pred_table.intended_device_family = "Stratix";
 
 `endif
-endmodule
-
-module dpram_12_4096_1 (
+endmodulemodule dpram_12_4096_1 (
 	clk,
 	address_a,
 	address_b,
@@ -588,23 +584,19 @@ module dpram_12_4096_1 (
 	out_b
 );
 
-parameter AWIDTH = 12;
-parameter NUM_WORDS = 4096;
-parameter DWIDTH = 1;
-
 input clk;
-input [(AWIDTH-1):0] address_a;
-input [(AWIDTH-1):0] address_b;
+input [(12-1):0] address_a;
+input [(12-1):0] address_b;
 input  wren_a;
 input  wren_b;
-input [(DWIDTH-1):0] data_a;
-input [(DWIDTH-1):0] data_b;
-output reg [(DWIDTH-1):0] out_a;
-output reg [(DWIDTH-1):0] out_b;
+input [(1-1):0] data_a;
+input [(1-1):0] data_b;
+output reg [(1-1):0] out_a;
+output reg [(1-1):0] out_b;
 
 `ifdef SIMULATION_MEMORY
 
-reg [DWIDTH-1:0] ram[NUM_WORDS-1:0];
+reg [1-1:0] ram[4096-1:0];
 
 always @ (posedge clk) begin 
   if (wren_a) begin

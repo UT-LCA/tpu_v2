@@ -328,320 +328,481 @@ reg	predictme;
 		//Decode Logic for Opcode and Multiplex Select signals
 always@(ifetch_opcode or ifetch_func or ifetch_rt or ifetch_rs)
 begin
-		// Initialize control opcodes to zero
-	ctrl_mux2to1_pipereg6_d_sel = 0;
-	ctrl_mux3to1_zeroer4_d_sel = 0;
-	ctrl_mux2to1_pipereg_d_sel = 0;
-	ctrl_zeroer4_en = 0;
-	ctrl_zeroer0_en = 0;
-	ctrl_zeroer_en = 0;
+	// 	// Initialize control opcodes to zero
+	// ctrl_mux2to1_pipereg6_d_sel = 0;
+	// ctrl_mux3to1_zeroer4_d_sel = 0;
+	// ctrl_mux2to1_pipereg_d_sel = 0;
+	// ctrl_zeroer4_en = 0;
+	// ctrl_zeroer0_en = 0;
+	// ctrl_zeroer_en = 0;
 	
-	casex (ifetch_opcode)
+	case (ifetch_opcode)
 		OP_ADDI:
 		begin
+            ctrl_mux2to1_pipereg6_d_sel = 0;
 			ctrl_mux3to1_zeroer4_d_sel = 2;
 			ctrl_mux2to1_pipereg_d_sel = 0;
 			ctrl_zeroer4_en = 1;
+            ctrl_zeroer0_en = 0;
 			ctrl_zeroer_en = 1;
 		end
 		OP_ADDIU:
 		begin
+            ctrl_mux2to1_pipereg6_d_sel = 0;
 			ctrl_mux3to1_zeroer4_d_sel = 2;
 			ctrl_mux2to1_pipereg_d_sel = 0;
 			ctrl_zeroer4_en = 1;
+            ctrl_zeroer0_en = 0;
 			ctrl_zeroer_en = 1;
 		end
 		OP_ANDI:
 		begin
+            ctrl_mux2to1_pipereg6_d_sel = 0;
 			ctrl_mux3to1_zeroer4_d_sel = 2;
 			ctrl_mux2to1_pipereg_d_sel = 1;
 			ctrl_zeroer4_en = 1;
+            ctrl_zeroer0_en = 0;
 			ctrl_zeroer_en = 1;
 		end
 		OP_BEQ:
 		begin
 			ctrl_mux2to1_pipereg6_d_sel = 1;
+            ctrl_mux3to1_zeroer4_d_sel = 0;
+            ctrl_mux2to1_pipereg_d_sel = 0;
+            ctrl_zeroer4_en = 0;
 			ctrl_zeroer0_en = 1;
 			ctrl_zeroer_en = 1;
 		end
 		OP_BGTZ:
 		begin
 			ctrl_mux2to1_pipereg6_d_sel = 1;
+            ctrl_mux3to1_zeroer4_d_sel = 0;
+            ctrl_mux2to1_pipereg_d_sel = 0;
+            ctrl_zeroer4_en = 0;
+            ctrl_zeroer0_en = 0;
 			ctrl_zeroer_en = 1;
 		end
 		OP_BLEZ:
 		begin
 			ctrl_mux2to1_pipereg6_d_sel = 1;
+            ctrl_mux3to1_zeroer4_d_sel = 0;
+            ctrl_mux2to1_pipereg_d_sel = 0;
+            ctrl_zeroer4_en = 0;
+            ctrl_zeroer0_en = 0;
 			ctrl_zeroer_en = 1;
 		end
 		OP_BNE:
 		begin
 			ctrl_mux2to1_pipereg6_d_sel = 1;
+            ctrl_mux3to1_zeroer4_d_sel = 0;
+            ctrl_mux2to1_pipereg_d_sel = 0;
+            ctrl_zeroer4_en = 0;
 			ctrl_zeroer0_en = 1;
 			ctrl_zeroer_en = 1;
 		end
 		OP_COP0:
-		casex (ifetch_rs)
+		case (ifetch_rs)
 			COP0_MFC0:
 			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
 				ctrl_mux3to1_zeroer4_d_sel = 2;
+                ctrl_mux2to1_pipereg_d_sel = 0;
 				ctrl_zeroer4_en = 1;
+                ctrl_zeroer0_en = 0;
+                ctrl_zeroer_en = 0;
 			end
 			COP0_MTC0:
+            begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+                ctrl_mux3to1_zeroer4_d_sel = 0;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+                ctrl_zeroer4_en = 0;
 				ctrl_zeroer0_en = 1;
+                ctrl_zeroer_en = 0;
+            end
 		endcase
 		OP_COP2:
-		casex (ifetch_func)
+		case (ifetch_func)
 			COP2_FUNC_CFC2:
 			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
 				ctrl_mux3to1_zeroer4_d_sel = 2;
+                ctrl_mux2to1_pipereg_d_sel = 0;
 				ctrl_zeroer4_en = 1;
+                ctrl_zeroer0_en = 0;
+                ctrl_zeroer_en = 0;
 			end
 			COP2_FUNC_CTC2:
+            begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+                ctrl_mux3to1_zeroer4_d_sel = 0;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+                ctrl_zeroer4_en = 0;
 				ctrl_zeroer0_en = 1;
+                ctrl_zeroer_en = 0;
+            end
 			COP2_FUNC_MTC2:
+            begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+                ctrl_mux3to1_zeroer4_d_sel = 0;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+                ctrl_zeroer4_en = 0;
 				ctrl_zeroer0_en = 1;
+                ctrl_zeroer_en = 0;
+            end
 		endcase
-		OP_J:
+		OP_J: 
+        begin
 			ctrl_mux2to1_pipereg6_d_sel = 0;
+            ctrl_mux3to1_zeroer4_d_sel = 0;
+            ctrl_mux2to1_pipereg_d_sel = 0;
+            ctrl_zeroer4_en = 0;
+            ctrl_zeroer0_en = 0;
+            ctrl_zeroer_en = 0;
+        end
 		OP_JAL:
 		begin
 			ctrl_mux2to1_pipereg6_d_sel = 0;
 			ctrl_mux3to1_zeroer4_d_sel = 0;
+            ctrl_mux2to1_pipereg_d_sel = 0;
 			ctrl_zeroer4_en = 1;
+            ctrl_zeroer0_en = 0;
+            ctrl_zeroer_en = 0;
 		end
 		OP_LB:
 		begin
+            ctrl_mux2to1_pipereg6_d_sel = 0;
 			ctrl_mux3to1_zeroer4_d_sel = 2;
 			ctrl_mux2to1_pipereg_d_sel = 0;
 			ctrl_zeroer4_en = 1;
+            ctrl_zeroer0_en = 0;
 			ctrl_zeroer_en = 1;
 		end
 		OP_LBU:
 		begin
+            ctrl_mux2to1_pipereg6_d_sel = 0;
 			ctrl_mux3to1_zeroer4_d_sel = 2;
 			ctrl_mux2to1_pipereg_d_sel = 0;
 			ctrl_zeroer4_en = 1;
+            ctrl_zeroer0_en = 0;
 			ctrl_zeroer_en = 1;
 		end
 		OP_LH:
 		begin
+            ctrl_mux2to1_pipereg6_d_sel = 0;
 			ctrl_mux3to1_zeroer4_d_sel = 2;
 			ctrl_mux2to1_pipereg_d_sel = 0;
 			ctrl_zeroer4_en = 1;
+            ctrl_zeroer0_en = 0;
 			ctrl_zeroer_en = 1;
 		end
 		OP_LHU:
 		begin
+            ctrl_mux2to1_pipereg6_d_sel = 0;
 			ctrl_mux3to1_zeroer4_d_sel = 2;
 			ctrl_mux2to1_pipereg_d_sel = 0;
 			ctrl_zeroer4_en = 1;
+            ctrl_zeroer0_en = 0;
 			ctrl_zeroer_en = 1;
 		end
 		OP_LUI:
 		begin
+            ctrl_mux2to1_pipereg6_d_sel = 0;
 			ctrl_mux3to1_zeroer4_d_sel = 2;
 			ctrl_mux2to1_pipereg_d_sel = 1;
 			ctrl_zeroer4_en = 1;
+            ctrl_zeroer0_en = 0;
+            ctrl_zeroer_en = 0;
 		end
 		OP_LW:
 		begin
+            ctrl_mux2to1_pipereg6_d_sel = 0;
 			ctrl_mux3to1_zeroer4_d_sel = 2;
 			ctrl_mux2to1_pipereg_d_sel = 0;
 			ctrl_zeroer4_en = 1;
+            ctrl_zeroer0_en = 0;
 			ctrl_zeroer_en = 1;
 		end
 		OP_ORI:
 		begin
+            ctrl_mux2to1_pipereg6_d_sel = 0;
 			ctrl_mux3to1_zeroer4_d_sel = 2;
 			ctrl_mux2to1_pipereg_d_sel = 1;
 			ctrl_zeroer4_en = 1;
+            ctrl_zeroer0_en = 0;
 			ctrl_zeroer_en = 1;
 		end
 		OP_REGIMM:
-		casex (ifetch_rt[0])
+		case (ifetch_rt[0])
 			FUNC_BGEZ:
 			begin
 				ctrl_mux2to1_pipereg6_d_sel = 1;
+                ctrl_mux3to1_zeroer4_d_sel = 0;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+                ctrl_zeroer4_en = 0;
+                ctrl_zeroer0_en = 0;
 				ctrl_zeroer_en = 1;
 			end
 			FUNC_BLTZ:
 			begin
 				ctrl_mux2to1_pipereg6_d_sel = 1;
+                ctrl_mux3to1_zeroer4_d_sel = 0;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+                ctrl_zeroer4_en = 0;
+                ctrl_zeroer0_en = 0;
 				ctrl_zeroer_en = 1;
 			end
 		endcase
 		OP_SB:
 		begin
+            ctrl_mux2to1_pipereg6_d_sel = 0;
+            ctrl_mux3to1_zeroer4_d_sel = 0;
 			ctrl_mux2to1_pipereg_d_sel = 0;
+            ctrl_zeroer4_en = 0;
 			ctrl_zeroer0_en = 1;
 			ctrl_zeroer_en = 1;
 		end
 		OP_SH:
 		begin
+            ctrl_mux2to1_pipereg6_d_sel = 0;
+            ctrl_mux3to1_zeroer4_d_sel = 0;
 			ctrl_mux2to1_pipereg_d_sel = 0;
+            ctrl_zeroer4_en = 0;
 			ctrl_zeroer0_en = 1;
 			ctrl_zeroer_en = 1;
 		end
 		OP_SLTI:
 		begin
+            ctrl_mux2to1_pipereg6_d_sel = 0;
 			ctrl_mux3to1_zeroer4_d_sel = 2;
 			ctrl_mux2to1_pipereg_d_sel = 0;
 			ctrl_zeroer4_en = 1;
+            ctrl_zeroer0_en = 0;
 			ctrl_zeroer_en = 1;
 		end
 		OP_SLTIU:
 		begin
+            ctrl_mux2to1_pipereg6_d_sel = 0;
 			ctrl_mux3to1_zeroer4_d_sel = 2;
 			ctrl_mux2to1_pipereg_d_sel = 0;
 			ctrl_zeroer4_en = 1;
+            ctrl_zeroer0_en = 0;
 			ctrl_zeroer_en = 1;
 		end
 		OP_SPECIAL:
-		casex (ifetch_func)
+		case (ifetch_func)
 			FUNC_ADD:
 			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
 				ctrl_mux3to1_zeroer4_d_sel = 1;
+                ctrl_mux2to1_pipereg_d_sel = 0;
 				ctrl_zeroer4_en = 1;
 				ctrl_zeroer0_en = 1;
 				ctrl_zeroer_en = 1;
 			end
 			FUNC_ADDU:
 			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
 				ctrl_mux3to1_zeroer4_d_sel = 1;
+                ctrl_mux2to1_pipereg_d_sel = 0;
 				ctrl_zeroer4_en = 1;
 				ctrl_zeroer0_en = 1;
 				ctrl_zeroer_en = 1;
 			end
 			FUNC_AND:
 			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
 				ctrl_mux3to1_zeroer4_d_sel = 1;
+                ctrl_mux2to1_pipereg_d_sel = 0;
 				ctrl_zeroer4_en = 1;
 				ctrl_zeroer0_en = 1;
 				ctrl_zeroer_en = 1;
 			end
 			FUNC_DIV:
 			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+                ctrl_mux3to1_zeroer4_d_sel = 0;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+                ctrl_zeroer4_en = 0;
 				ctrl_zeroer0_en = 1;
 				ctrl_zeroer_en = 1;
 			end
 			FUNC_DIVU:
 			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+                ctrl_mux3to1_zeroer4_d_sel = 0;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+                ctrl_zeroer4_en = 0;
 				ctrl_zeroer0_en = 1;
 				ctrl_zeroer_en = 1;
 			end
 			FUNC_JALR:
 			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
 				ctrl_mux3to1_zeroer4_d_sel = 1;
+                ctrl_mux2to1_pipereg_d_sel = 0;
 				ctrl_zeroer4_en = 1;
+                ctrl_zeroer0_en = 0;
 				ctrl_zeroer_en = 1;
 			end
 			FUNC_JR:
+            begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+                ctrl_mux3to1_zeroer4_d_sel = 0;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+                ctrl_zeroer4_en = 0;
+                ctrl_zeroer0_en = 0;
 				ctrl_zeroer_en = 1;
+            end
 			FUNC_MFHI:
 			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
 				ctrl_mux3to1_zeroer4_d_sel = 1;
+                ctrl_mux2to1_pipereg_d_sel = 0;
 				ctrl_zeroer4_en = 1;
+                ctrl_zeroer0_en = 0;
+                ctrl_zeroer_en = 0;
 			end
 			FUNC_MFLO:
 			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
 				ctrl_mux3to1_zeroer4_d_sel = 1;
+                ctrl_mux2to1_pipereg_d_sel = 0;
 				ctrl_zeroer4_en = 1;
+                ctrl_zeroer0_en = 0;
+                ctrl_zeroer_en = 0;
 			end
 			FUNC_MULT:
 			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+                ctrl_mux3to1_zeroer4_d_sel = 0;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+                ctrl_zeroer4_en = 0;
 				ctrl_zeroer0_en = 1;
 				ctrl_zeroer_en = 1;
 			end
 			FUNC_MULTU:
 			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+                ctrl_mux3to1_zeroer4_d_sel = 0;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+                ctrl_zeroer4_en = 0;
 				ctrl_zeroer0_en = 1;
 				ctrl_zeroer_en = 1;
 			end
 			FUNC_NOR:
 			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
 				ctrl_mux3to1_zeroer4_d_sel = 1;
+                ctrl_mux2to1_pipereg_d_sel = 0;
 				ctrl_zeroer4_en = 1;
 				ctrl_zeroer0_en = 1;
 				ctrl_zeroer_en = 1;
 			end
 			FUNC_OR:
 			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
 				ctrl_mux3to1_zeroer4_d_sel = 1;
+                ctrl_mux2to1_pipereg_d_sel = 0;
 				ctrl_zeroer4_en = 1;
 				ctrl_zeroer0_en = 1;
 				ctrl_zeroer_en = 1;
 			end
 			FUNC_SLL:
 			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
 				ctrl_mux3to1_zeroer4_d_sel = 1;
+                ctrl_mux2to1_pipereg_d_sel = 0;
 				ctrl_zeroer4_en = 1;
 				ctrl_zeroer0_en = 1;
+                ctrl_zeroer_en = 0;
 			end
 			FUNC_SLLV:
 			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
 				ctrl_mux3to1_zeroer4_d_sel = 1;
+                ctrl_mux2to1_pipereg_d_sel = 0;
 				ctrl_zeroer4_en = 1;
 				ctrl_zeroer0_en = 1;
 				ctrl_zeroer_en = 1;
 			end
 			FUNC_SLT:
 			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
 				ctrl_mux3to1_zeroer4_d_sel = 1;
+                ctrl_mux2to1_pipereg_d_sel = 0;
 				ctrl_zeroer4_en = 1;
 				ctrl_zeroer0_en = 1;
 				ctrl_zeroer_en = 1;
 			end
 			FUNC_SLTU:
 			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
 				ctrl_mux3to1_zeroer4_d_sel = 1;
+                ctrl_mux2to1_pipereg_d_sel = 0;
 				ctrl_zeroer4_en = 1;
 				ctrl_zeroer0_en = 1;
 				ctrl_zeroer_en = 1;
 			end
 			FUNC_SRA:
 			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
 				ctrl_mux3to1_zeroer4_d_sel = 1;
+                ctrl_mux2to1_pipereg_d_sel = 0;
 				ctrl_zeroer4_en = 1;
 				ctrl_zeroer0_en = 1;
+                ctrl_zeroer_en = 0;
 			end
 			FUNC_SRAV:
 			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
 				ctrl_mux3to1_zeroer4_d_sel = 1;
+                ctrl_mux2to1_pipereg_d_sel = 0;
 				ctrl_zeroer4_en = 1;
 				ctrl_zeroer0_en = 1;
 				ctrl_zeroer_en = 1;
 			end
 			FUNC_SRL:
 			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
 				ctrl_mux3to1_zeroer4_d_sel = 1;
+                ctrl_mux2to1_pipereg_d_sel = 0;
 				ctrl_zeroer4_en = 1;
 				ctrl_zeroer0_en = 1;
+                ctrl_zeroer_en = 0;
 			end
 			FUNC_SRLV:
 			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
 				ctrl_mux3to1_zeroer4_d_sel = 1;
+                ctrl_mux2to1_pipereg_d_sel = 0;
 				ctrl_zeroer4_en = 1;
 				ctrl_zeroer0_en = 1;
 				ctrl_zeroer_en = 1;
 			end
 			FUNC_SUB:
 			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
 				ctrl_mux3to1_zeroer4_d_sel = 1;
+                ctrl_mux2to1_pipereg_d_sel = 0;
 				ctrl_zeroer4_en = 1;
 				ctrl_zeroer0_en = 1;
 				ctrl_zeroer_en = 1;
 			end
 			FUNC_SUBU:
 			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
 				ctrl_mux3to1_zeroer4_d_sel = 1;
+                ctrl_mux2to1_pipereg_d_sel = 0;
 				ctrl_zeroer4_en = 1;
 				ctrl_zeroer0_en = 1;
 				ctrl_zeroer_en = 1;
 			end
 			FUNC_XOR:
 			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
 				ctrl_mux3to1_zeroer4_d_sel = 1;
+                ctrl_mux2to1_pipereg_d_sel = 0;
 				ctrl_zeroer4_en = 1;
 				ctrl_zeroer0_en = 1;
 				ctrl_zeroer_en = 1;
@@ -649,15 +810,20 @@ begin
 		endcase
 		OP_SW:
 		begin
+            ctrl_mux2to1_pipereg6_d_sel = 0;
+            ctrl_mux3to1_zeroer4_d_sel = 0;
 			ctrl_mux2to1_pipereg_d_sel = 0;
+            ctrl_zeroer4_en = 0;
 			ctrl_zeroer0_en = 1;
 			ctrl_zeroer_en = 1;
 		end
 		OP_XORI:
 		begin
+            ctrl_mux2to1_pipereg6_d_sel = 0;
 			ctrl_mux3to1_zeroer4_d_sel = 2;
 			ctrl_mux2to1_pipereg_d_sel = 1;
 			ctrl_zeroer4_en = 1;
+            ctrl_zeroer0_en = 0;
 			ctrl_zeroer_en = 1;
 		end
 	endcase
@@ -673,340 +839,865 @@ end
 always@(pipereg14_q or pipereg15_q or pipereg16_q or pipereg17_q)
 begin
 		// Initialize control opcodes to zero
-	ctrl_mux6to1_pipereg7_d_sel = 0;
-	ctrl_mux9to1_nop13_d_sel = 0;
-	ctrl_mux3to1_nop9_d_sel = 0;
-	ctrl_mux2to1_lo_reg_d_sel = 0;
-	ctrl_mux2to1_hi_reg_d_sel = 0;
-	ctrl_mux2to1_mul_opA_sel = 0;
-	ctrl_mux3to1_mul_sa_sel = 0;
-	ctrl_mux2to1_addersub_opA_sel = 0;
-	ctrl_ifetch_pcwrop = 0;
-	ctrl_addersub_op = 0;
-	ctrl_data_mem_op = 0;
-	ctrl_div_sign = 0;
-	ctrl_mul_op = 0;
-	ctrl_logic_unit_op = 0;
+	// ctrl_mux6to1_pipereg7_d_sel = 0;
+	// ctrl_mux9to1_nop13_d_sel = 0;
+	// ctrl_mux3to1_nop9_d_sel = 0;
+	// ctrl_mux2to1_lo_reg_d_sel = 0;
+	// ctrl_mux2to1_hi_reg_d_sel = 0;
+	// ctrl_mux2to1_mul_opA_sel = 0;
+	// ctrl_mux3to1_mul_sa_sel = 0;
+	// ctrl_mux2to1_addersub_opA_sel = 0;
+	// ctrl_ifetch_pcwrop = 0;
+	// ctrl_addersub_op = 0;
+	// ctrl_data_mem_op = 0;
+	// ctrl_div_sign = 0;
+	// ctrl_mul_op = 0;
+	// ctrl_logic_unit_op = 0;
 	
-	casex (pipereg14_q)
+	case (pipereg14_q)
 		OP_ADDI:
 		begin
+			ctrl_mux6to1_pipereg7_d_sel = 0;
 			ctrl_mux9to1_nop13_d_sel = 6;
 			ctrl_mux3to1_nop9_d_sel = 2;
+			ctrl_mux2to1_lo_reg_d_sel = 0;
+			ctrl_mux2to1_hi_reg_d_sel = 0;
+			ctrl_mux2to1_mul_opA_sel = 0;
+			ctrl_mux3to1_mul_sa_sel = 0;
 			ctrl_mux2to1_addersub_opA_sel = 0;
+			ctrl_ifetch_pcwrop = 0;
 			ctrl_addersub_op = 3;
+			ctrl_data_mem_op = 0;
+			ctrl_div_sign = 0;
+			ctrl_mul_op = 0;
+			ctrl_logic_unit_op = 0;
 		end
 		OP_ADDIU:
 		begin
+			ctrl_mux6to1_pipereg7_d_sel = 0;
 			ctrl_mux9to1_nop13_d_sel = 6;
 			ctrl_mux3to1_nop9_d_sel = 2;
+			ctrl_mux2to1_lo_reg_d_sel = 0;
+			ctrl_mux2to1_hi_reg_d_sel = 0;
+			ctrl_mux2to1_mul_opA_sel = 0;
+			ctrl_mux3to1_mul_sa_sel = 0;
 			ctrl_mux2to1_addersub_opA_sel = 0;
+			ctrl_ifetch_pcwrop = 0;
 			ctrl_addersub_op = 1;
+			ctrl_data_mem_op = 0;
+			ctrl_div_sign = 0;
+			ctrl_mul_op = 0;
+			ctrl_logic_unit_op = 0;
 		end
 		OP_ANDI:
 		begin
+			ctrl_mux6to1_pipereg7_d_sel = 0;
 			ctrl_mux9to1_nop13_d_sel = 4;
 			ctrl_mux3to1_nop9_d_sel = 2;
+			ctrl_mux2to1_lo_reg_d_sel = 0;
+			ctrl_mux2to1_hi_reg_d_sel = 0;
+			ctrl_mux2to1_mul_opA_sel = 0;
+			ctrl_mux3to1_mul_sa_sel = 0;
+			ctrl_mux2to1_addersub_opA_sel = 0;
+			ctrl_ifetch_pcwrop = 0;
+			ctrl_addersub_op = 0;
+			ctrl_data_mem_op = 0;
+			ctrl_div_sign = 0;
+			ctrl_mul_op = 0;
 			ctrl_logic_unit_op = 0;
 		end
 		OP_BEQ:
 		begin
 			ctrl_mux6to1_pipereg7_d_sel = 5;
+			ctrl_mux9to1_nop13_d_sel = 0;
+			ctrl_mux3to1_nop9_d_sel = 0;
+			ctrl_mux2to1_lo_reg_d_sel = 0;
+			ctrl_mux2to1_hi_reg_d_sel = 0;
+			ctrl_mux2to1_mul_opA_sel = 0;
+			ctrl_mux3to1_mul_sa_sel = 0;
+			ctrl_mux2to1_addersub_opA_sel = 0;
 			ctrl_ifetch_pcwrop = 0;
+			ctrl_addersub_op = 0;
+			ctrl_data_mem_op = 0;
+			ctrl_div_sign = 0;
+			ctrl_mul_op = 0;
+			ctrl_logic_unit_op = 0;
 		end
 		OP_BGTZ:
 		begin
 			ctrl_mux6to1_pipereg7_d_sel = 0;
+			ctrl_mux9to1_nop13_d_sel = 0;
+			ctrl_mux3to1_nop9_d_sel = 0;
+			ctrl_mux2to1_lo_reg_d_sel = 0;
+			ctrl_mux2to1_hi_reg_d_sel = 0;
+			ctrl_mux2to1_mul_opA_sel = 0;
+			ctrl_mux3to1_mul_sa_sel = 0;
+			ctrl_mux2to1_addersub_opA_sel = 0;
 			ctrl_ifetch_pcwrop = 0;
+			ctrl_addersub_op = 0;
+			ctrl_data_mem_op = 0;
+			ctrl_div_sign = 0;
+			ctrl_mul_op = 0;
+			ctrl_logic_unit_op = 0;
 		end
 		OP_BLEZ:
 		begin
 			ctrl_mux6to1_pipereg7_d_sel = 3;
+			ctrl_mux9to1_nop13_d_sel = 0;
+			ctrl_mux3to1_nop9_d_sel = 0;
+			ctrl_mux2to1_lo_reg_d_sel = 0;
+			ctrl_mux2to1_hi_reg_d_sel = 0;
+			ctrl_mux2to1_mul_opA_sel = 0;
+			ctrl_mux3to1_mul_sa_sel = 0;
+			ctrl_mux2to1_addersub_opA_sel = 0;
 			ctrl_ifetch_pcwrop = 0;
+			ctrl_addersub_op = 0;
+			ctrl_data_mem_op = 0;
+			ctrl_div_sign = 0;
+			ctrl_mul_op = 0;
+			ctrl_logic_unit_op = 0;
 		end
 		OP_BNE:
 		begin
 			ctrl_mux6to1_pipereg7_d_sel = 4;
+			ctrl_mux9to1_nop13_d_sel = 0;
+			ctrl_mux3to1_nop9_d_sel = 0;
+			ctrl_mux2to1_lo_reg_d_sel = 0;
+			ctrl_mux2to1_hi_reg_d_sel = 0;
+			ctrl_mux2to1_mul_opA_sel = 0;
+			ctrl_mux3to1_mul_sa_sel = 0;
+			ctrl_mux2to1_addersub_opA_sel = 0;
 			ctrl_ifetch_pcwrop = 0;
+			ctrl_addersub_op = 0;
+			ctrl_data_mem_op = 0;
+			ctrl_div_sign = 0;
+			ctrl_mul_op = 0;
+			ctrl_logic_unit_op = 0;
 		end
 		OP_COP0:
-		casex (pipereg17_q)
+		case (pipereg17_q)
 			COP0_MFC0:
+			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
 				ctrl_mux9to1_nop13_d_sel = 7;
+				ctrl_mux3to1_nop9_d_sel = 0;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
+			end
 		endcase
 		OP_COP2:
-		casex (pipereg15_q)
+		case (pipereg15_q)
 			COP2_FUNC_CFC2:
+			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
 				ctrl_mux9to1_nop13_d_sel = 8;
+				ctrl_mux3to1_nop9_d_sel = 0;
+				ctrl_mux2to1_lo_reg_d_sel = 0;	
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;	
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;	
+			end
 		endcase
 		OP_J:
+		begin
+			ctrl_mux6to1_pipereg7_d_sel = 0;
+			ctrl_mux9to1_nop13_d_sel = 0;
+			ctrl_mux3to1_nop9_d_sel = 0;
+			ctrl_mux2to1_lo_reg_d_sel = 0;
+			ctrl_mux2to1_hi_reg_d_sel = 0;
+			ctrl_mux2to1_mul_opA_sel = 0;
+			ctrl_mux3to1_mul_sa_sel = 0;
+			ctrl_mux2to1_addersub_opA_sel = 0;
 			ctrl_ifetch_pcwrop = 1;
+			ctrl_addersub_op = 0;
+			ctrl_data_mem_op = 0;
+			ctrl_div_sign = 0;
+			ctrl_mul_op = 0;
+			ctrl_logic_unit_op = 0;
+		end
 		OP_JAL:
 		begin
+			ctrl_mux6to1_pipereg7_d_sel = 0;
 			ctrl_mux9to1_nop13_d_sel = 6;
+			ctrl_mux3to1_nop9_d_sel = 0;
+			ctrl_mux2to1_lo_reg_d_sel = 0;
+			ctrl_mux2to1_hi_reg_d_sel = 0;
+			ctrl_mux2to1_mul_opA_sel = 0;
+			ctrl_mux3to1_mul_sa_sel = 0;
 			ctrl_mux2to1_addersub_opA_sel = 1;
 			ctrl_ifetch_pcwrop = 1;
 			ctrl_addersub_op = 1;
+			ctrl_data_mem_op = 0;
+			ctrl_div_sign = 0;
+			ctrl_mul_op = 0;
+			ctrl_logic_unit_op = 0;
 		end
 		OP_LB:
 		begin
+			ctrl_mux6to1_pipereg7_d_sel = 0;
 			ctrl_mux9to1_nop13_d_sel = 2;
 			ctrl_mux3to1_nop9_d_sel = 2;
+			ctrl_mux2to1_lo_reg_d_sel = 0;
+			ctrl_mux2to1_hi_reg_d_sel = 0;
+			ctrl_mux2to1_mul_opA_sel = 0;
+			ctrl_mux3to1_mul_sa_sel = 0;
 			ctrl_mux2to1_addersub_opA_sel = 0;
+			ctrl_ifetch_pcwrop = 0;
 			ctrl_addersub_op = 3;
 			ctrl_data_mem_op = 7;
+			ctrl_div_sign = 0;
+			ctrl_mul_op = 0;
+			ctrl_logic_unit_op = 0;
 		end
 		OP_LBU:
 		begin
+			ctrl_mux6to1_pipereg7_d_sel = 0;
 			ctrl_mux9to1_nop13_d_sel = 2;
 			ctrl_mux3to1_nop9_d_sel = 2;
+			ctrl_mux2to1_lo_reg_d_sel = 0;
+			ctrl_mux2to1_hi_reg_d_sel = 0;
+			ctrl_mux2to1_mul_opA_sel = 0;
+			ctrl_mux3to1_mul_sa_sel = 0;
 			ctrl_mux2to1_addersub_opA_sel = 0;
+			ctrl_ifetch_pcwrop = 0;
 			ctrl_addersub_op = 3;
 			ctrl_data_mem_op = 3;
+			ctrl_div_sign = 0;
+			ctrl_mul_op = 0;
+			ctrl_logic_unit_op = 0;
 		end
 		OP_LH:
 		begin
+			ctrl_mux6to1_pipereg7_d_sel = 0;
 			ctrl_mux9to1_nop13_d_sel = 2;
 			ctrl_mux3to1_nop9_d_sel = 2;
+			ctrl_mux2to1_lo_reg_d_sel = 0;
+			ctrl_mux2to1_hi_reg_d_sel = 0;
+			ctrl_mux2to1_mul_opA_sel = 0;
+			ctrl_mux3to1_mul_sa_sel = 0;
 			ctrl_mux2to1_addersub_opA_sel = 0;
+			ctrl_ifetch_pcwrop = 0;
 			ctrl_addersub_op = 3;
 			ctrl_data_mem_op = 5;
+			ctrl_div_sign = 0;
+			ctrl_mul_op = 0;
+			ctrl_logic_unit_op = 0;
 		end
 		OP_LHU:
 		begin
+			ctrl_mux6to1_pipereg7_d_sel = 0;
 			ctrl_mux9to1_nop13_d_sel = 2;
 			ctrl_mux3to1_nop9_d_sel = 2;
+			ctrl_mux2to1_lo_reg_d_sel = 0;
+			ctrl_mux2to1_hi_reg_d_sel = 0;
+			ctrl_mux2to1_mul_opA_sel = 0;
+			ctrl_mux3to1_mul_sa_sel = 0;
 			ctrl_mux2to1_addersub_opA_sel = 0;
+			ctrl_ifetch_pcwrop = 0;
 			ctrl_addersub_op = 3;
 			ctrl_data_mem_op = 1;
+			ctrl_div_sign = 0;
+			ctrl_mul_op = 0;
+			ctrl_logic_unit_op = 0;
 		end
 		OP_LUI:
 		begin
+			ctrl_mux6to1_pipereg7_d_sel = 0;
 			ctrl_mux9to1_nop13_d_sel = 3;
 			ctrl_mux3to1_nop9_d_sel = 2;
+			ctrl_mux2to1_lo_reg_d_sel = 0;
+			ctrl_mux2to1_hi_reg_d_sel = 0;
 			ctrl_mux2to1_mul_opA_sel = 0;
 			ctrl_mux3to1_mul_sa_sel = 1;
+			ctrl_mux2to1_addersub_opA_sel = 0;
+			ctrl_ifetch_pcwrop = 0;
+			ctrl_addersub_op = 0;
+			ctrl_data_mem_op = 0;
+			ctrl_div_sign = 0;
 			ctrl_mul_op = 0;
+			ctrl_logic_unit_op = 0;
 		end
 		OP_LW:
 		begin
+			ctrl_mux6to1_pipereg7_d_sel = 0;
 			ctrl_mux9to1_nop13_d_sel = 2;
 			ctrl_mux3to1_nop9_d_sel = 2;
+			ctrl_mux2to1_lo_reg_d_sel = 0;
+			ctrl_mux2to1_hi_reg_d_sel = 0;
+			ctrl_mux2to1_mul_opA_sel = 0;
+			ctrl_mux3to1_mul_sa_sel = 0;
 			ctrl_mux2to1_addersub_opA_sel = 0;
+			ctrl_ifetch_pcwrop = 0;
 			ctrl_addersub_op = 3;
 			ctrl_data_mem_op = 0;
+			ctrl_div_sign = 0;
+			ctrl_mul_op = 0;
+			ctrl_logic_unit_op = 0;
 		end
 		OP_ORI:
 		begin
+			ctrl_mux6to1_pipereg7_d_sel = 0;
 			ctrl_mux9to1_nop13_d_sel = 4;
 			ctrl_mux3to1_nop9_d_sel = 2;
+			ctrl_mux2to1_lo_reg_d_sel = 0;
+			ctrl_mux2to1_hi_reg_d_sel = 0;
+			ctrl_mux2to1_mul_opA_sel = 0;
+			ctrl_mux3to1_mul_sa_sel = 0;
+			ctrl_mux2to1_addersub_opA_sel = 0;
+			ctrl_ifetch_pcwrop = 0;
+			ctrl_addersub_op = 0;
+			ctrl_data_mem_op = 0;
+			ctrl_div_sign = 0;
+			ctrl_mul_op = 0;
 			ctrl_logic_unit_op = 1;
 		end
 		OP_REGIMM:
-		casex (pipereg16_q[0])
+		case (pipereg16_q[0])
 			FUNC_BGEZ:
 			begin
 				ctrl_mux6to1_pipereg7_d_sel = 1;
+				ctrl_mux9to1_nop13_d_sel = 0;
+				ctrl_mux3to1_nop9_d_sel = 0;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
 				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
 			end
 			FUNC_BLTZ:
 			begin
 				ctrl_mux6to1_pipereg7_d_sel = 2;
+				ctrl_mux9to1_nop13_d_sel = 0;
+				ctrl_mux3to1_nop9_d_sel = 0;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
 				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
 			end
 		endcase
 		OP_SB:
 		begin
+			ctrl_mux6to1_pipereg7_d_sel = 0;
+			ctrl_mux9to1_nop13_d_sel = 0;
 			ctrl_mux3to1_nop9_d_sel = 2;
+			ctrl_mux2to1_lo_reg_d_sel = 0;
+			ctrl_mux2to1_hi_reg_d_sel = 0;
+			ctrl_mux2to1_mul_opA_sel = 0;
+			ctrl_mux3to1_mul_sa_sel = 0;
 			ctrl_mux2to1_addersub_opA_sel = 0;
+			ctrl_ifetch_pcwrop = 0;
 			ctrl_addersub_op = 3;
 			ctrl_data_mem_op = 11;
+			ctrl_div_sign = 0;
+			ctrl_mul_op = 0;
+			ctrl_logic_unit_op = 0;
 		end
 		OP_SH:
 		begin
+			ctrl_mux6to1_pipereg7_d_sel = 0;
+			ctrl_mux9to1_nop13_d_sel = 0;
 			ctrl_mux3to1_nop9_d_sel = 2;
+			ctrl_mux2to1_lo_reg_d_sel = 0;
+			ctrl_mux2to1_hi_reg_d_sel = 0;
+			ctrl_mux2to1_mul_opA_sel = 0;
+			ctrl_mux3to1_mul_sa_sel = 0;
 			ctrl_mux2to1_addersub_opA_sel = 0;
+			ctrl_ifetch_pcwrop = 0;
 			ctrl_addersub_op = 3;
 			ctrl_data_mem_op = 9;
+			ctrl_div_sign = 0;
+			ctrl_mul_op = 0;
+			ctrl_logic_unit_op = 0;
 		end
 		OP_SLTI:
 		begin
+			ctrl_mux6to1_pipereg7_d_sel = 0;
 			ctrl_mux9to1_nop13_d_sel = 5;
 			ctrl_mux3to1_nop9_d_sel = 2;
+			ctrl_mux2to1_lo_reg_d_sel = 0;
+			ctrl_mux2to1_hi_reg_d_sel = 0;
+			ctrl_mux2to1_mul_opA_sel = 0;
+			ctrl_mux3to1_mul_sa_sel = 0;
 			ctrl_mux2to1_addersub_opA_sel = 0;
+			ctrl_ifetch_pcwrop = 0;
 			ctrl_addersub_op = 6;
+			ctrl_data_mem_op = 0;
+			ctrl_div_sign = 0;
+			ctrl_mul_op = 0;
+			ctrl_logic_unit_op = 0;
 		end
 		OP_SLTIU:
 		begin
+			ctrl_mux6to1_pipereg7_d_sel = 0;
 			ctrl_mux9to1_nop13_d_sel = 5;
 			ctrl_mux3to1_nop9_d_sel = 2;
+			ctrl_mux2to1_lo_reg_d_sel = 0;
+			ctrl_mux2to1_hi_reg_d_sel = 0;
+			ctrl_mux2to1_mul_opA_sel = 0;
+			ctrl_mux3to1_mul_sa_sel = 0;
 			ctrl_mux2to1_addersub_opA_sel = 0;
+			ctrl_ifetch_pcwrop = 0;
 			ctrl_addersub_op = 4;
+			ctrl_data_mem_op = 0;
+			ctrl_div_sign = 0;
+			ctrl_mul_op = 0;
+			ctrl_logic_unit_op = 0;
 		end
 		OP_SPECIAL:
-		casex (pipereg15_q)
+		case (pipereg15_q)
 			FUNC_ADD:
 			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
 				ctrl_mux9to1_nop13_d_sel = 6;
 				ctrl_mux3to1_nop9_d_sel = 1;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
 				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
 				ctrl_addersub_op = 3;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
 			end
 			FUNC_ADDU:
 			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
 				ctrl_mux9to1_nop13_d_sel = 6;
 				ctrl_mux3to1_nop9_d_sel = 1;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
 				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
 				ctrl_addersub_op = 1;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
 			end
 			FUNC_AND:
 			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
 				ctrl_mux9to1_nop13_d_sel = 4;
 				ctrl_mux3to1_nop9_d_sel = 1;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 0;
 				ctrl_logic_unit_op = 0;
 			end
 			FUNC_DIV:
 			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
+				ctrl_mux9to1_nop13_d_sel = 0;
+				ctrl_mux3to1_nop9_d_sel = 0;
 				ctrl_mux2to1_lo_reg_d_sel = 1;
 				ctrl_mux2to1_hi_reg_d_sel = 1;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
 				ctrl_div_sign = 1;
+				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
 			end
 			FUNC_DIVU:
 			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
+				ctrl_mux9to1_nop13_d_sel = 0;
+				ctrl_mux3to1_nop9_d_sel = 0;
 				ctrl_mux2to1_lo_reg_d_sel = 1;
 				ctrl_mux2to1_hi_reg_d_sel = 1;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
 				ctrl_div_sign = 0;
+				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
 			end
 			FUNC_JALR:
 			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
 				ctrl_mux9to1_nop13_d_sel = 6;
+				ctrl_mux3to1_nop9_d_sel = 0;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
 				ctrl_mux2to1_addersub_opA_sel = 1;
+				ctrl_ifetch_pcwrop = 0;
 				ctrl_addersub_op = 1;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
 			end
 			FUNC_MFHI:
+			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
 				ctrl_mux9to1_nop13_d_sel = 1;
+				ctrl_mux3to1_nop9_d_sel = 0;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
+			end
 			FUNC_MFLO:
+			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
 				ctrl_mux9to1_nop13_d_sel = 0;
+				ctrl_mux3to1_nop9_d_sel = 0;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
+			end
 			FUNC_MULT:
 			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
+				ctrl_mux9to1_nop13_d_sel = 0;
+				ctrl_mux3to1_nop9_d_sel = 0;
 				ctrl_mux2to1_lo_reg_d_sel = 0;
 				ctrl_mux2to1_hi_reg_d_sel = 0;
 				ctrl_mux2to1_mul_opA_sel = 1;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
 				ctrl_mul_op = 6;
+				ctrl_logic_unit_op = 0;
 			end
 			FUNC_MULTU:
 			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
+				ctrl_mux9to1_nop13_d_sel = 0;
+				ctrl_mux3to1_nop9_d_sel = 0;
 				ctrl_mux2to1_lo_reg_d_sel = 0;
 				ctrl_mux2to1_hi_reg_d_sel = 0;
 				ctrl_mux2to1_mul_opA_sel = 1;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
 				ctrl_mul_op = 4;
+				ctrl_logic_unit_op = 0;
 			end
 			FUNC_NOR:
 			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
 				ctrl_mux9to1_nop13_d_sel = 4;
 				ctrl_mux3to1_nop9_d_sel = 1;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 0;
 				ctrl_logic_unit_op = 3;
 			end
 			FUNC_OR:
 			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
 				ctrl_mux9to1_nop13_d_sel = 4;
 				ctrl_mux3to1_nop9_d_sel = 1;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 0;
 				ctrl_logic_unit_op = 1;
 			end
 			FUNC_SLL:
 			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
 				ctrl_mux9to1_nop13_d_sel = 3;
 				ctrl_mux3to1_nop9_d_sel = 1;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
 				ctrl_mux2to1_mul_opA_sel = 0;
 				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
 				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
 			end
 			FUNC_SLLV:
 			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
 				ctrl_mux9to1_nop13_d_sel = 3;
 				ctrl_mux3to1_nop9_d_sel = 1;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
 				ctrl_mux2to1_mul_opA_sel = 0;
 				ctrl_mux3to1_mul_sa_sel = 2;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
 				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
 			end
 			FUNC_SLT:
 			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
 				ctrl_mux9to1_nop13_d_sel = 5;
 				ctrl_mux3to1_nop9_d_sel = 1;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
 				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
 				ctrl_addersub_op = 6;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
 			end
 			FUNC_SLTU:
 			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
 				ctrl_mux9to1_nop13_d_sel = 5;
 				ctrl_mux3to1_nop9_d_sel = 1;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
 				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
 				ctrl_addersub_op = 4;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
 			end
 			FUNC_SRA:
 			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
 				ctrl_mux9to1_nop13_d_sel = 3;
 				ctrl_mux3to1_nop9_d_sel = 1;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
 				ctrl_mux2to1_mul_opA_sel = 0;
 				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
 				ctrl_mul_op = 3;
+				ctrl_logic_unit_op = 0;
 			end
 			FUNC_SRAV:
 			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
 				ctrl_mux9to1_nop13_d_sel = 3;
 				ctrl_mux3to1_nop9_d_sel = 1;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
 				ctrl_mux2to1_mul_opA_sel = 0;
 				ctrl_mux3to1_mul_sa_sel = 2;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
 				ctrl_mul_op = 3;
+				ctrl_logic_unit_op = 0;
 			end
 			FUNC_SRL:
 			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
 				ctrl_mux9to1_nop13_d_sel = 3;
 				ctrl_mux3to1_nop9_d_sel = 1;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
 				ctrl_mux2to1_mul_opA_sel = 0;
 				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
 				ctrl_mul_op = 1;
+				ctrl_logic_unit_op = 0;
 			end
 			FUNC_SRLV:
 			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
 				ctrl_mux9to1_nop13_d_sel = 3;
 				ctrl_mux3to1_nop9_d_sel = 1;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
 				ctrl_mux2to1_mul_opA_sel = 0;
 				ctrl_mux3to1_mul_sa_sel = 2;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
 				ctrl_mul_op = 1;
+				ctrl_logic_unit_op = 0;
 			end
 			FUNC_SUB:
 			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
 				ctrl_mux9to1_nop13_d_sel = 6;
 				ctrl_mux3to1_nop9_d_sel = 1;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
 				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
 				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
 			end
 			FUNC_SUBU:
 			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
 				ctrl_mux9to1_nop13_d_sel = 6;
 				ctrl_mux3to1_nop9_d_sel = 1;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
 				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
 				ctrl_addersub_op = 2;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
 			end
 			FUNC_XOR:
 			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
 				ctrl_mux9to1_nop13_d_sel = 4;
 				ctrl_mux3to1_nop9_d_sel = 1;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 0;
 				ctrl_logic_unit_op = 2;
 			end
 		endcase
 		OP_SW:
 		begin
+			ctrl_mux6to1_pipereg7_d_sel = 0;
+			ctrl_mux9to1_nop13_d_sel = 0;
 			ctrl_mux3to1_nop9_d_sel = 2;
+			ctrl_mux2to1_lo_reg_d_sel = 0;
+			ctrl_mux2to1_hi_reg_d_sel = 0;
+			ctrl_mux2to1_mul_opA_sel = 0;
+			ctrl_mux3to1_mul_sa_sel = 0;
 			ctrl_mux2to1_addersub_opA_sel = 0;
+			ctrl_ifetch_pcwrop = 0;
 			ctrl_addersub_op = 3;
 			ctrl_data_mem_op = 8;
+			ctrl_div_sign = 0;
+			ctrl_mul_op = 0;
+			ctrl_logic_unit_op = 0;
 		end
 		OP_XORI:
 		begin
+			ctrl_mux6to1_pipereg7_d_sel = 0;
 			ctrl_mux9to1_nop13_d_sel = 4;
 			ctrl_mux3to1_nop9_d_sel = 2;
+			ctrl_mux2to1_lo_reg_d_sel = 0;
+			ctrl_mux2to1_hi_reg_d_sel = 0;
+			ctrl_mux2to1_mul_opA_sel = 0;
+			ctrl_mux3to1_mul_sa_sel = 0;
+			ctrl_mux2to1_addersub_opA_sel = 0;
+			ctrl_ifetch_pcwrop = 0;
+			ctrl_addersub_op = 0;
+			ctrl_data_mem_op = 0;
+			ctrl_div_sign = 0;
+			ctrl_mul_op = 0;
 			ctrl_logic_unit_op = 2;
 		end
 	endcase
@@ -1025,188 +1716,738 @@ begin
 	ctrl_data_mem_en = 0;
 	ctrl_div_en = 0;
 	ctrl_mul_start = 0;
-	casex (pipereg14_q)
+	case (pipereg14_q)
 		OP_ADDI:
+        begin
 			ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+            ctrl_cop0_fromcpu_en = 0;
+            ctrl_cop0_tocpu_en = 0;
+            ctrl_cop2_fromcpu_en = 0;
+            ctrl_cop2_tocpu_en = 0;
+            ctrl_lo_reg_en = 0;
+            ctrl_hi_reg_en = 0;
+            ctrl_branchresolve_en = 0;
+            ctrl_data_mem_en = 0;
+            ctrl_div_en = 0;
+            ctrl_mul_start = 0;
+        end
 		OP_ADDIU:
+        begin
 			ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+            ctrl_cop0_fromcpu_en = 0;
+            ctrl_cop0_tocpu_en = 0;
+            ctrl_cop2_fromcpu_en = 0;
+            ctrl_cop2_tocpu_en = 0;
+            ctrl_lo_reg_en = 0;
+            ctrl_hi_reg_en = 0;
+            ctrl_branchresolve_en = 0;
+            ctrl_data_mem_en = 0;
+            ctrl_div_en = 0;
+            ctrl_mul_start = 0;
+        end
 		OP_ANDI:
+        begin
 			ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+            ctrl_cop0_fromcpu_en = 0;
+            ctrl_cop0_tocpu_en = 0;
+            ctrl_cop2_fromcpu_en = 0;
+            ctrl_cop2_tocpu_en = 0;
+            ctrl_lo_reg_en = 0;
+            ctrl_hi_reg_en = 0;
+            ctrl_branchresolve_en = 0;
+            ctrl_data_mem_en = 0;
+            ctrl_div_en = 0;
+            ctrl_mul_start = 0;
+        end
 		OP_BEQ:
+        begin
 			ctrl_branchresolve_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+            ctrl_cop0_fromcpu_en = 0;
+            ctrl_cop0_tocpu_en = 0;
+            ctrl_cop2_fromcpu_en = 0;
+            ctrl_cop2_tocpu_en = 0;
+            ctrl_lo_reg_en = 0;
+            ctrl_hi_reg_en = 0;
+            ctrl_reg_file_c_we = 0;
+            ctrl_data_mem_en = 0;
+            ctrl_div_en = 0;
+            ctrl_mul_start = 0;
+        end
 		OP_BGTZ:
+        begin
 			ctrl_branchresolve_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+            ctrl_cop0_fromcpu_en = 0;
+            ctrl_cop0_tocpu_en = 0;
+            ctrl_cop2_fromcpu_en = 0;
+            ctrl_cop2_tocpu_en = 0;
+            ctrl_lo_reg_en = 0;
+            ctrl_hi_reg_en = 0;
+            ctrl_reg_file_c_we = 0;
+            ctrl_data_mem_en = 0;
+            ctrl_div_en = 0;
+            ctrl_mul_start = 0;
+        end
 		OP_BLEZ:
+        begin
 			ctrl_branchresolve_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+            ctrl_cop0_fromcpu_en = 0;
+            ctrl_cop0_tocpu_en = 0;
+            ctrl_cop2_fromcpu_en = 0;
+            ctrl_cop2_tocpu_en = 0;
+            ctrl_lo_reg_en = 0;
+            ctrl_hi_reg_en = 0;
+            ctrl_reg_file_c_we = 0;
+            ctrl_data_mem_en = 0;
+            ctrl_div_en = 0;
+            ctrl_mul_start = 0;
+        end
 		OP_BNE:
+        begin
 			ctrl_branchresolve_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+            ctrl_cop0_fromcpu_en = 0;
+            ctrl_cop0_tocpu_en = 0;
+            ctrl_cop2_fromcpu_en = 0;
+            ctrl_cop2_tocpu_en = 0;
+            ctrl_lo_reg_en = 0;
+            ctrl_hi_reg_en = 0;
+            ctrl_reg_file_c_we = 0;
+            ctrl_data_mem_en = 0;
+            ctrl_div_en = 0;
+            ctrl_mul_start = 0;
+        end
 		OP_COP0:
-		casex (pipereg17_q)
+		case (pipereg17_q)
 			COP0_MFC0:
 			begin
 				ctrl_cop0_tocpu_en = 1 &~stall_out_stage3;
 				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+                ctrl_mul_start = 0;
 			end
 			COP0_MTC0:
 				ctrl_cop0_fromcpu_en = 1 &~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_reg_file_c_we = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+                ctrl_mul_start = 0;
 		endcase
 		OP_COP2:
-		casex (pipereg15_q)
+		case (pipereg15_q)
 			COP2_FUNC_CFC2:
 			begin
 				ctrl_cop2_tocpu_en = 1 &~stall_out_stage3;
 				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+                ctrl_mul_start = 0;
 			end
 			COP2_FUNC_CTC2:
+            begin
 				ctrl_cop2_fromcpu_en = 1 &~ctrl_cop0_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_reg_file_c_we = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+                ctrl_mul_start = 0;
+            end
 			COP2_FUNC_MTC2:
+            begin
 				ctrl_cop2_fromcpu_en = 1 &~ctrl_cop0_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_reg_file_c_we = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+                ctrl_mul_start = 0;
+            end
 		endcase
 		OP_JAL:
+        begin
 			ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+            ctrl_cop0_fromcpu_en = 0;
+            ctrl_cop0_tocpu_en = 0;
+            ctrl_cop2_fromcpu_en = 0;
+            ctrl_cop2_tocpu_en = 0;
+            ctrl_lo_reg_en = 0;
+            ctrl_hi_reg_en = 0;
+            ctrl_branchresolve_en = 0;
+            ctrl_data_mem_en = 0;
+            ctrl_div_en = 0;
+            ctrl_mul_start = 0;
+        end
 		OP_LB:
 		begin
 			ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
 			ctrl_data_mem_en = 1 &~stall_out_stage3;
+            ctrl_cop0_fromcpu_en = 0;
+            ctrl_cop0_tocpu_en = 0;
+            ctrl_cop2_fromcpu_en = 0;
+            ctrl_cop2_tocpu_en = 0;
+            ctrl_lo_reg_en = 0;
+            ctrl_hi_reg_en = 0;
+            ctrl_branchresolve_en = 0;
+            ctrl_div_en = 0;
+            ctrl_mul_start = 0;
 		end
 		OP_LBU:
 		begin
 			ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
 			ctrl_data_mem_en = 1 &~stall_out_stage3;
+            ctrl_cop0_fromcpu_en = 0;
+            ctrl_cop0_tocpu_en = 0;
+            ctrl_cop2_fromcpu_en = 0;
+            ctrl_cop2_tocpu_en = 0;
+            ctrl_lo_reg_en = 0;
+            ctrl_hi_reg_en = 0;
+            ctrl_branchresolve_en = 0;
+            ctrl_div_en = 0;
+            ctrl_mul_start = 0;
 		end
 		OP_LH:
 		begin
 			ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
 			ctrl_data_mem_en = 1 &~stall_out_stage3;
+            ctrl_cop0_fromcpu_en = 0;
+            ctrl_cop0_tocpu_en = 0;
+            ctrl_cop2_fromcpu_en = 0;
+            ctrl_cop2_tocpu_en = 0;
+            ctrl_lo_reg_en = 0;
+            ctrl_hi_reg_en = 0;
+            ctrl_branchresolve_en = 0;
+            ctrl_div_en = 0;
+            ctrl_mul_start = 0;
 		end
 		OP_LHU:
 		begin
 			ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
 			ctrl_data_mem_en = 1 &~stall_out_stage3;
+            ctrl_cop0_fromcpu_en = 0;
+            ctrl_cop0_tocpu_en = 0;
+            ctrl_cop2_fromcpu_en = 0;
+            ctrl_cop2_tocpu_en = 0;
+            ctrl_lo_reg_en = 0;
+            ctrl_hi_reg_en = 0;
+            ctrl_branchresolve_en = 0;
+            ctrl_div_en = 0;
+            ctrl_mul_start = 0;
 		end
 		OP_LUI:
 		begin
 			ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
 			ctrl_mul_start = 1 &~stall_out_stage3;
+            ctrl_cop0_fromcpu_en = 0;
+            ctrl_cop0_tocpu_en = 0;
+            ctrl_cop2_fromcpu_en = 0;
+            ctrl_cop2_tocpu_en = 0;
+            ctrl_lo_reg_en = 0;
+            ctrl_hi_reg_en = 0;
+            ctrl_branchresolve_en = 0;
+            ctrl_data_mem_en = 0;
+            ctrl_div_en = 0;
 		end
 		OP_LW:
 		begin
 			ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
 			ctrl_data_mem_en = 1 &~stall_out_stage3;
+            ctrl_cop0_fromcpu_en = 0;
+            ctrl_cop0_tocpu_en = 0;
+            ctrl_cop2_fromcpu_en = 0;
+            ctrl_cop2_tocpu_en = 0;
+            ctrl_lo_reg_en = 0;
+            ctrl_hi_reg_en = 0;
+            ctrl_branchresolve_en = 0;
+            ctrl_div_en = 0;
+            ctrl_mul_start = 0;
 		end
 		OP_ORI:
+        begin
 			ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+            ctrl_cop0_fromcpu_en = 0;
+            ctrl_cop0_tocpu_en = 0;
+            ctrl_cop2_fromcpu_en = 0;
+            ctrl_cop2_tocpu_en = 0;
+            ctrl_lo_reg_en = 0;
+            ctrl_hi_reg_en = 0;
+            ctrl_branchresolve_en = 0;
+            ctrl_data_mem_en = 0;
+            ctrl_div_en = 0;
+            ctrl_mul_start = 0;
+        end
 		OP_REGIMM:
-		casex (pipereg16_q[0])
+		case (pipereg16_q[0])
 			FUNC_BGEZ:
+            begin
 				ctrl_branchresolve_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_reg_file_c_we = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+                ctrl_mul_start = 0;
+            end
 			FUNC_BLTZ:
+            begin
 				ctrl_branchresolve_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_reg_file_c_we = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+                ctrl_mul_start = 0;
+            end
 		endcase
 		OP_SB:
+        begin
 			ctrl_data_mem_en = 1 &~stall_out_stage3;
+            ctrl_cop0_fromcpu_en = 0;
+            ctrl_cop0_tocpu_en = 0;
+            ctrl_cop2_fromcpu_en = 0;
+            ctrl_cop2_tocpu_en = 0;
+            ctrl_lo_reg_en = 0;
+            ctrl_hi_reg_en = 0;
+            ctrl_branchresolve_en = 0;
+            ctrl_reg_file_c_we = 0;
+            ctrl_div_en = 0;
+            ctrl_mul_start = 0;
+        end
 		OP_SH:
+        begin
 			ctrl_data_mem_en = 1 &~stall_out_stage3;
+            ctrl_cop0_fromcpu_en = 0;
+            ctrl_cop0_tocpu_en = 0;
+            ctrl_cop2_fromcpu_en = 0;
+            ctrl_cop2_tocpu_en = 0;
+            ctrl_lo_reg_en = 0;
+            ctrl_hi_reg_en = 0;
+            ctrl_branchresolve_en = 0;
+            ctrl_reg_file_c_we = 0;
+            ctrl_div_en = 0;
+            ctrl_mul_start = 0;
+        end
 		OP_SLTI:
+        begin
 			ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+            ctrl_cop0_fromcpu_en = 0;
+            ctrl_cop0_tocpu_en = 0;
+            ctrl_cop2_fromcpu_en = 0;
+            ctrl_cop2_tocpu_en = 0;
+            ctrl_lo_reg_en = 0;
+            ctrl_hi_reg_en = 0;
+            ctrl_branchresolve_en = 0;
+            ctrl_data_mem_en = 0;
+            ctrl_div_en = 0;
+            ctrl_mul_start = 0;
+        end
 		OP_SLTIU:
+        begin
 			ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+            ctrl_cop0_fromcpu_en = 0;
+            ctrl_cop0_tocpu_en = 0;
+            ctrl_cop2_fromcpu_en = 0;
+            ctrl_cop2_tocpu_en = 0;
+            ctrl_lo_reg_en = 0;
+            ctrl_hi_reg_en = 0;
+            ctrl_branchresolve_en = 0;
+            ctrl_data_mem_en = 0;
+            ctrl_div_en = 0;
+            ctrl_mul_start = 0;
+        end
 		OP_SPECIAL:
-		casex (pipereg15_q)
+		case (pipereg15_q)
 			FUNC_ADD:
+            begin
 				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+                ctrl_mul_start = 0;
+            end
 			FUNC_ADDU:
+            begin
 				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+                ctrl_mul_start = 0;
+            end
 			FUNC_AND:
+            begin
 				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+                ctrl_mul_start = 0;
+            end
 			FUNC_DIV:
 			begin
 				ctrl_lo_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
 				ctrl_hi_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
 				ctrl_div_en = 1 &~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_reg_file_c_we = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_mul_start = 0;
 			end
 			FUNC_DIVU:
 			begin
 				ctrl_lo_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
 				ctrl_hi_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
 				ctrl_div_en = 1 &~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_reg_file_c_we = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_mul_start = 0;
 			end
 			FUNC_JALR:
+            begin
 				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+                ctrl_mul_start = 0;
+            end
 			FUNC_MFHI:
+            begin
 				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+                ctrl_mul_start = 0;
+            end
 			FUNC_MFLO:
+            begin
 				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+                ctrl_mul_start = 0;
+            end
 			FUNC_MULT:
 			begin
 				ctrl_lo_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
 				ctrl_hi_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
 				ctrl_mul_start = 1 &~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_reg_file_c_we = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
 			end
 			FUNC_MULTU:
 			begin
 				ctrl_lo_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
 				ctrl_hi_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
 				ctrl_mul_start = 1 &~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_reg_file_c_we = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
 			end
 			FUNC_NOR:
+            begin
 				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+                ctrl_mul_start = 0;
+            end
 			FUNC_OR:
+            begin
 				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+                ctrl_mul_start = 0;
+            end
 			FUNC_SLL:
 			begin
 				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
 				ctrl_mul_start = 1 &~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
 			end
 			FUNC_SLLV:
 			begin
 				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
 				ctrl_mul_start = 1 &~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
 			end
 			FUNC_SLT:
+            begin
 				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+                ctrl_mul_start = 0;
+            end
 			FUNC_SLTU:
+            begin
 				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+                ctrl_mul_start = 0;
+            end
 			FUNC_SRA:
 			begin
 				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
 				ctrl_mul_start = 1 &~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
 			end
 			FUNC_SRAV:
 			begin
 				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
 				ctrl_mul_start = 1 &~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
 			end
 			FUNC_SRL:
 			begin
 				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
 				ctrl_mul_start = 1 &~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
 			end
 			FUNC_SRLV:
 			begin
 				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
 				ctrl_mul_start = 1 &~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
 			end
 			FUNC_SUB:
+            begin
 				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+                ctrl_mul_start = 0;
+            end
 			FUNC_SUBU:
+            begin
 				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+                ctrl_mul_start = 0;
+            end
 			FUNC_XOR:
+            begin
 				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+                ctrl_mul_start = 0;
+            end
 		endcase
 		OP_SW:
+        begin
 			ctrl_data_mem_en = 1 &~stall_out_stage3;
+            ctrl_cop0_fromcpu_en = 0;
+            ctrl_cop0_tocpu_en = 0;
+            ctrl_cop2_fromcpu_en = 0;
+            ctrl_cop2_tocpu_en = 0;
+            ctrl_lo_reg_en = 0;
+            ctrl_hi_reg_en = 0;
+            ctrl_branchresolve_en = 0;
+            ctrl_reg_file_c_we = 0;
+            ctrl_div_en = 0;
+            ctrl_mul_start = 0;
+        end
 		OP_XORI:
+        begin
 			ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+            ctrl_cop0_fromcpu_en = 0;
+            ctrl_cop0_tocpu_en = 0;
+            ctrl_cop2_fromcpu_en = 0;
+            ctrl_cop2_tocpu_en = 0;
+            ctrl_lo_reg_en = 0;
+            ctrl_hi_reg_en = 0;
+            ctrl_branchresolve_en = 0;
+            ctrl_data_mem_en = 0;
+            ctrl_div_en = 0;
+            ctrl_mul_start = 0;
+        end
 	endcase
 end
 		//Decode Logic for Opcode and Multiplex Select signals
 always@(pipereg18_q or pipereg19_q or pipereg20_q or pipereg21_q)
 begin
-		// Initialize control opcodes to zero
-	ctrl_ifetch_op = 0;
 	
-	casex (pipereg18_q)
+	case (pipereg18_q)
 		OP_BEQ:
 			ctrl_ifetch_op = 0;
 		OP_BGTZ:
@@ -1216,26 +2457,28 @@ begin
 		OP_BNE:
 			ctrl_ifetch_op = 0;
 		OP_REGIMM:
-		casex (pipereg20_q[0])
+		case (pipereg20_q[0])
 			FUNC_BGEZ:
 				ctrl_ifetch_op = 0;
 			FUNC_BLTZ:
 				ctrl_ifetch_op = 0;
 		endcase
 		OP_SPECIAL:
-		casex (pipereg19_q)
+		case (pipereg19_q)
 			FUNC_JALR:
 				ctrl_ifetch_op = 1;
 			FUNC_JR:
 				ctrl_ifetch_op = 1;
 		endcase
+        default: 
+            ctrl_ifetch_op = 0;
 	endcase
 end
 		//Logic for enable signals in Pipe Stage 3
 always@(pipereg18_q or pipereg19_q or pipereg20_q[0] or pipereg21_q or 1'b0)
 begin
-	ctrl_ifetch_we = 0;
-	casex (pipereg18_q)
+	
+	case (pipereg18_q)
 		OP_BEQ:
 			ctrl_ifetch_we = 1 &~1'b0;
 		OP_BGTZ:
@@ -1245,19 +2488,21 @@ begin
 		OP_BNE:
 			ctrl_ifetch_we = 1 &~1'b0;
 		OP_REGIMM:
-		casex (pipereg20_q[0])
+		case (pipereg20_q[0])
 			FUNC_BGEZ:
 				ctrl_ifetch_we = 1 &~1'b0;
 			FUNC_BLTZ:
 				ctrl_ifetch_we = 1 &~1'b0;
 		endcase
 		OP_SPECIAL:
-		casex (pipereg19_q)
+		case (pipereg19_q)
 			FUNC_JALR:
 				ctrl_ifetch_we = 1 &~1'b0;
 			FUNC_JR:
 				ctrl_ifetch_we = 1 &~1'b0;
 		endcase
+        default:
+            ctrl_ifetch_we = 0;
 	endcase
 end
 
@@ -1295,8 +2540,7 @@ assign has_delayslot = pipereg22_q;
 		//Identify branches that will be predicted
 always@(ifetch_opcode or ifetch_func or ifetch_rt[0] or ifetch_rs)
 begin
-	predictme=0;
-	casex (ifetch_opcode)
+	case (ifetch_opcode)
 		OP_BEQ:
 			predictme=1;
 		OP_BGTZ:
@@ -1310,12 +2554,14 @@ begin
 		OP_JAL:
 			predictme=1;
 		OP_REGIMM:
-		casex (ifetch_rt[0])
+		case (ifetch_rt[0])
 			FUNC_BGEZ:
 				predictme=1;
 			FUNC_BLTZ:
 				predictme=1;
 		endcase
+        default:
+            predictme=0;
 	endcase
 end
 
