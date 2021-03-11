@@ -1,4 +1,56 @@
 from isa import isa
+
+from addersub_slt import addersub
+from local_add_sub import local_add_sub
+
+from logic_unit import logic_unit
+
+from ifetch_pipe_bpred_bus_int import ifetch
+from components import register
+from components import pipereg
+from components import branch_detector
+from bpred_1bittable import branchpredict
+from rams import dpram
+
+from mul_shift_stall import mul
+from local_mult import local_mult
+from components import onecyclestall
+
+from divider import div
+
+from data_mem_bus_int import data_mem
+from data_mem_bus_int import store_data_translator
+from data_mem_bus_int import load_data_translator
+
+from reg_file_pipe import reg_file
+from ram_wrapper import ram_wrapper
+
+from pcadder import pcadder
+
+from signext16 import signext16
+
+from merge26lo import merge26lo
+
+from branchresolve import branchresolve
+
+from lo_reg import lo_reg
+
+from hi_reg import hi_reg
+
+from components import const
+
+from components import fakedelay
+
+from components import nop
+
+from components import zeroer
+
+from cop2 import cop2
+
+from cop0 import cop0
+from components import multicyclestall
+
+from components import branch_detector
 import parser
 
 class system():
@@ -7,23 +59,23 @@ class system():
 
     def make_str(self):
         string = '''\
-`include "bpred_1bittable.v"
-`include "cop0.v"
-`include "cop2.v"
-`include "lo_reg.v"
-`include "hi_reg.v"
-`include "data_mem_bus_int.v"
-`include "divider.v"
-`include "mul_shift_stall.v"
-`include "logic_unit.v"
-`include "addersub_slt.v"
-`include "merge26lo.v"
-`include "branchresolve.v"
-`include "pcadder.v"
-`include "signext16.v"
-`include "reg_file_pipe.v"
-`include "ifetch_pipe_bpred_bus_int.v"
-`include "components.v"
+//`include "bpred_1bittable.v"
+//`include "cop0.v"
+//`include "cop2.v"
+//`include "lo_reg.v"
+//`include "hi_reg.v"
+//`include "data_mem_bus_int.v"
+//`include "divider.v"
+//`include "mul_shift_stall.v"
+//`include "logic_unit.v"
+//`include "addersub_slt.v"
+//`include "merge26lo.v"
+//`include "branchresolve.v"
+//`include "pcadder.v"
+//`include "signext16.v"
+//`include "reg_file_pipe.v"
+//`include "ifetch_pipe_bpred_bus_int.v"
+//`include "components.v"
 
 
 module system ( 
@@ -70,7 +122,109 @@ module system (
 	);
 
 /************************* IO Declarations *********************/
-`include "isa.v"
+//`include "isa.v"
+
+/****************************************************************************
+          ISA definition file
+
+  - The MIPS I ISA has a 6 bit opcode in the upper 6 bits.  
+  - The opcode can also specify a "class".  There are two classes:
+            1.  SPECIAL - look in lowest 6 bits to find operation
+            2.  REGIMM - look in [20:16] to find type of branch
+
+****************************************************************************/
+
+/****** OPCODES - bits 31...26 *******/
+
+parameter     OP_SPECIAL      = 6'b000000;
+parameter     OP_REGIMM       = 6'b000001;
+parameter     OP_J            = 6'b000010;
+parameter     OP_JAL          = 6'b000011;
+parameter     OP_BEQ          = 6'b000100;
+parameter     OP_BNE          = 6'b000101;
+parameter     OP_BLEZ         = 6'b000110;
+parameter     OP_BGTZ         = 6'b000111;
+
+parameter     OP_ADDI         = 6'b001000;
+parameter     OP_ADDIU        = 6'b001001;
+parameter     OP_SLTI         = 6'b001010;
+parameter     OP_SLTIU        = 6'b001011;
+parameter     OP_ANDI         = 6'b001100;
+parameter     OP_ORI          = 6'b001101;
+parameter     OP_XORI         = 6'b001110;
+parameter     OP_LUI          = 6'b001111;
+
+parameter     OP_LB           = 6'b100000;
+parameter     OP_LH           = 6'b100001;
+parameter     OP_LWL          = 6'b100010;
+parameter     OP_LW           = 6'b100011;
+parameter     OP_LBU          = 6'b100100;
+parameter     OP_LHU          = 6'b100101;
+parameter     OP_LWR          = 6'b100110;
+
+parameter     OP_SB           = 6'b101x00;
+parameter     OP_SH           = 6'b101x01;
+parameter     OP_SWL          = 6'b101010;
+parameter     OP_SW           = 6'b101x11;
+parameter     OP_SWR          = 6'b101110;
+
+/****** FUNCTION CLASS - bits 5...0 *******/
+parameter     FUNC_SLL        = 6'b000000;
+parameter     FUNC_SRL        = 6'b000010;
+parameter     FUNC_SRA        = 6'b000011;
+parameter     FUNC_SLLV       = 6'b000100;
+parameter     FUNC_SRLV       = 6'b000110;
+parameter     FUNC_SRAV       = 6'b000111;
+
+parameter     FUNC_JR         = 6'b001xx0;
+parameter     FUNC_JALR       = 6'b001xx1;
+
+parameter     FUNC_MFHI       = 6'bx10x00;
+parameter     FUNC_MTHI       = 6'bx10x01;
+parameter     FUNC_MFLO       = 6'bx10x10;
+parameter     FUNC_MTLO       = 6'bx10x11;
+
+parameter     FUNC_MULT       = 6'bx11x00;
+parameter     FUNC_MULTU      = 6'bx11x01;
+parameter     FUNC_DIV        = 6'bx11x10;
+parameter     FUNC_DIVU       = 6'bx11x11;
+
+parameter     FUNC_ADD        = 6'b100000;
+parameter     FUNC_ADDU       = 6'b100001;
+parameter     FUNC_SUB        = 6'b100010;
+parameter     FUNC_SUBU       = 6'b100011;
+parameter     FUNC_AND        = 6'b100100;
+parameter     FUNC_OR         = 6'b100101;
+parameter     FUNC_XOR        = 6'b100110;
+parameter     FUNC_NOR        = 6'b100111;
+
+parameter     FUNC_SLT        = 6'b101010;
+parameter     FUNC_SLTU       = 6'b101011;
+
+/****** REGIMM Class - bits 20...16 *******/
+parameter     FUNC_BLTZ       = 1'b0;
+parameter     FUNC_BGEZ       = 1'b1;
+
+parameter     OP_COP2       = 6'b010010;
+parameter     COP2_FUNC_CFC2     = 6'b111000;
+parameter     COP2_FUNC_CTC2     = 6'b111010;
+parameter     COP2_FUNC_MTC2     = 6'b111011;
+
+parameter     OP_COP0       = 6'b010000;
+parameter     COP0_MFC0     = 5'b00000;
+parameter     COP0_MTC0     = 5'b00100;
+
+//parameter     FUNC_BLTZAL     = 5'b10000;
+//parameter     FUNC_BGEZAL     = 5'b10001;
+
+/****** 
+ * Original REGIMM class, compressed above to save decode logic
+parameter     FUNC_BLTZ       = 5'b00000;
+parameter     FUNC_BGEZ       = 5'b00001;
+parameter     FUNC_BLTZAL     = 5'b10000;
+parameter     FUNC_BGEZAL     = 5'b10001;
+*/
+
 input clk;
 input resetn;
 input [31:0] boot_iaddr;
@@ -330,6 +484,10 @@ wire	ctrl_pipereg14_en;
 wire	ctrl_pipereg15_en;
 wire	ctrl_pipereg16_en;
 wire	ctrl_pipereg17_en;
+wire	ctrl_ifetch_squashn;
+wire	ctrl_lo_reg_squashn;
+wire	ctrl_hi_reg_squashn;
+wire	ctrl_reg_file_c_squashn;
 reg	predictme;
 
 
@@ -1714,17 +1872,17 @@ end
 		//Logic for enable signals in Pipe Stage 2
 always@(pipereg14_q or pipereg15_q or pipereg16_q[0] or pipereg17_q or stall_out_stage3 or ctrl_mul_stalled or ctrl_data_mem_stalled or ctrl_div_stalled or ctrl_cop2_stalled or ctrl_cop0_stalled)
 begin
-	ctrl_cop0_fromcpu_en = 0;
-	ctrl_cop0_tocpu_en = 0;
-	ctrl_cop2_fromcpu_en = 0;
-	ctrl_cop2_tocpu_en = 0;
-	ctrl_lo_reg_en = 0;
-	ctrl_hi_reg_en = 0;
-	ctrl_branchresolve_en = 0;
-	ctrl_reg_file_c_we = 0;
-	ctrl_data_mem_en = 0;
-	ctrl_div_en = 0;
-	ctrl_mul_start = 0;
+//	ctrl_cop0_fromcpu_en = 0;
+//	ctrl_cop0_tocpu_en = 0;
+//	ctrl_cop2_fromcpu_en = 0;
+//	ctrl_cop2_tocpu_en = 0;
+//	ctrl_lo_reg_en = 0;
+//	ctrl_hi_reg_en = 0;
+//	ctrl_branchresolve_en = 0;
+//	ctrl_reg_file_c_we = 0;
+//	ctrl_data_mem_en = 0;
+//	ctrl_div_en = 0;
+//	ctrl_mul_start = 0;
 	case (pipereg14_q)
 		OP_ADDI:
         begin
@@ -1812,7 +1970,7 @@ begin
         end
 		OP_BNE:
         begin
-			ctrl_branchresolve_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+			ctrl_branchresolve_en = 1 &(~ctrl_cop0_stalled)&(~ctrl_cop2_stalled)&(~ctrl_div_stalled)&(~ctrl_data_mem_stalled)&(~ctrl_mul_stalled)&(~stall_out_stage3);
             ctrl_cop0_fromcpu_en = 0;
             ctrl_cop0_tocpu_en = 0;
             ctrl_cop2_fromcpu_en = 0;
@@ -1829,7 +1987,7 @@ begin
 			COP0_MFC0:
 			begin
 				ctrl_cop0_tocpu_en = 1 &~stall_out_stage3;
-				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+				ctrl_reg_file_c_we = 1 &(~ctrl_cop0_stalled)&(~ctrl_cop2_stalled)&(~ctrl_div_stalled)&(~ctrl_data_mem_stalled)&(~ctrl_mul_stalled)&(~stall_out_stage3);
                 ctrl_cop0_fromcpu_en = 0;
                 ctrl_cop2_fromcpu_en = 0;
                 ctrl_cop2_tocpu_en = 0;
@@ -1841,7 +1999,8 @@ begin
                 ctrl_mul_start = 0;
 			end
 			COP0_MTC0:
-				ctrl_cop0_fromcpu_en = 1 &~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+			begin
+				ctrl_cop0_fromcpu_en = 1 &(~ctrl_cop2_stalled)&(~ctrl_div_stalled)&(~ctrl_data_mem_stalled)&(~ctrl_mul_stalled)&(~stall_out_stage3);
                 ctrl_cop0_tocpu_en = 0;
                 ctrl_cop2_fromcpu_en = 0;
                 ctrl_cop2_tocpu_en = 0;
@@ -1852,13 +2011,14 @@ begin
                 ctrl_data_mem_en = 0;
                 ctrl_div_en = 0;
                 ctrl_mul_start = 0;
+			end
 		endcase
 		OP_COP2:
 		case (pipereg15_q)
 			COP2_FUNC_CFC2:
 			begin
 				ctrl_cop2_tocpu_en = 1 &~stall_out_stage3;
-				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+				ctrl_reg_file_c_we = 1 &(~ctrl_cop0_stalled)&(~ctrl_cop2_stalled)&(~ctrl_div_stalled)&(~ctrl_data_mem_stalled)&(~ctrl_mul_stalled)&(~stall_out_stage3);
                 ctrl_cop0_fromcpu_en = 0;
                 ctrl_cop0_tocpu_en = 0;
                 ctrl_cop2_fromcpu_en = 0;
@@ -2484,7 +2644,7 @@ begin
 	endcase
 end
 		//Logic for enable signals in Pipe Stage 3
-always@(pipereg18_q or pipereg19_q or pipereg20_q[0] or pipereg21_q or 1'b0)
+always@(pipereg18_q or pipereg19_q or pipereg20_q[0] or pipereg21_q)// or 1'b0)
 begin
 	
 	case (pipereg18_q)
@@ -2634,126 +2794,133 @@ assign haz_zeroer0_q_pipereg5_q = (zeroer0_q==pipereg5_q) && (|zeroer0_q);
 assign haz_zeroer_q_pipereg5_q = (zeroer_q==pipereg5_q) && (|zeroer_q);
 
 /*************** DATAPATH COMPONENTS **************/
-addersub addersub (
+addersub_32 addersub (
 	.opB(nop9_q),
 	.opA(mux2to1_addersub_opA_out),
 	.op(ctrl_addersub_op),
 	.result_slt(addersub_result_slt),
 	.result(addersub_result));
-	defparam
-		addersub.WIDTH=32;
+//	defparam
+//		addersub.WIDTH=32;
 
-logic_unit logic_unit (
+logic_unit_32 logic_unit (
 	.opB(nop9_q),
 	.opA(nop_q),
 	.op(ctrl_logic_unit_op),
 	.result(logic_unit_result));
-	defparam
-		logic_unit.WIDTH=32;
+//	defparam
+//		logic_unit.WIDTH=32;
 
-ifetch ifetch (
+ifetch_67108896_32_14_16384 ifetch (
 	.clk(clk),
 	.resetn(resetn),
+	.en(ctrl_ifetch_en),
+	.squashn(ctrl_ifetch_squashn),
+	.we(ctrl_ifetch_we),
+	.op(ctrl_ifetch_op),
+	.load(pipereg7_q),
+	.load_data(pipereg8_q),
+	.pcwrop(ctrl_ifetch_pcwrop),
+	.predict_tgt_pc(pipereg6_q),
+	.predict_en(pipereg23_q),
+	.predict_result_rdy(pipereg25_q),
+	.predict_result(ifetch_predict_result),
+	.interrupt(cop0_exception),
+	.epc(ifetch_epc),
+	.ecause(ifetch_ecause),
+	.pc_out(ifetch_pc_out),
+	.next_pc(ifetch_next_pc),
 	.boot_iaddr(boot_iaddr),
 	.boot_idata(boot_idata),
 	.boot_iwe(boot_iwe),
-	.bus_ecause(ifetch_bus_ecause),
-	.bus_squashn(ifetch_bus_squashn),
 	.bus_address(ifetch_bus_address),
 	.bus_en(ifetch_bus_en),
 	.bus_readdata(ifetch_bus_readdata),
 	.bus_wait(ifetch_bus_wait),
-	.interrupt(cop0_exception),
-	.predict_result_rdy(pipereg25_q),
-	.predict_en(pipereg23_q),
-	.predict_tgt_pc(pipereg6_q),
-	.load(pipereg7_q),
-	.load_data(pipereg8_q),
-	.pcwrop(ctrl_ifetch_pcwrop),
-	.op(ctrl_ifetch_op),
-	.we(ctrl_ifetch_we),
-	.squashn(ctrl_ifetch_squashn),
-	.en(ctrl_ifetch_en),
-	.pc_out(ifetch_pc_out),
-	.instr(ifetch_instr),
+	.bus_squashn(ifetch_bus_squashn),
+	.bus_ecause(ifetch_bus_ecause),
 	.opcode(ifetch_opcode),
-	.func(ifetch_func),
 	.rs(ifetch_rs),
 	.rt(ifetch_rt),
 	.rd(ifetch_rd),
-	.instr_index(ifetch_instr_index),
-	.offset(ifetch_offset),
 	.sa(ifetch_sa),
-	.next_pc(ifetch_next_pc),
-	.predict_result(ifetch_predict_result),
-	.ecause(ifetch_ecause),
-	.epc(ifetch_epc));
+	.offset(ifetch_offset),
+	.instr_index(ifetch_instr_index),
+	.func(ifetch_func),
+	.instr(ifetch_instr)
+	);
 
-mul mul (
+mul_32 mul (
 	.clk(clk),
 	.resetn(resetn),
-	.sa(mux3to1_mul_sa_out),
-	.dst(pipereg5_q),
-	.opB(nop10_q),
-	.opA(mux2to1_mul_opA_out),
-	.op(ctrl_mul_op),
 	.start(ctrl_mul_start),
 	.stalled(ctrl_mul_stalled),
+	.dst(pipereg5_q),
+	.opA(mux2to1_mul_opA_out),
+	.opB(nop10_q),
+	.sa(mux3to1_mul_sa_out),	
+	.op(ctrl_mul_op),
 	.shift_result(mul_shift_result),
-	.lo(mul_lo),
-	.hi(mul_hi));
-	defparam
-		mul.WIDTH=32;
+	.hi(mul_hi),
+	.lo(mul_lo)
+	);
+//	defparam
+//		mul.WIDTH=32;
 
-div div (
-	.clk(clk),
-	.resetn(resetn),
-	.divider(nop10_q),
-	.dividend(nop_q),
-	.sign(ctrl_div_sign),
+div_0_1_2 div (
 	.en(ctrl_div_en),
+	.resetn(resetn),
 	.stalled(ctrl_div_stalled),
+	.quotient(div_quotient),
 	.remainder(div_remainder),
-	.quotient(div_quotient));
+	.dividend(nop_q),
+	.divider(nop10_q),
+	.sign(ctrl_div_sign),
+	.clk(clk)	
+	);
 
-data_mem data_mem (
+wire bus_wait_temp;
+assign bus_wait_temp = data_mem_bus_wait|trc_stall;
+data_mem_32_32_4_16_16384 data_mem (
 	.clk(clk),
 	.resetn(resetn),
+	.en(ctrl_data_mem_en),
+	.stalled(ctrl_data_mem_stalled),
+	.d_writedata(nop10_q),
+	.d_address(addersub_result),
+	.op(ctrl_data_mem_op),
+	.d_loadresult(data_mem_d_loadresult),
+	.ecause(data_mem_ecause),
 	.boot_daddr(boot_daddr),
 	.boot_ddata(boot_ddata),
 	.boot_dwe(boot_dwe),
-	.bus_ecause(data_mem_bus_ecause),
 	.bus_address(data_mem_bus_address),
-	.bus_en(data_mem_bus_en),
-	.bus_we(data_mem_bus_we),
 	.bus_byteen(data_mem_bus_byteen),
+	.bus_we(data_mem_bus_we),
+	.bus_en(data_mem_bus_en),
 	.bus_writedata(data_mem_bus_writedata),
 	.bus_readdata(data_mem_bus_readdata),
 	//PETES CHANGE for tracing, was: .bus_wait(data_mem_bus_wait),
-	.bus_wait(data_mem_bus_wait|trc_stall),
-	.d_address(addersub_result),
-	.d_writedata(nop10_q),
-	.op(ctrl_data_mem_op),
-	.en(ctrl_data_mem_en),
-	.stalled(ctrl_data_mem_stalled),
-	.d_loadresult(data_mem_d_loadresult),
-	.ecause(data_mem_ecause));
+	.bus_wait(bus_wait_temp),
+	.bus_ecause(data_mem_bus_ecause)
+	);
 
-reg_file reg_file (
+reg_file_32_32_5 reg_file (
 	.clk(clk),
 	.resetn(resetn),
-	.c_writedatain(nop13_q),
-	.c_reg(pipereg5_q),
-	.b_reg(zeroer0_q),
-	.a_reg(zeroer_q),
 	.c_squashn(ctrl_reg_file_c_squashn),
-	.c_we(ctrl_reg_file_c_we),
-	.b_en(ctrl_reg_file_b_en),
+	.a_reg(zeroer_q),
+	.a_readdataout(reg_file_a_readdataout),
 	.a_en(ctrl_reg_file_a_en),
+	.b_reg(zeroer0_q),
 	.b_readdataout(reg_file_b_readdataout),
-	.a_readdataout(reg_file_a_readdataout));
+	.b_en(ctrl_reg_file_b_en),
+	.c_reg(pipereg5_q),
+	.c_writedatain(nop13_q),
+	.c_we(ctrl_reg_file_c_we)
+	);
 
-pcadder pcadder (
+pcadder_32 pcadder (
 	.offset(signext16_out),
 	.pc(ifetch_pc_out),
 	.result(pcadder_result));
@@ -2767,7 +2934,7 @@ merge26lo merge26lo (
 	.in1(ifetch_pc_out),
 	.out(merge26lo_out));
 
-branchresolve branchresolve (
+branchresolve_32 branchresolve (
 	.rt(nop10_q),
 	.rs(nop_q),
 	.en(ctrl_branchresolve_en),
@@ -2778,243 +2945,245 @@ branchresolve branchresolve (
 	.ltz(branchresolve_ltz),
 	.ne(branchresolve_ne),
 	.eq(branchresolve_eq));
-	defparam
-		branchresolve.WIDTH=32;
+//	defparam
+//		branchresolve.WIDTH=32;
 
-lo_reg lo_reg (
+lo_reg_32 lo_reg (
 	.clk(clk),
 	.resetn(resetn),
 	.d(mux2to1_lo_reg_d_out),
 	.squashn(ctrl_lo_reg_squashn),
 	.en(ctrl_lo_reg_en),
 	.q(lo_reg_q));
-	defparam
-		lo_reg.WIDTH=32;
+//	defparam
+//		lo_reg.WIDTH=32;
 
-hi_reg hi_reg (
+hi_reg_32 hi_reg (
 	.clk(clk),
 	.resetn(resetn),
 	.d(mux2to1_hi_reg_d_out),
 	.squashn(ctrl_hi_reg_squashn),
 	.en(ctrl_hi_reg_en),
 	.q(hi_reg_q));
-	defparam
-		hi_reg.WIDTH=32;
+//	defparam
+//		hi_reg.WIDTH=32;
 
-const const11 (
+const_32_0 const11 (
 	.out(const11_out));
-	defparam
-		const11.WIDTH=32,
-		const11.VAL=0;
+//	defparam
+//		const11.WIDTH=32,
+//		const11.VAL=0;
 
-const const12 (
+const_32_16 const12 (
 	.out(const12_out));
-	defparam
-		const12.WIDTH=32,
-		const12.VAL=16;
+//	defparam
+//		const12.WIDTH=32,
+//		const12.VAL=16;
 
-const const (
+const_32_31 const (
 	.out(const_out));
-	defparam
-		const.WIDTH=32,
-		const.VAL=31;
+//	defparam
+//		const.WIDTH=32,
+//		const.VAL=31;
 
-pipereg pipereg (
+pipereg_32 pipereg (
 	.clk(clk),
 	.resetn(ctrl_pipereg_resetn),
 	.d(mux2to1_pipereg_d_out),
 	.squashn(ctrl_pipereg_squashn),
 	.en(ctrl_pipereg_en),
 	.q(pipereg_q));
-	defparam
-		pipereg.WIDTH=32;
+//	defparam
+//		pipereg.WIDTH=32;
 
-pipereg pipereg5 (
+pipereg_5 pipereg5 (
 	.clk(clk),
 	.resetn(ctrl_pipereg5_resetn),
 	.d(zeroer4_q),
 	.squashn(ctrl_pipereg5_squashn),
 	.en(ctrl_pipereg5_en),
 	.q(pipereg5_q));
-	defparam
-		pipereg5.WIDTH=5;
+//	defparam
+//		pipereg5.WIDTH=5;
 
-pipereg pipereg2 (
+pipereg_5 pipereg2 (
 	.clk(clk),
 	.resetn(ctrl_pipereg2_resetn),
 	.d(ifetch_sa),
 	.squashn(ctrl_pipereg2_squashn),
 	.en(ctrl_pipereg2_en),
 	.q(pipereg2_q));
-	defparam
-		pipereg2.WIDTH=5;
+//	defparam
+//		pipereg2.WIDTH=5;
 
-pipereg pipereg6 (
+pipereg_32 pipereg6 (
 	.clk(clk),
 	.resetn(ctrl_pipereg6_resetn),
 	.d(mux2to1_pipereg6_d_out),
 	.squashn(ctrl_pipereg6_squashn),
 	.en(ctrl_pipereg6_en),
 	.q(pipereg6_q));
-	defparam
-		pipereg6.WIDTH=32;
+//	defparam
+//		pipereg6.WIDTH=32;
 
-pipereg pipereg26 (
+pipereg_32 pipereg26 (
 	.clk(clk),
 	.resetn(ctrl_pipereg26_resetn),
 	.d(nop13_q),
 	.squashn(ctrl_pipereg26_squashn),
 	.en(ctrl_pipereg26_en),
 	.q(pipereg26_q));
-	defparam
-		pipereg26.WIDTH=32;
+//	defparam
+//		pipereg26.WIDTH=32;
 
-pipereg pipereg8 (
+pipereg_32 pipereg8 (
 	.clk(clk),
 	.resetn(ctrl_pipereg8_resetn),
 	.d(nop_q),
 	.squashn(ctrl_pipereg8_squashn),
 	.en(ctrl_pipereg8_en),
 	.q(pipereg8_q));
-	defparam
-		pipereg8.WIDTH=32;
+//	defparam
+//		pipereg8.WIDTH=32;
 
-pipereg pipereg7 (
+pipereg_1 pipereg7 (
 	.clk(clk),
 	.resetn(ctrl_pipereg7_resetn),
 	.d(mux6to1_pipereg7_d_out),
 	.squashn(ctrl_pipereg7_squashn),
 	.en(ctrl_pipereg7_en),
 	.q(pipereg7_q));
-	defparam
-		pipereg7.WIDTH=1;
+//	defparam
+//		pipereg7.WIDTH=1;
 
-fakedelay fakedelay (
+fakedelay_32 fakedelay (
 	.clk(clk),
 	.d(ifetch_pc_out),
 	.q(fakedelay_q));
-	defparam
-		fakedelay.WIDTH=32;
+//	defparam
+//		fakedelay.WIDTH=32;
 
-pipereg pipereg27 (
+pipereg_32 pipereg27 (
 	.clk(clk),
 	.resetn(ctrl_pipereg27_resetn),
 	.d(ifetch_instr),
 	.squashn(ctrl_pipereg27_squashn),
 	.en(ctrl_pipereg27_en),
 	.q(pipereg27_q));
-	defparam
-		pipereg27.WIDTH=32;
+//	defparam
+//		pipereg27.WIDTH=32;
 
-pipereg pipereg28 (
+pipereg_32 pipereg28 (
 	.clk(clk),
 	.resetn(ctrl_pipereg28_resetn),
 	.d(ifetch_epc),
 	.squashn(ctrl_pipereg28_squashn),
 	.en(ctrl_pipereg28_en),
 	.q(pipereg28_q));
-	defparam
-		pipereg28.WIDTH=32;
+//	defparam
+//		pipereg28.WIDTH=32;
 
-pipereg pipereg29 (
+pipereg_32 pipereg29 (
 	.clk(clk),
 	.resetn(ctrl_pipereg29_resetn),
 	.d(ifetch_rd),
 	.squashn(ctrl_pipereg29_squashn),
 	.en(ctrl_pipereg29_en),
 	.q(pipereg29_q));
-	defparam
-		pipereg29.WIDTH=32;
+//	defparam
+//		pipereg29.WIDTH=32;
 
-pipereg pipereg30 (
+pipereg_32 pipereg30 (
 	.clk(clk),
 	.resetn(ctrl_pipereg30_resetn),
 	.d(ifetch_ecause),
 	.squashn(ctrl_pipereg30_squashn),
 	.en(ctrl_pipereg30_en),
 	.q(pipereg30_q));
-	defparam
-		pipereg30.WIDTH=32;
+//	defparam
+//		pipereg30.WIDTH=32;
 
-nop nop (
+nop_32 nop (
 	.d(mux2to1_nop_d_out),
 	.q(nop_q));
-	defparam
-		nop.WIDTH=32;
+//	defparam
+//		nop.WIDTH=32;
 
-nop nop10 (
+nop_32 nop10 (
 	.d(mux2to1_nop10_d_out),
 	.q(nop10_q));
-	defparam
-		nop10.WIDTH=32;
+//	defparam
+//		nop10.WIDTH=32;
 
-nop nop13 (
+nop_32 nop13 (
 	.d(mux9to1_nop13_d_out),
 	.q(nop13_q));
-	defparam
-		nop13.WIDTH=32;
+//	defparam
+//		nop13.WIDTH=32;
 
-nop nop9 (
+nop_32 nop9 (
 	.d(mux3to1_nop9_d_out),
 	.q(nop9_q));
-	defparam
-		nop9.WIDTH=32;
+//	defparam
+//		nop9.WIDTH=32;
 
-zeroer zeroer (
+zeroer_5 zeroer (
 	.d(ifetch_rs),
 	.en(ctrl_zeroer_en),
 	.q(zeroer_q));
-	defparam
-		zeroer.WIDTH=5;
+//	defparam
+//		zeroer.WIDTH=5;
 
-zeroer zeroer0 (
+zeroer_5 zeroer0 (
 	.d(ifetch_rt),
 	.en(ctrl_zeroer0_en),
 	.q(zeroer0_q));
-	defparam
-		zeroer0.WIDTH=5;
+//	defparam
+//		zeroer0.WIDTH=5;
 
-zeroer zeroer4 (
+zeroer_5 zeroer4 (
 	.d(mux3to1_zeroer4_d_out),
 	.en(ctrl_zeroer4_en),
 	.q(zeroer4_q));
-	defparam
-		zeroer4.WIDTH=5;
+//	defparam
+//		zeroer4.WIDTH=5;
 
 cop2 cop2 (
 	.clk(clk),
 	.resetn(resetn),
-	.fromcop2_wait(cop2_fromcop2_wait),
-	.fromcop2_en(cop2_fromcop2_en),
-	.fromcop2(cop2_fromcop2),
-	.tocop2_wait(cop2_tocop2_wait),
-	.tocop2_en(cop2_tocop2_en),
-	.tocop2(cop2_tocop2),
+	.stalled(ctrl_cop2_stalled),
 	.fromcpu(nop10_q),
 	.fromcpu_en(ctrl_cop2_fromcpu_en),
+	.tocpu(cop2_tocpu),
 	.tocpu_en(ctrl_cop2_tocpu_en),
-	.stalled(ctrl_cop2_stalled),
-	.tocpu(cop2_tocpu));
+	.tocop2(cop2_tocop2),
+	.tocop2_en(cop2_tocop2_en),
+	.tocop2_wait(cop2_tocop2_wait),
+	.fromcop2(cop2_fromcop2),
+	.fromcop2_en(cop2_fromcop2_en),
+	.fromcop2_wait(cop2_fromcop2_wait)	
+	);
 
 cop0 cop0 (
 	.clk(clk),
 	.resetn(resetn),
-	.badvaddr_we(cop0_badvaddr_we),
-	.badvaddr_in(cop0_badvaddr_in),
-	.ext_cause_in(cop0_ext_cause_in),
-	.int_cause_in_stage2(data_mem_ecause),
-	.int_cause_in_stage1(pipereg30_q),
-	.epc_in(pipereg28_q),
-	.fromcpu(nop10_q),
-	.dest_addr(pipereg29_q),
-	.read_addr(pipereg29_q),
-	.instr(pipereg27_q),
-	.fromcpu_en(ctrl_cop0_fromcpu_en),
-	.tocpu_en(ctrl_cop0_tocpu_en),
 	.stalled(ctrl_cop0_stalled),
-	.status(cop0_status),
+	.instr(pipereg27_q),
+	.exception(cop0_exception),
+	.read_addr(pipereg29_q),
+	.dest_addr(pipereg29_q),
+	.fromcpu(nop10_q),
+	.fromcpu_en(ctrl_cop0_fromcpu_en),
 	.tocpu(cop0_tocpu),
-	.exception(cop0_exception));
+	.tocpu_en(ctrl_cop0_tocpu_en),
+	.epc_in(pipereg28_q),
+	.ext_cause_in(cop0_ext_cause_in),
+	.int_cause_in_stage1(pipereg30_q),
+	.int_cause_in_stage2(data_mem_ecause),
+	.status(cop0_status),
+	.badvaddr_in(cop0_badvaddr_in),
+	.badvaddr_we(cop0_badvaddr_we)
+	);
 
 		// Multiplexor mux2to1_mul_opA instantiation
 assign mux2to1_mul_opA_out = 
@@ -3085,150 +3254,154 @@ assign mux3to1_zeroer4_d_out =
 	(ctrl_mux3to1_zeroer4_d_sel==1) ? ifetch_rd :
 	const_out;
 
-pipereg pipereg15 (
+pipereg_6 pipereg15 (
 	.clk(clk),
 	.resetn(ctrl_pipereg15_resetn),
 	.d(ifetch_func),
 	.squashn(ctrl_pipereg15_squashn),
 	.en(ctrl_pipereg15_en),
 	.q(pipereg15_q));
-	defparam
-		pipereg15.WIDTH=6;
+//	defparam
+//		pipereg15.WIDTH=6;
 
-pipereg pipereg16 (
+pipereg_5 pipereg16 (
 	.clk(clk),
 	.resetn(ctrl_pipereg16_resetn),
 	.d(ifetch_rt),
 	.squashn(ctrl_pipereg16_squashn),
 	.en(ctrl_pipereg16_en),
 	.q(pipereg16_q));
-	defparam
-		pipereg16.WIDTH=5;
+//	defparam
+//		pipereg16.WIDTH=5;
 
-pipereg pipereg14 (
+pipereg_6 pipereg14 (
 	.clk(clk),
 	.resetn(ctrl_pipereg14_resetn),
 	.d(ifetch_opcode),
 	.squashn(ctrl_pipereg14_squashn),
 	.en(ctrl_pipereg14_en),
 	.q(pipereg14_q));
-	defparam
-		pipereg14.WIDTH=6;
+//	defparam
+//		pipereg14.WIDTH=6;
 
 branch_detector branch_detector (
 	.func(ifetch_func),
 	.opcode(ifetch_opcode),
 	.is_branch(branch_detector_is_branch));
 
-pipereg pipereg17 (
+pipereg_5 pipereg17 (
 	.clk(clk),
 	.resetn(ctrl_pipereg17_resetn),
 	.d(ifetch_rs),
 	.squashn(ctrl_pipereg17_squashn),
 	.en(ctrl_pipereg17_en),
 	.q(pipereg17_q));
-	defparam
-		pipereg17.WIDTH=5;
+//	defparam
+//		pipereg17.WIDTH=5;
 
-pipereg pipereg19 (
+pipereg_6 pipereg19 (
 	.clk(clk),
 	.resetn(ctrl_pipereg19_resetn),
 	.d(pipereg15_q),
 	.squashn(ctrl_pipereg19_squashn),
 	.en(ctrl_pipereg19_en),
 	.q(pipereg19_q));
-	defparam
-		pipereg19.WIDTH=6;
+//	defparam
+//		pipereg19.WIDTH=6;
 
-pipereg pipereg18 (
+pipereg_6 pipereg18 (
 	.clk(clk),
 	.resetn(ctrl_pipereg18_resetn),
 	.d(pipereg14_q),
 	.squashn(ctrl_pipereg18_squashn),
 	.en(ctrl_pipereg18_en),
 	.q(pipereg18_q));
-	defparam
-		pipereg18.WIDTH=6;
+//	defparam
+//		pipereg18.WIDTH=6;
 
-pipereg pipereg20 (
+pipereg_5 pipereg20 (
 	.clk(clk),
 	.resetn(ctrl_pipereg20_resetn),
 	.d(pipereg16_q),
 	.squashn(ctrl_pipereg20_squashn),
 	.en(ctrl_pipereg20_en),
 	.q(pipereg20_q));
-	defparam
-		pipereg20.WIDTH=5;
+//	defparam
+//		pipereg20.WIDTH=5;
 
-pipereg pipereg21 (
+pipereg_5 pipereg21 (
 	.clk(clk),
 	.resetn(ctrl_pipereg21_resetn),
 	.d(pipereg17_q),
 	.squashn(ctrl_pipereg21_squashn),
 	.en(ctrl_pipereg21_en),
 	.q(pipereg21_q));
-	defparam
-		pipereg21.WIDTH=5;
+//	defparam
+//		pipereg21.WIDTH=5;
 
-pipereg pipereg22 (
+wire en_pipereg22;
+assign en_pipereg22 = ~stall_out_stage1;
+wire squashn_pipereg22;
+assign squashn_pipereg22 = ~branch_mispred;
+pipereg_1 pipereg22 (
 	.clk(clk),
 	.resetn(resetn),
 	.d(branch_detector_is_branch),
-	.squashn(~branch_mispred),
-	.en(~stall_out_stage1),
+	.squashn(squashn_pipereg22),
+	.en(en_pipereg22),
 	.q(pipereg22_q));
-	defparam
-		pipereg22.WIDTH=1;
+//	defparam
+//		pipereg22.WIDTH=1;
 
-pipereg pipereg23 (
+pipereg_1 pipereg23 (
 	.clk(clk),
 	.resetn(ctrl_pipereg23_resetn),
 	.d(predictme),
 	.squashn(ctrl_pipereg23_squashn),
 	.en(ctrl_pipereg23_en),
 	.q(pipereg23_q));
-	defparam
-		pipereg23.WIDTH=1;
+//	defparam
+//		pipereg23.WIDTH=1;
 
 		// Multiplexor mux2to1_nop_d instantiation
 assign mux2to1_nop_d_out = 
 	(pipereg31_q==1) ? pipereg26_q :
 	reg_file_a_readdataout;
 
-pipereg pipereg31 (
+pipereg_1 pipereg31 (
 	.clk(clk),
 	.resetn(ctrl_pipereg31_resetn),
 	.d(haz_zeroer_q_pipereg5_q),
 	.squashn(ctrl_pipereg31_squashn),
 	.en(ctrl_pipereg31_en),
 	.q(pipereg31_q));
-	defparam
-		pipereg31.WIDTH=1;
+//	defparam
+//		pipereg31.WIDTH=1;
 
 		// Multiplexor mux2to1_nop10_d instantiation
 assign mux2to1_nop10_d_out = 
 	(pipereg32_q==1) ? pipereg26_q :
 	reg_file_b_readdataout;
 
-pipereg pipereg32 (
+pipereg_1 pipereg32 (
 	.clk(clk),
 	.resetn(ctrl_pipereg32_resetn),
 	.d(haz_zeroer0_q_pipereg5_q),
 	.squashn(ctrl_pipereg32_squashn),
 	.en(ctrl_pipereg32_en),
 	.q(pipereg32_q));
-	defparam
-		pipereg32.WIDTH=1;
+//	defparam
+//		pipereg32.WIDTH=1;
 
-pipereg pipereg25 (
+pipereg_1 pipereg25 (
 	.clk(clk),
 	.resetn(ctrl_pipereg25_resetn),
 	.d(pipereg23_q),
 	.squashn(ctrl_pipereg25_squashn),
 	.en(ctrl_pipereg25_en),
 	.q(pipereg25_q));
-	defparam
-		pipereg25.WIDTH=1;
+//	defparam
+//		pipereg25.WIDTH=1;
 
 // PETES CHANGE add trace signals
 assign trc_data=nop13_q;
@@ -3238,17 +3411,138 @@ assign trc_pipestall=stall_out_stage2;
 
 endmodule'''       
 
-        return string.format(WIDTH=width, NUMREGS=numregs, LOG2NUMREGS=log2numregs)
+        return string
 
-    def write (self, width, numregs, log2numregs):
-        self.fp.write(self.make_str(width, numregs, log2numregs))
+    def write (self):
+        self.fp.write(self.make_str())
 
 if __name__ == '__main__':
+	width = 32
 	fp = open(parser.parse(), "w")
-	isa = isa(fp)
-	uut.write()
-	fp.close()
-	fp = open(parser.parse(), "a")
-	fp.write("\r\r")
 	uut = system(fp)
 	uut.write()
+	fp = open(parser.parse(), "a")
+	fp.write("\r\r")
+	adder = addersub(fp)
+	adder.write(width)
+	fp.write("\r\r")
+	local_adder = local_add_sub(fp)
+	local_adder.write(width+1, 0, "SIGNED")
+	fp.write("\r\r")
+	logic_unit_obj = logic_unit(fp)
+	logic_unit_obj.write(width)
+	fp.write("\r\r")
+	fetcher = ifetch(fp)
+	fetcher.write(67108896, width, 14, 16384)
+	fp.write("\r\r")
+	reg1 = register(fp)
+	reg1.write(width)
+	fp.write("\r\r")
+	reg2 = register(fp)
+	reg2.write(2) 
+	fp.write("\r\r")
+	br_detect = branch_detector(fp)
+	br_detect.write() 
+	# fp.write("\r\r")
+	# pipe_reg = pipereg(fp)
+	# pipe_reg.write(1) 
+	fp.write("\r\r")
+	br_pred = branchpredict(fp)
+	br_pred.write(width, 4096, 12, 1)
+	fp.write("\r\r")
+	bpred_ram = dpram(fp)
+	bpred_ram.write(12, 4096, 1) 
+	fp.write("\r\r")
+	multiplier = mul(fp)
+	multiplier.write(width)
+	fp.write("\r\r")
+	local_mult = local_mult(fp)
+	local_mult.write(width+1, width+1, 2*(width+1))
+	fp.write("\r\r")
+	mult_stall = onecyclestall(fp)
+	mult_stall.write()
+	fp.write("\r\r")
+	divider = div(fp)
+	divider.write(0, 1, 2)
+	fp.write("\r\r")
+	data_memory = data_mem(fp)
+	data_memory.write(width, width, 4, 16, 16384)
+	fp.write("\r\r")
+	store = store_data_translator(fp)
+	store.write(width)
+	fp.write("\r\r")
+	load = load_data_translator(fp)
+	load.write(width) 
+	# fp.write("\r\r")
+	# reg = register(fp)
+	# reg.write(2)
+	fp.write("\r\r")
+	register_file = reg_file(fp)
+	register_file.write(width, 32, 5)
+	fp.write("\r\r")
+	wrapper = ram_wrapper(fp)
+	wrapper.write(5, 32, width)
+	fp.write("\r\r")
+	reg_file_ram = dpram(fp)
+	reg_file_ram.write(5, 32, width)
+	fp.write("\r\r")
+	pc_adder = pcadder(fp)
+	pc_adder.write(width)
+	fp.write("\r\r")
+	sign_ext = signext16(fp)
+	sign_ext.write()
+	fp.write("\r\r")
+	merge26lo_obj = merge26lo(fp)
+	merge26lo_obj.write()
+	fp.write("\r\r")
+	branch_resolver = branchresolve(fp)
+	branch_resolver.write(width)
+	fp.write("\r\r")
+	lo_reg_obj = lo_reg(fp)
+	lo_reg_obj.write(width)
+	fp.write("\r\r")
+	hi_reg_obj = hi_reg(fp)
+	hi_reg_obj.write(width)
+	fp.write("\r\r")
+	const11 = const(fp)
+	const11.write(width, 0)
+	fp.write("\r\r")
+	const12 = const(fp)
+	const12.write(width, 16)
+	fp.write("\r\r")
+	const_obj = const(fp)
+	const_obj.write(width, 31)
+	fp.write("\r\r")
+	pipe_reg1 = pipereg(fp)
+	pipe_reg1.write(width)
+	fp.write("\r\r")
+	pipe_reg2 = pipereg(fp)
+	pipe_reg2.write(5)
+	fp.write("\r\r")
+	pipe_reg3 = pipereg(fp)
+	pipe_reg3.write(1)
+	fp.write("\r\r")
+	fake_delay1 = fakedelay(fp)
+	fake_delay1.write(width)
+	fp.write("\r\r")
+	nop_obj = nop(fp)
+	nop_obj.write(width)
+	fp.write("\r\r")
+	zeroer_obj = zeroer(fp)
+	zeroer_obj.write(5)
+	fp.write("\r\r")
+	cop2_obj = cop2(fp)
+	cop2_obj.write()
+	fp.write("\r\r")
+	cop0_obj = cop0(fp)
+	cop0_obj.write()
+	fp.write("\r\r")
+	cop0_stall = multicyclestall(fp)
+	cop0_stall.write()
+	fp.write("\r\r")
+	pipe_reg4 = pipereg(fp)
+	pipe_reg4.write(6)
+	# fp.write("\r\r")
+	# branch_detect = branch_detector(fp)
+	# branch_detect.write()
+	fp.close()

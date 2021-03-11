@@ -39,6 +39,10 @@ reg [({AWIDTH}-1):0] q_address_a;
 reg [({AWIDTH}-1):0] q_address_b;
 reg [({AWIDTH}-1):0] mux_address_b;
 
+// not connect ports
+wire rden_a_nc;
+assign rden_a_nc = rden_a;
+
 dpram_{AWIDTH}_{NUM_WORDS}_{DWIDTH} dpram1(
     .clk(clk),
     .address_a(address_a),

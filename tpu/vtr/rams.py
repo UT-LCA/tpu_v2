@@ -72,7 +72,6 @@ endmodule'''
 
     def write (self, awidth, num_words, dwidth):
         self.fp.write(self.make_str(awidth, num_words, dwidth))
-        self.fp.close()
 
 class spram():
     def __init__(self, fp=None):

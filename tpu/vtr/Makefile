@@ -1,5 +1,5 @@
 BASE_DIR = ~/Desktop/utexas_thesis
-BASE_FILE_NAME = ifetch_pipe_bpred_bus_int
+BASE_FILE_NAME = system
 
 SUB_DIR = scalar
 

@@ -1,6 +1,6 @@
 import parser
 
-class divider():
+class div():
     def __init__(self, fp):
         self.fp = fp
 
@@ -101,6 +101,6 @@ endmodule'''
 
 if __name__ == '__main__':
     fp = open(parser.parse(), "w")
-    uut = divider(fp)
+    uut = div(fp)
     uut.write(0, 1, 2)
     fp.close()

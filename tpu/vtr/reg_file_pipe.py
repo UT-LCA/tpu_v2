@@ -14,7 +14,7 @@ class reg_file():
    - Has two read ports (a and b) and one write port (c)
    - sel chooses the register to be read/written
 ****************************************************************************/
-`include "options.v"
+//`include "options.v"
 module reg_file_{WIDTH}_{NUMREGS}_{LOG2NUMREGS}(clk,resetn, c_squashn,
 	a_reg, a_readdataout, a_en,
 	b_reg, b_readdataout, b_en,

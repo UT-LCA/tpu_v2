@@ -77,6 +77,16 @@ wire [{DM_DATAWIDTH}-1:0] d_writedatamem;
 wire d_write;
 wire [1:0] d_address_latched;
 
+// not connected ports
+wire resetn_nc;
+assign resetn_nc = resetn;
+wire [31:0] boot_daddr_nc;
+assign boot_daddr_nc = boot_daddr;
+wire [31:0] boot_ddata_nc;
+assign boot_ddata_nc = boot_ddata;
+wire boot_dwe_nc;
+assign boot_dwe_nc = boot_dwe;
+
 assign d_write=op[3];
 
 assign ecause=bus_ecause;

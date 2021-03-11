@@ -246,6 +246,10 @@ input [{WIDTH}-1:0] d;
 input clk;
 output [{WIDTH}-1:0] q;
 
+// not connectr ports
+wire clk_nc;
+assign clk_nc = clk;
+
 assign q=d;
 
 endmodule'''       

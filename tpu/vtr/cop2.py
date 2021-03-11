@@ -1,6 +1,6 @@
 import parser
 
-class cop0():
+class cop2():
     def __init__(self, fp):
         self.fp = fp
 
@@ -49,6 +49,11 @@ input   [31:0] fromcop2;
 input          fromcop2_en;
 output         fromcop2_wait;
 
+// not connected ports
+wire clk_nc;
+assign clk_nc = clk;
+wire resetn_nc;
+assign resetn_nc = resetn;
 
   assign tocop2=fromcpu;
   assign tocop2_en=fromcpu_en;

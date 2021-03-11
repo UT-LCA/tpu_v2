@@ -119,6 +119,14 @@ wire predict_en_saved;
 wire [{I_DATAWIDTH}-1:0] pc_rollbacknottaken;
 wire [{I_DATAWIDTH}-1:0] pc_rollback;
 
+//not connect ports
+wire [31:0] boot_iaddr_nc;
+assign boot_iaddr_nc = boot_iaddr;
+wire [31:0] boot_idata_nc;
+assign boot_idata_nc = boot_idata;
+wire  boot_iwe_nc;
+assign boot_iwe_nc = boot_iwe;
+
 reg [{I_DATAWIDTH}-1:0] _next_pc;
 reg pc_load_en;
 reg predict_result;

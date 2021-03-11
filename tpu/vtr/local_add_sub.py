@@ -14,15 +14,11 @@ add_sub,
 result
 );
 
-parameter WIDTH = {WIDTH};
-parameter PIPELINE = {PIPELINE};
-parameter REPRESENTATION = "{REPRESENTATION}";
-
-input[WIDTH-1:0] dataa;
-input[WIDTH-1:0] datab;
+input[{WIDTH}-1:0] dataa;
+input[{WIDTH}-1:0] datab;
 input cin;
 input add_sub;
-output reg [WIDTH-1:0] result;
+output reg [{WIDTH}-1:0] result;
 
 always @(*)begin
     if(add_sub == 1'b1)

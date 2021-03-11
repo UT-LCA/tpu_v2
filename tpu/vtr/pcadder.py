@@ -12,6 +12,10 @@ input [{PC_WIDTH}-1:0] pc;
 input [{PC_WIDTH}-1:0] offset;
 output [{PC_WIDTH}-1:0] result;
 
+// not connect ports
+wire [{PC_WIDTH}-1:0] offset_nc;
+assign offset_nc = offset;
+
 wire dum;
 
 assign {{dum,result}} = pc + {{offset[{PC_WIDTH}-3:0],2'b0}};

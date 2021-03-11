@@ -20,7 +20,7 @@ Operation table
 1  0   0    1    |  ShiftRightLogic
 3  0   1    1    |  ShiftRightArith
 ****************************************************************************/
-`include "options.v"
+//`include "options.v"
 
 module mul_{WIDTH} (clk, resetn, start, stalled, dst,
             opA, opB, sa,

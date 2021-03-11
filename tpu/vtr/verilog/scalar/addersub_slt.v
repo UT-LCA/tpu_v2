@@ -20,19 +20,16 @@ module addersub_32 (
             result,
             result_slt );
 
-parameter WIDTH=32;
-
-
-input [WIDTH-1:0] opA;
-input [WIDTH-1:0] opB;
+input [32-1:0] opA;
+input [32-1:0] opB;
 //input carry_in;
 input [3-1:0] op;
 
-output [WIDTH-1:0] result;
+output [32-1:0] result;
 output result_slt;
 
 wire carry_out;
-wire [WIDTH:0] sum;
+wire [32:0] sum;
 
 // Mux between sum, and slt
 wire is_slt;
@@ -43,22 +40,22 @@ assign is_slt=op[2];
 assign signext=op[1];
 assign addsub=op[0];
 
-assign result=sum[WIDTH-1:0];
-//assign result_slt[WIDTH-1:1]={31{1'b0}};
-//assign result_slt[0]=sum[WIDTH];
-assign result_slt=sum[WIDTH];
+assign result=sum[32-1:0];
+//assign result_slt[32-1:1]={31{1'b0}};
+//assign result_slt[0]=sum[32];
+assign result_slt=sum[32];
 
 `ifndef USE_INHOUSE_LOGIC
     `define USE_INHOUSE_LOGIC
 `endif
 
 `ifdef USE_INHOUSE_LOGIC
-wire [(WIDTH+1)-1:0] dataa;
-wire [(WIDTH+1)-1:0] datab;
+wire [(32+1)-1:0] dataa;
+wire [(32+1)-1:0] datab;
 wire cin;
 
-assign dataa = {signext&opA[WIDTH-1],opA};
-assign datab = {signext&opB[WIDTH-1],opB};
+assign dataa = {signext&opA[32-1],opA};
+assign datab = {signext&opB[32-1],opB};
 assign cin = ~addsub;
 
   local_add_sub_33_0_SIGNED local_adder_inst(
@@ -69,13 +66,13 @@ assign cin = ~addsub;
       .result(sum)
   );
 //  defparam
-//      local_adder_inst.WIDTH = WIDTH+1,
+//      local_adder_inst.32 = 32+1,
 //      local_adder_inst.PIPELINE = 0,
 //      local_adder_inst.REPRESENTATION = "SIGNED";
 `else
 lpm_add_sub adder_inst(
-    .dataa({signext&opA[WIDTH-1],opA}),
-    .datab({signext&opB[WIDTH-1],opB}),
+    .dataa({signext&opA[32-1],opA}),
+    .datab({signext&opB[32-1],opB}),
     .cin(~addsub),
     .add_sub(addsub),
     .result(sum)
@@ -89,11 +86,11 @@ lpm_add_sub adder_inst(
         // synopsys translate_on
     );
 defparam 
-    adder_inst.lpm_width=WIDTH+1,
+    adder_inst.lpm_width=32+1,
     adder_inst.lpm_representation="SIGNED";
 `endif
 
-assign carry_out=sum[WIDTH];
+assign carry_out=sum[32];
 endmodulemodule local_add_sub_33_0_SIGNED(
 dataa,
 datab,

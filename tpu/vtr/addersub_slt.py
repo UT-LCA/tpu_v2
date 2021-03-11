@@ -1,7 +1,7 @@
 from local_add_sub import local_add_sub
 import parser
 
-class addersub_slt():
+class addersub():
     def __init__(self, fp):
         self.fp = fp
 
@@ -29,19 +29,16 @@ module addersub_{WIDTH} (
             result,
             result_slt );
 
-parameter WIDTH={WIDTH};
-
-
-input [WIDTH-1:0] opA;
-input [WIDTH-1:0] opB;
+input [{WIDTH}-1:0] opA;
+input [{WIDTH}-1:0] opB;
 //input carry_in;
 input [3-1:0] op;
 
-output [WIDTH-1:0] result;
+output [{WIDTH}-1:0] result;
 output result_slt;
 
 wire carry_out;
-wire [WIDTH:0] sum;
+wire [{WIDTH}:0] sum;
 
 // Mux between sum, and slt
 wire is_slt;
@@ -52,22 +49,22 @@ assign is_slt=op[2];
 assign signext=op[1];
 assign addsub=op[0];
 
-assign result=sum[WIDTH-1:0];
-//assign result_slt[WIDTH-1:1]={{31{{1'b0}}}};
-//assign result_slt[0]=sum[WIDTH];
-assign result_slt=sum[WIDTH];
+assign result=sum[{WIDTH}-1:0];
+//assign result_slt[{WIDTH}-1:1]={{31{{1'b0}}}};
+//assign result_slt[0]=sum[{WIDTH}];
+assign result_slt=sum[{WIDTH}];
 
 `ifndef USE_INHOUSE_LOGIC
     `define USE_INHOUSE_LOGIC
 `endif
 
 `ifdef USE_INHOUSE_LOGIC
-wire [(WIDTH+1)-1:0] dataa;
-wire [(WIDTH+1)-1:0] datab;
+wire [({WIDTH}+1)-1:0] dataa;
+wire [({WIDTH}+1)-1:0] datab;
 wire cin;
 
-assign dataa = {{signext&opA[WIDTH-1],opA}};
-assign datab = {{signext&opB[WIDTH-1],opB}};
+assign dataa = {{signext&opA[{WIDTH}-1],opA}};
+assign datab = {{signext&opB[{WIDTH}-1],opB}};
 assign cin = ~addsub;
 
   local_add_sub_{ADD_SUB_WIDTH}_{PIPELINE}_{REPRESENTATION} local_adder_inst(
@@ -77,14 +74,11 @@ assign cin = ~addsub;
       .add_sub(addsub),
       .result(sum)
   );
-//  defparam
-//      local_adder_inst.WIDTH = WIDTH+1,
-//      local_adder_inst.PIPELINE = 0,
-//      local_adder_inst.REPRESENTATION = "SIGNED";
+
 `else
 lpm_add_sub adder_inst(
-    .dataa({{signext&opA[WIDTH-1],opA}}),
-    .datab({{signext&opB[WIDTH-1],opB}}),
+    .dataa({{signext&opA[{WIDTH}-1],opA}}),
+    .datab({{signext&opB[{WIDTH}-1],opB}}),
     .cin(~addsub),
     .add_sub(addsub),
     .result(sum)
@@ -98,11 +92,11 @@ lpm_add_sub adder_inst(
         // synopsys translate_on
     );
 defparam 
-    adder_inst.lpm_width=WIDTH+1,
+    adder_inst.lpm_width={WIDTH}+1,
     adder_inst.lpm_representation="SIGNED";
 `endif
 
-assign carry_out=sum[WIDTH];
+assign carry_out=sum[{WIDTH}];
 endmodule'''       
 
         return string.format(WIDTH=width, ADD_SUB_WIDTH=width+1, PIPELINE=0, REPRESENTATION="SIGNED")
@@ -112,7 +106,7 @@ endmodule'''
 
 if __name__ == '__main__':
     fp = open(parser.parse(), "w")
-    uut = addersub_slt(fp)
+    uut = addersub(fp)
     uut.write(32)
     fp.close()
     fp = open(parser.parse(), "a")
