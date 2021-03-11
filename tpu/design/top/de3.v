@@ -385,7 +385,19 @@ module de3 (
     .dmem_wbaddr(dmem_wbaddr),
     .dmem_wbdata(dmem_wbdata),
     .dmem_wbwe(dmem_wbwe),
-    .dmem_wback(dmem_wback)
+    .dmem_wback(dmem_wback),
+
+    .mem_dcache_address(0),
+    .mem_dcache_data(0),
+    .mem_dcache_out(),
+    .mem_dcache_byteen(0),
+    .mem_dcache_wren(0),
+    
+    .mem_icache_address(0),
+    .mem_icache_data(0),
+    .mem_icache_out(),
+    .mem_icache_byteen(0),
+    .mem_icache_wren(0)
     );
 
   /*********** Trace circuit ************

@@ -48,7 +48,13 @@ module mem_dcache_wb (
 
     // Cache signals
     cache_hit,
-    cache_miss
+    cache_miss,
+ 
+    mem_dcache_address,
+    mem_dcache_data,
+    mem_dcache_out,
+    mem_dcache_byteen,
+    mem_dcache_wren
     );
 
 // Only need to set THESE TWO PARAMETERS
@@ -99,6 +105,13 @@ input                       mem_wback;
 // Cache signals
 output cache_hit;
 output cache_miss;
+
+input  [31:0]                mem_dcache_address;
+input  [CACHELINESIZE-1:0]   mem_dcache_data;
+output [31:0]                mem_dcache_out;
+input  [CACHELINESIZE/8-1:0] mem_dcache_byteen;
+input                        mem_dcache_wren;
+
 
 wire [31:0]              mem_dirtyaddr; 
 wire [CACHELINESIZE-1:0] mem_dirtydata;
@@ -223,13 +236,18 @@ wire                        t_mem_fillwe;
 //   tags.read_during_write_mode_mixed_ports = "OLD_DATA";
 
 `ifdef USE_INHOUSE_LOGIC
- spram1 data0 (
+ dpram1 data0 (
     .clk(bus_clk),
-    .address(bus_address[28:7]),
-    .wren(bus_wren),
-    .data(bus_writedata_t),
-    .byteen(bus_byteen_t),
-    .out(cache_dataout)
+    .address_a(bus_address[28:7]),
+    .address_b(mem_dcache_address),
+    .wren_a(bus_wren),
+    .wren_b(mem_dcache_wren),
+    .data_a(bus_writedata_t),
+    .data_b(mem_dcache_data),
+    .byteen_a(bus_byteen_t),
+    .byteen_b(mem_dcache_byteen),
+    .out_a(cache_dataout),
+    .out_b(mem_dcache_out)
  );
  defparam 
     data0.AWIDTH=22,
@@ -274,8 +292,8 @@ wire                        t_mem_fillwe;
     else 
       bus_address_saved<=bus_address;
 
-  register memtag(mem_filladdr[`OFFSETRANGE],mem_clk,resetn,1'b1,mem_ndx_saved);
-    defparam memtag.WIDTH=LOG2CACHEDEPTH;
+//  register memtag(mem_filladdr[`OFFSETRANGE],mem_clk,resetn,1'b1,mem_ndx_saved);
+//    defparam memtag.WIDTH=LOG2CACHEDEPTH;
 
 //  assign tagmatch=(cache_tagout==bus_address_saved[`TAGRANGE]);
 

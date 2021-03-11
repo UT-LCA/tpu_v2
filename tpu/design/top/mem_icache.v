@@ -28,7 +28,13 @@ module mem_icache (
 
     // Cache signals
     cache_hit,
-    cache_miss
+    cache_miss,
+
+    mem_icache_address,
+    mem_icache_data,
+    mem_icache_out,
+    mem_icache_byteen,
+    mem_icache_wren
     );
 
                 // In bits, subtract 3 for bytes
@@ -73,6 +79,12 @@ wire [TAGSIZE-1:0]       cache_tagout;
 wire                     cache_validout;
 wire [32-1:0]            cache_dataout;
 wire [CACHELINESIZE-1:0] cache_lineout;
+
+input  [31:0]                mem_icache_address;
+input  [CACHELINESIZE-1:0]   mem_icache_data;
+output [31:0]                mem_icache_out;
+input  [CACHELINESIZE/8-1:0] mem_icache_byteen;
+input                        mem_icache_wren;
 
 wire                     tagmatch;
 reg  [32-1:0] bus_address_saved;
@@ -142,13 +154,18 @@ reg  [LOG2CACHEDEPTH-1:0] count;
 //   tags.read_during_write_mode_mixed_ports = "OLD_DATA";
 
 `ifdef USE_INHOUSE_LOGIC
- spram1 data1 (
+ dpram1 data1 (
     .clk(bus_clk),
-    .address(bus_address[27:2]),
-    .wren(1'b0),
-    .data(0),
-    .byteen(-1),
-    .out(cache_dataout)
+    .address_a(bus_address[27:2]),
+    .address_b(mem_icache_address),
+    .wren_a(1'b0),
+    .wren_b(mem_icache_wren),
+    .data_a(0),
+    .data_b(mem_icache_data),
+    .byteen_a(-1),
+    .byteen_b(mem_icache_byteen),
+    .out_a(cache_dataout),
+    .out_b(meme_icache_out)
  );
  defparam 
     data1.AWIDTH=26,

@@ -28,12 +28,12 @@ module processor (
     dbus_prefetch,
     dbus_wait,    //Goes high 1-cycle after dbus_en
 
-  // PETES CHANGE for tracing
-  trc_addr,
-  trc_data,
-  trc_we,
-  trc_stall,
-  trc_pipestall,
+    // PETES CHANGE for tracing
+    trc_addr,
+    trc_data,
+    trc_we,
+    trc_stall,
+    trc_pipestall,
 
     // Data fill/WB 133MHz
     dmem_filladdr,
@@ -43,7 +43,19 @@ module processor (
     dmem_wbaddr,
     dmem_wbdata,
     dmem_wbwe,
-    dmem_wback
+    dmem_wback,
+
+    mem_dcache_address,
+    mem_dcache_data,
+    mem_dcache_out,
+    mem_dcache_byteen,
+    mem_dcache_wren,
+
+    mem_icache_address,
+    mem_icache_data,
+    mem_icache_out,
+    mem_icache_byteen,
+    mem_icache_wren
     );
 
 parameter LOG2DCACHEWIDTHBITS=`LOG2DCACHEWIDTHBITS;
@@ -97,6 +109,18 @@ output              trc_we;
 input               trc_stall;
 output              trc_pipestall;
 
+input  [31:0]                  mem_dcache_address;
+input  [DCACHEWIDTHBITS-1:0]   mem_dcache_data;
+output [DCACHEWIDTHBITS-1:0]   mem_dcache_out;
+input  [DCACHEWIDTHBITS/8-1:0] mem_dcache_byteen;
+input                          mem_dcache_wren;
+
+input  [31:0]                  mem_icache_address;
+input  [31-1:0]   mem_icache_data;
+output [31-1:0]   mem_icache_out;
+input  [32/8-1:0] mem_icache_byteen;
+input                          mem_icache_wren;
+
   wire [31:0] dcpu_address;    // Processor's data bus signals
   wire [31:0] dcpu_writedata;
   wire [3:0]  dcpu_byteen;
@@ -108,6 +132,7 @@ output              trc_pipestall;
   wire [DCACHEWIDTHBITS-1:0] dcpu_writedata_line;
   wire [DCACHEWIDTHBITS/8-1:0]  dcpu_byteen_line;
   wire         dcpu_wait;
+
 
   wire        icache_en;             // Instruction bus signals
   wire [31:0] icache_address;
@@ -198,7 +223,13 @@ output              trc_pipestall;
 
     // Cache signals
     .cache_hit(icache_hit),
-    .cache_miss(icache_miss)
+    .cache_miss(icache_miss),
+
+    .mem_icache_address  (mem_icache_address),
+    .mem_icache_data     (mem_icache_data   ),
+    .mem_icache_out      (mem_icache_out    ),
+    .mem_icache_byteen   (mem_icache_byteen ),
+    .mem_icache_wren     (mem_icache_wren   )
     );
     defparam icache1.LOG2CACHEDEPTH=LOG2ICACHEDEPTH,
       icache1.LOG2CACHELINESIZE=LOG2ICACHEWIDTHBITS;
@@ -280,7 +311,13 @@ output              trc_pipestall;
 
     // Cache signals
     .cache_hit(dcache_hit), //Checks only match - doesn't consider if en was on
-    .cache_miss(dcache_miss) //Checks if not in the cache AND if enabled
+    .cache_miss(dcache_miss), //Checks if not in the cache AND if enabled
+
+    .mem_dcache_address(mem_dcache_address),
+    .mem_dcache_data(mem_dcache_data),
+    .mem_dcache_out(mem_dcache_out),
+    .mem_dcache_byteen(mem_dcache_byteen),
+    .mem_dcache_wren(mem_dcache_wren)
     );
     defparam 
       dcache1.LOG2DRAMWIDTHBITS=LOG2DRAMWIDTHBITS,
