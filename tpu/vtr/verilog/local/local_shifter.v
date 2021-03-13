@@ -5,25 +5,23 @@ module local_shifter_32_5_ARITHMETIC(
   result
 );
 
-parameter LPM_WIDTH = 32;
-parameter LPM_WIDTHDIST = 5;
 parameter LPM_SHIFTTYPE = "ARITHMETIC";
 
-input [LPM_WIDTH-1:0] data;
-input [LPM_WIDTHDIST-1:0] distance;
+input [32-1:0] data;
+input [5-1:0] distance;
 input direction;
 
-output reg [LPM_WIDTH-1:0] result;
-reg [LPM_WIDTH-1:0] arith_reg; 
+output reg [32-1:0] result;
+reg [32-1:0] arith_reg; 
 always @* begin
-  arith_reg = {LPM_WIDTH{1'b1}};
+  arith_reg = {32{1'b1}};
     if (LPM_SHIFTTYPE == "ARITHMETIC") begin
     if(direction)begin
       result = data << distance;
     end
     else begin
-      if(data[LPM_WIDTH-1] == 1'b1)
-          result =  ((arith_reg <<(LPM_WIDTH - distance))|| (data >> distance));
+      if(data[32-1] == 1'b1)
+          result =  ((arith_reg <<(32 - distance))|| (data >> distance));
       else
           result = data >> distance;
     end
