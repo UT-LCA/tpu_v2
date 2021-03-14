@@ -1,3 +1,4 @@
+import re
 from optparse import OptionParser
 parser = OptionParser()
 (_,args) = parser.parse_args()
@@ -5,6 +6,91 @@ parser = OptionParser()
 class vlanes():
     def __init__(self, fp):
         self.fp = fp
+
+    def process_case_stmt(self,infile):
+        capture_case_item_code = False
+        case_stmt_start = False
+        case_item_list = []
+        captured_case_items = []
+        line_num = 0
+        outfile =""
+    
+        #Go over each line
+        for line in infile.splitlines():
+            line_num = line_num+1
+            
+            c_stmt_begin = None
+            c_stmt_end = None
+    
+            c_stmt_begin = re.search(r'((\bcase\b)|(\bcasez\b))\(.*\)', line)
+            c_stmt_end = re.search(r'endcase', line)
+    
+            #Case statement handling begins. ODIN doesn't support multiple case_items
+            #separated by comma. See: https://github.com/verilog-to-routing/vtr-verilog-to-routing/issues/1676
+            #So, we are converting to having single case_item only.
+            if c_stmt_begin is not None:
+                case_stmt_start = True
+                #Replace casez with case while we're at it. ODIN doesn't like casez.
+                outfile += (re.sub(r'casez', 'case', line))
+                outfile += "\n"
+            elif c_stmt_end is not None:
+                case_stmt_start = False
+                outfile += (line) 
+                outfile += "\n"
+            elif case_stmt_start is True:
+                #Is this a line that has one of the multiple case_items
+                #Assumption: one case item mentioned per line
+                #Eg: COP2_VADD,
+                case_item_multi = re.match(r'\s+([A-Z\d_]*),\s*$', line)
+                if case_item_multi is not None:
+                    case_item_list.append(case_item_multi.group(1))
+                    continue
+    
+                #Is this a line that has the last case_item in a multi
+                #case item list or the only case_item in a non-multi case
+                #item list
+                case_item_single = re.match(r'\s+([A-Z\d_]*):\s*$', line)
+                if case_item_single is not None:
+                    case_item_list.append(case_item_single.group(1))
+                    continue
+    
+                #We created a list containing the names of case_items for this
+                #piece of code
+                #Assumption: Each case_item's code is enclosed in begin and end
+                if len(case_item_list) > 0:
+                    #We will capture the contents between the begin and end.
+                    #These are to be copied for each case_item
+                    begin_in_case = re.search(r'\s+begin', line)
+                    if begin_in_case is not None:
+                        captured_case_items.append(line)
+                        capture_case_item_code = True
+                        continue
+                    end_in_case = re.search(r'\s+end', line)
+                    if end_in_case is not None:
+                        captured_case_items.append(line)
+                        capture_case_item_code = False
+                        #Start printing each case_item's code one by one.
+                        #Basically, we just copy all lines in begin-end over
+                        #and over for each case_item. 
+                        for case_item in case_item_list:
+                            outfile += "    "+case_item+":\n"
+                            outfile += "\n"
+                            outfile += (''.join(captured_case_items))
+                            outfile += "\n"
+                        case_item_list = []
+                        captured_case_items = []
+                        continue
+                    if capture_case_item_code is True:
+                        captured_case_items.append(line)
+                        continue
+                outfile += line
+                outfile += "\n"
+            
+            #If we don't meet any of the criteria above, just write it to outfile
+            else:
+                outfile += line 
+                outfile += "\n"
+        return outfile
 
     def make_str(self, numlanes, log2numlanes, numparallellanes, log2numparallellanes, nummullanes, mvl, log2mvl, vpw, log2vpw, lanewidth, log2lanewidth, numbanks, log2numbanks, aluperbank, dmem_writewidth,log2dmem_writewidth, dmem_readwidth, log2dmem_readwidth, vcwidth, vswidth, numvsregs, log2numvsregs,):
         string1 = ''' 
@@ -587,7 +673,6 @@ reg   [{NUMBANKS}-1:0] D_wb_instrdone;
 
 '''
         string2_basic ='''
-//TODO:Generate statement 1
 
     pipereg #(8) debugintrfupipereg1_Df (
       .d( D_instr_s4[Df] ),
@@ -670,11 +755,6 @@ assign pipe_squash[5]=pipe_advance[6]&~pipe_advance[5];
 '''
         string4_basic = '''
 
-//TODO:Generate statement 2
-genvar pipe_stage;
-generate
-for (pipe_stage=6; pipe_stage<`MAX_PIPE_STAGES-1; pipe_stage=pipe_stage+1)
-begin:pipe_squash_assign
   assign pipe_squash[pipe_stage] = pipe_advance[pipe_stage+1] & ~pipe_advance[pipe_stage];
   if (pipe_stage==(`MAX_PIPE_STAGES-2)) begin
     assign internal_pipe_advance[pipe_stage] = internal_pipe_advance[pipe_stage+1] && ~stall_matmul;
@@ -682,8 +762,6 @@ begin:pipe_squash_assign
   else begin
     assign internal_pipe_advance[pipe_stage] = internal_pipe_advance[pipe_stage+1];
   end
-end
-endgenerate
 
 '''
         string4 = ""
@@ -2567,14 +2645,8 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
 '''
         string8_basic ='''
 
-//TODO:Generate statement 4
-genvar g;
-  generate
-    for (g=0; g<`MATMUL_STAGES; g=g+1) begin: matmul_dst_gen
       assign dst[FU_MATMUL][g+4] = dst_matmul[REGIDWIDTH*(g+1)-1:REGIDWIDTH*g];
       assign dst_mask[FU_MATMUL][g+4] = dst_mask_matmul[{NUMLANES}*(g+1)-1:{NUMLANES}*g];
-    end
- endgenerate
 
 '''
         string8 = ""
@@ -2628,9 +2700,6 @@ trp_unit #(REGIDWIDTH) u_trp (
 // Bfloat unit
 ///////////////////////////
 
-genvar g_func;
-  generate
-  for(g_func =0; g_func <{NUMLANES}; g_func = g_func+1) begin
     bfloat_adder #(REGIDWIDTH) bf_add_g_func(
     .clk(clk),
     .resetn(resetn),
@@ -2663,8 +2732,6 @@ genvar g_func;
     .a(vr_src1[FU_ACT][g_func * LANEWIDTHE +: {LANEWIDTH}]),
     .out(act_result_s5[g_func*{LANEWIDTH} +: {LANEWIDTH}])
     );
-  end
- endgenerate
 
 '''
         string10 = ""
@@ -2677,18 +2744,12 @@ genvar g_func;
 /************************** WB Pipeline Stage ********************************/
 /******************************************************************************/
 
-//TODO:Generate statement 6
-  generate
-  for (ba=0; ba<1+({NUMBANKS}-1)*{ALUPERBANK}; ba=ba+1)
-  begin : wbaluperbank_gen
     assign wb_dst[FU_ALU+ba]=dst[FU_ALU+ba][5];
     assign wb_dst_we[FU_ALU+ba]=dst_we[FU_ALU+ba][5] && ~pipe_squash[5];
     assign wb_dst_mask[FU_ALU+ba]=dst_mask[FU_ALU+ba][5];
     assign D_wb_last_subvector[FU_ALU+ba]=D_last_subvector_s5[FU_ALU+ba];
 
     assign D_wb_last_subvector[FU_FALU+ba]=D_last_subvector_s5[FU_FALU+ba];
-  end
-  endgenerate
 
 '''
         string11 = ""
@@ -2848,8 +2909,10 @@ endmodule
 '''
         string = string1 + string2 + string3 + string4 + string5 + string6 + \
                   string7 + string8 + string9 + string10 + string11 + string12
+        
+        output_string = self.process_case_stmt(string)
 
-        return string.format( NUMLANES = numlanes, \
+        return output_string.format( NUMLANES = numlanes, \
                               LOG2NUMLANES = log2numlanes, \
                               NUMPARALLELLANES = numparallellanes, \
                               LOG2NUMPARALLELLANES = log2numparallellanes, \
