@@ -503,7 +503,7 @@ begin
 	// ctrl_zeroer0_en = 0;
 	// ctrl_zeroer_en = 0;
 	
-	case (ifetch_opcode)
+	casex (ifetch_opcode)
 		OP_ADDI:
 		begin
             ctrl_mux2to1_pipereg6_d_sel = 0;
