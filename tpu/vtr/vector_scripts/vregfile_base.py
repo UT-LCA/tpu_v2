@@ -13,7 +13,7 @@ class vregfile_base():
 
    - Has one read port (a) and one write port (c)
 ****************************************************************************/
-module vregfile_base (
+module vregfile_base_{WIDTH}_{NUMREGS}_{LOG2NUMREGS} (
     clk,
     resetn, 
 
@@ -34,8 +34,7 @@ output [{WIDTH}-1:0] a_readdataout;
 input [{WIDTH}-1:0] c_writedatain;
 input a_en, c_we;
 
-`ifdef USE_INHOUSE_LOGIC
-        ram_wrapper reg_file1(
+        ram_wrapper_{LOG2NUMREGS}_{NUMREGS}_{WIDTH} reg_file1(
 	    .clk(clk),
             .resetn(resetn),
             .rden_a(1'b0),

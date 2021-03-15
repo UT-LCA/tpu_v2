@@ -14,7 +14,7 @@ class vregfile_control():
    - Has one read port (a) and one write port (c)
    - vl promoted as first-class entities
 ****************************************************************************/
-module vregfile_control (
+module vregfile_control_{WIDTH}_{NUMREGS}_{LOG2NUMREGS} (
     clk,
     resetn, 
 
@@ -45,7 +45,7 @@ output [3*{MAT_MUL_SIZE}-1:0] matmul_masks;
 reg [{WIDTH}-1:0] vl;
 reg [{WIDTH}-1:0] matmul_masks;
 
-ram_wrapper reg_file1(
+ram_wrapper_{LOG2NUMREGS}_{NUMREGS}_{WIDTH} reg_file1(
         .clk(clk),
         .resetn(resetn),
         .rden_a(1'b0),

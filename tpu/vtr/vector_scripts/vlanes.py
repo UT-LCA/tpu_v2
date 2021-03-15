@@ -1,3 +1,4 @@
+from math import log
 import re
 from optparse import OptionParser
 parser = OptionParser()
@@ -92,7 +93,18 @@ class vlanes():
                 outfile += "\n"
         return outfile
 
-    def make_str(self, numlanes, log2numlanes, numparallellanes, log2numparallellanes, nummullanes, mvl, log2mvl, vpw, log2vpw, lanewidth, log2lanewidth, numbanks, log2numbanks, aluperbank, dmem_writewidth,log2dmem_writewidth, dmem_readwidth, log2dmem_readwidth, vcwidth, vswidth, numvsregs, log2numvsregs,):
+    def make_str(self, numlanes, log2numlanes, nummemparallellanes, log2nummemparallellanes, nummullanes, mvl, log2mvl, vpw, log2vpw, lanewidth, log2lanewidth, numbanks, log2numbanks, aluperbank, dmem_writewidth,log2dmem_writewidth, dmem_readwidth, log2dmem_readwidth, vcwidth, vswidth, numvsregs, log2numvsregs,):
+        pipe1regwidth = 3*(5+log2mvl-log2numlanes) + 42
+        dispatcherwidth = 63 + 3*(5+log2mvl-log2numlanes) + vcwidth + vswidth
+        log2numlanesp1 = 1+ log2numlanes
+        totalalus = 4+(numbanks-1)*aluperbank
+        totalflagalus = 1+(numbanks-1)*aluperbank
+        regidwidth =  (5+log2mvl-log2numlanes)
+        velmidwidth = log2mvl-log2numlanes
+        totalvpw = 8 * vpw * numlanes
+        totalregs = 32 * mvl / numlanes
+        vrminusregwidth = 5-regidwidth
+        log2nummullanes = log(nummullanes,2)
         string1 = ''' 
 
 /******************************************************************************
@@ -116,7 +128,7 @@ class vlanes():
 
 `define LO(x,b) ((x)&~({CBS}1024{CBS}1'b1{CBE}{CBE}<<b))
 
-module vlanes (
+module vlanes_{NUMLANES}_{LOG2NUMLANES}_{NUMMEMPARALLELLANES}_{LOG2NUMMEMPARALLELLANES}_{NUMMULLANES}_{MVL}_{LOG2MVL}_{VPW}_{LOG2VPW}_{LANEWIDTH}_{LOG2LANEWIDTH}_{NUMBANKS}_{LOG2NUMBANKS}_{ALUPERBANK}_{DMEM_WRITEWIDTH}_{LOG2DMEM_WRITEWIDTH}_{DMEM_READWIDTH}_{LOG2DMEM_READWIDTH}_{VCWIDTH}_{VSWIDTH}_{NUMVSREGS}_{LOG2NUMVSREGS} (
     clk,
     resetn,
 
@@ -158,28 +170,9 @@ module vlanes (
 
     );
 
-parameter {NUMLANES}=4;
-parameter {LOG2NUMLANES}=2;
-parameter {MVL}=128;
-parameter {LOG2MVL}=7;
-parameter {VPW}=4;                  // VP width in number of bytes
-parameter {LOG2VPW}=2;
-parameter {LANEWIDTH}=8*{VPW};
-parameter {LOG2LANEWIDTH}=3+{LOG2VPW};
-parameter {NUMBANKS}=2;
-parameter {LOG2NUMBANKS}=1;
-parameter {ALUPERBANK}=1;
 parameter NUMMEMPARALLELLANES=2;
 parameter LOG2NUMMEMPARALLELLANES=1;
 parameter LOG2NUMMULLANES={NUMLANES};
-parameter {DMEM_WRITEWIDTH}=128;     // Width of write bus to memory
-parameter {LOG2DMEM_WRITEWIDTH}=7;  // Log2 of Width of write bus to memory
-parameter {DMEM_READWIDTH}=128;
-parameter {LOG2DMEM_READWIDTH}=7;
-parameter {VCWIDTH}=32;
-parameter {VSWIDTH}=32;
-parameter {NUMVSREGS}=32;
-parameter {LOG2NUMVSREGS}=5;
 
 parameter VRIDWIDTH=5;
 parameter VELMIDWIDTH={LOG2MVL}-{LOG2NUMLANES};
@@ -663,7 +656,8 @@ wire  [NUMFUS-1:0] D_wb_last_subvector;
 reg   [{NUMBANKS}-1:0] D_last_subvector_done;
 reg   [{NUMBANKS}-1:0] D_wb_instrdone;
 
-  pipe #(8,1) debuginstrpipe (
+// Module instance
+  pipe_8_1  debuginstrpipe (
       .d( {CBS}instr[25:24],instr[5:0]{CBE} ),
       .clk(clk),
       .resetn(resetn),
@@ -674,7 +668,8 @@ reg   [{NUMBANKS}-1:0] D_wb_instrdone;
 '''
         string2_basic ='''
 
-    pipereg #(8) debugintrfupipereg1_Df (
+// Module instance
+    pipereg_8 debugintrfupipereg1_Df (
       .d( D_instr_s4[Df] ),
       .clk(clk),
       .resetn(resetn),
@@ -682,7 +677,8 @@ reg   [{NUMBANKS}-1:0] D_wb_instrdone;
       .squashn( ~pipe_squash[4] ),
       .q(D_instr_s5[Df]));
 
-    pipereg #(8) debugintrfupipereg2_Df (
+// Module instance
+    pipereg_8 debugintrfupipereg2_Df (
       .d( D_instr_s5[Df] ),
       .clk(clk),
       .resetn(resetn),
@@ -690,7 +686,8 @@ reg   [{NUMBANKS}-1:0] D_wb_instrdone;
       .squashn( ~pipe_squash[4] ),
       .q(D_instr_s6[Df]));
 
-    pipereg #(1) debuglastpipereg1_Df (
+// Module instance
+    pipereg_1 debuglastpipereg1_Df (
       .d( D_last_subvector_s4[Df] ),
       .clk(clk),
       .resetn(resetn),
@@ -698,7 +695,8 @@ reg   [{NUMBANKS}-1:0] D_wb_instrdone;
       .squashn( ~pipe_squash[4] ),
       .q(D_last_subvector_s5[Df]));
 
-    pipereg #(1) debuglastpipereg2_Df (
+// Module instance
+    pipereg_1 debuglastpipereg2_Df (
       .d( D_last_subvector_s5[Df] ),
       .clk(clk),
       .resetn(resetn),
@@ -1525,14 +1523,8 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
 
   assign regid_pad=0;
 
-  pipereg 
-    #(
-      2+
-      2+
-      1+
-      2+
-      1
-    ) pipe1reg_secondstageonly (
+// Module instance
+  pipereg_8  pipe1reg_secondstageonly (
       .d( {CBS}
         ctrl1_elmshamt_sel,
         ctrl1_srcshamt_sel,
@@ -1553,24 +1545,9 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       {CBE}));
 
   // *********** Pipeline signals that need to be squashed *********
-  pipereg 
-    #(
-      1+
-      1+
-      1+
-      1+
-      1+
-      1+
-      1+
-      1+
-      1+
-      1+
-      1+
-      1+
-      3+
-      1+
-      1
-    ) pipe1regwsquash (
+
+//module instance
+  pipereg_17  pipe1regwsquash (
       .d( {CBS}
         ctrl1_vr_d_we,
         ctrl1_vf_c_we,
@@ -1616,28 +1593,7 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       );
 
   // *********** Pipeline signals that don't need to be squashed *********
-  pipereg 
-    #(
-      REGIDWIDTH+
-      REGIDWIDTH+
-      REGIDWIDTH+
-      1+
-      1+
-      1+
-      1+
-      1+
-      1+
-      11+
-      2+
-      4+
-      5+
-      7+
-      1+
-      3+
-      1+
-      1+
-      1
-    ) pipe1reg (
+  pipereg_{PIPE1REGWIDTH}  pipe1reg (
       .d( {CBS}
         {CBS}(ctrl1_vrdest_sel) ? ir_src2 : ir_dst, regid_pad{CBE},
         {CBS}(ctrl1_vr_c_en ) ? ir_dst : ir_src1, regid_pad{CBE},
@@ -1684,7 +1640,9 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       {CBE}));
   
   wire [6:1] squash_ctrlmemoppipe_NC;
-  pipe #(7,5) ctrlmemoppipe (
+
+//module instance
+  pipe_7_5  ctrlmemoppipe (
       .d( ctrl1_memunit_op ),
       .clk(clk),
       .resetn(resetn),
@@ -1761,7 +1719,8 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
     end
 
   wire [6:2] squash_vcpipe_NC;
-  pipe #({VCWIDTH},4) vcpipe (
+//module instance 
+ pipe_{VCWIDTH}_4 vcpipe (
       .d( (!pipe_advance_s2_r) ? vc_in_saved : vc_in ),
       .clk(clk),
       .resetn(resetn),
@@ -1770,7 +1729,9 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       .q( {CBS}vc[6],vc[5],vc[4],vc[3],vc[2]{CBE} ));
 
   wire [6:2] squash_vlpipe_NC;
-  pipe #({VCWIDTH},4) vlpipe (
+
+//module instance 
+  pipe_{VCWIDTH}_4 vlpipe (
       .d( (!pipe_advance_s2_r) ? vl_in_saved : vl_in ),
       .clk(clk),
       .resetn(resetn),
@@ -1779,7 +1740,9 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       .q( {CBS}vl[6],vl[5],vl[4],vl[3],vl[2]{CBE} ));
 
   wire [6:2] squash_vbasepipe_NC;
-  pipe #({VCWIDTH},4) vbasepipe (
+
+//module instance 
+  pipe_{VCWIDTH}_4 vbasepipe (
       .d( (!pipe_advance_s2_r) ? vbase_in_saved : vbase_in ),
       .clk(clk),
       .resetn(resetn),
@@ -1788,7 +1751,9 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       .q( {CBS}vbase[6],vbase[5],vbase[4],vbase[3],vbase[2]{CBE} ));
 
   wire [6:2] squash_vincpipe_NC;
-  pipe #({VCWIDTH},4) vincpipe (
+
+//module instance 
+  pipe_{VCWIDTH}_4 vincpipe (
       .d( (!pipe_advance_s2_r) ? vinc_in_saved : vinc_in ),
       .clk(clk),
       .resetn(resetn),
@@ -1798,7 +1763,9 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
 
   //stride register also used for elmt shamt for vext/vhalf/etc in memunit
   wire [6:2] squash_vstridepipe_NC;
-  pipe #({VCWIDTH},4) vstridepipe (
+
+//module instance 
+  pipe_{VCWIDTH}_4 vstridepipe (
       .d( (ctrl2_memunit_en&~ctrl2_mem_en) ? 
             (({LOG2NUMLANES}>0) ?
                   total_shamt[(({LOG2NUMLANES}>0) ? {LOG2NUMLANES} : 1)-1:0] : 0) :
@@ -1870,8 +1837,9 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
     {VSWIDTH}+ \
     8
 wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
-  vdispatcher #({NUMBANKS}, `DISPATCHWIDTH,{LOG2MVL},{LOG2MVL},{LOG2MVL}-{LOG2NUMLANES}+1)
-    vdispatcher(
+
+//module instance
+  vdispatcher_{NUMBANKS}_{DISPATCHERWIDTH}_{LOG2MVL}_{LOG2MVL}_{LOG2MVL}_{LOG2NUMLANESP1} vdispatcher(
       .clk(clk),
       .resetn(resetn),
       .shift(dispatcher_shift),
@@ -1948,9 +1916,8 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
       falu_dst_we[4][bd]=dst_we[FU_FALU+bd][4];
     end
 
-
-  hazardchecker #(REGIDWIDTH,VELMIDWIDTH,4+({NUMBANKS}-1)*{ALUPERBANK},{NUMBANKS}) 
-    src1hazchecker(
+//module instance 
+  hazardchecker_{REGIDWIDTH}_{VELMIDWIDTH}_{TOTALALUS}_{NUMBANKS} src1hazchecker(
       .src( src1_s2 |(src_start_delayed[{LOG2MVL}-1:0]>>{LOG2NUMLANES}) ),
       .src_valid(ctrl2_vr_a_en),
       .dst({CBS}
@@ -1970,9 +1937,9 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
       .lt_dst_valid(ctrl3_vr_c_we),
       .lt_mode(ctrl3_volatiledest),
       .haz(stall_hazsrc1));
+//module instance 
 
-  hazardchecker #(REGIDWIDTH,VELMIDWIDTH,4+({NUMBANKS}-1)*{ALUPERBANK},{NUMBANKS}) 
-    src2hazchecker(
+  hazardchecker_{REGIDWIDTH}_{VELMIDWIDTH}_{TOTALALUS}_{NUMBANKS} src2hazchecker(
       .src( src2_s2 |(src_start_delayed[{LOG2MVL}-1:0]>>{LOG2NUMLANES}) ),
       .src_valid(ctrl2_vr_b_en),
       .dst({CBS}
@@ -1994,8 +1961,8 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
       .haz(stall_hazsrc2));
 
   //Check flag hazards - flags always start at 0th element
-  hazardchecker #(REGIDWIDTH,VELMIDWIDTH,1+({NUMBANKS}-1)*{ALUPERBANK},{NUMBANKS}) 
-    fsrc1hazchecker(
+//module instance 
+  hazardchecker_{REGIDWIDTH}_{VELMIDWIDTH}_{TOTALFLAGALUS}_{NUMBANKS} fsrc1hazchecker(
       // Check for mask flag and src1 flag depending on instruction
       .src( (ctrl2_vf_a_sel) ? src1_s2 : (imask_s2<<VELMIDWIDTH)),
       .src_valid(ctrl2_vf_a_en),
@@ -2007,8 +1974,8 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
       .lt_mode(0),
       .haz(stall_hazfsrc1));
 
-  hazardchecker #(REGIDWIDTH,VELMIDWIDTH,1+({NUMBANKS}-1)*{ALUPERBANK},{NUMBANKS}) 
-    fsrc2hazchecker(
+//module instance 
+  hazardchecker_{REGIDWIDTH}_{VELMIDWIDTH}_{TOTALFLAGALUS}_{NUMBANKS} fsrc2hazchecker(
       .src( src2_s2 ),
       .src_valid(ctrl2_vf_b_en),
       .dst(falu_dst[4]),
@@ -2324,10 +2291,8 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
         end
       end
 
-
-  vregfile_vector 
-    #({NUMBANKS},{LOG2NUMBANKS},8*{VPW}*{NUMLANES},32*{MVL}/{NUMLANES},REGIDWIDTH) 
-    vregfile_vector (
+// module instance
+  vregfile_vector_{NUMBANKS}_{LOG2NUMBANKS}_{TOTALVPW}_{TOTALREGS}_{REGIDWIDTH} vregfile_vector (
       .clk(clk),
       .resetn(resetn),
       .a_reg(vr_a_reg),
@@ -2341,8 +2306,8 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
       .c_byteen(vr_c_byteen),
       .c_we(vr_c_we));
 
-  vregfile_flag 
-    #({NUMBANKS},{LOG2NUMBANKS},{NUMLANES},32*{MVL}/{NUMLANES},REGIDWIDTH) 
+// module instance
+  vregfile_flag_{NUMBANKS}_{LOG2NUMBANKS}_{NUMLANES}_{TOTALREGS}_{REGIDWIDTH} 
     vregfile_flag (
       .clk(clk),
       .resetn(resetn),
@@ -2357,7 +2322,8 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
       .c_we(vf_c_we));
 
 
-  pipereg #(1) sdstwepipereg (
+// module instance
+  pipereg_1 sdstwepipereg (
       .d( |ctrl3_vs_we ),
       .clk(clk),
       .resetn(resetn),
@@ -2444,7 +2410,9 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
   assign stall_memunit=_stall_memunit && (dst_we[FU_MEM][5] ||
     (ctrl4_memunit_en && ~stall_mulunit && ~stall_matmul));
 
-  pipereg #(1) memen5pipereg (
+//module instance 
+
+  pipereg_1 memen5pipereg (
       .d( ctrl4_mem_en ),
       .clk(clk),
       .resetn(resetn),
@@ -2452,9 +2420,11 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
       .squashn( ~pipe_squash[4] | _stall_memunit ),
       .q(ctrl5_mem_en ));
 
-  //============== Memory Unit =============
+ //============== Memory Unit =============
 
-  vmem_unit vmem_unit(
+//module instance 
+
+  vmem_unit_{LANEWIDTH}_{NUMLANES}_{LOG2NUMLANES}_{NUMMEMPARALLELLANES}_{LOG2NUMMEMPARALLELLANES}_{VCWIDTH}_{DMEM_WRITEWIDTH}_{LOG2DMEM_WRITEWIDTH}_{DMEM_READWIDTH}_{LOG2DMEM_READWIDTH}_{VRMINUSREGWIDTH}_{REGIDWIDTH} vmem_unit(
     .clk(clk),
     .resetn(resetn),
     .enable(ctrl4_memunit_en && ~stall_mulunit && ~stall_matmul),  //unit on and pipe active
@@ -2496,26 +2466,16 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
     .dmem_prefetch(dbus_prefetch),
     .dmem_wait(dbus_wait)
     );
-  defparam 
-    vmem_unit.VPUWIDTH={LANEWIDTH},         // Width of the Vector processing unit
-    vmem_unit.{NUMLANES}={NUMLANES},      // Number of vector lanes
-    vmem_unit.{LOG2NUMLANES}={LOG2NUMLANES}, 
-    vmem_unit.NUMPARALLELLANES=NUMMEMPARALLELLANES,   // Crossbar size
-    vmem_unit.LOG2NUMPARALLELLANES=LOG2NUMMEMPARALLELLANES, 
-    vmem_unit.CONTROLWIDTH={VCWIDTH},   // Width of the Control Registers
-    vmem_unit.{DMEM_WRITEWIDTH}={DMEM_WRITEWIDTH}, // Width of write bus to memory
-    vmem_unit.{LOG2DMEM_WRITEWIDTH}={LOG2DMEM_WRITEWIDTH},
-    vmem_unit.{DMEM_READWIDTH}={DMEM_READWIDTH},   // Width of read bus from memory
-    vmem_unit.{LOG2DMEM_READWIDTH}={LOG2DMEM_READWIDTH},
-    vmem_unit.ELMIDWIDTH=REGIDWIDTH-VRIDWIDTH,
-    vmem_unit.REGIDWIDTH=REGIDWIDTH;
+
 
   assign dst[FU_MEM][4]=dst_s4[FU_MEM];
   assign dst_we[FU_MEM][4]=dst_we_s4[FU_MEM];
 
   //============== Multiplier Unit (spans stages 4-6) =============
 
-  vmul_unit vmul_unit(
+//module instance 
+
+  vmul_unit_{LOG2LANEWIDTH}_{NUMMULLANES}_{LOG2NUMLANES}_{REGIDWIDTH} vmul_unit(
     .clk(clk),
     .resetn(resetn),
     .op(ctrl4_mulshift_op),
@@ -2534,11 +2494,6 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
     .out_dst_mask({CBS}dst_mask[FU_MUL][6],dst_mask[FU_MUL][5],dst_mask[FU_MUL][4]{CBE}),
     .result(mulshift_result_s5)
   );
-  defparam 
-    vmul_unit.LOG2WIDTH={LOG2LANEWIDTH},   // Width of the Vector processing unit
-    vmul_unit.LOG2NUMMULLANES=LOG2NUMMULLANES,   // Number of vector lanes
-    vmul_unit.{LOG2NUMLANES}={LOG2NUMLANES}, // Number of vector lanes
-    vmul_unit.REGIDWIDTH=REGIDWIDTH;
 
   //============== ALU Unit =============
 
@@ -2547,7 +2502,9 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
 '''
         string6_basic1='''
 
-      vlane_alu #({LANEWIDTH}) valu_k_bk(
+//module instance 
+
+    vlane_alu_{LANEWIDTH} valu_k_bk(
         .clk(clk), 
         .resetn(resetn),
         .pipe_en(pipe_advance[4]),
@@ -2561,6 +2518,7 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
         .cmp_result(alu_cmpresult_s4[bk][k]),
         .result(alu_result_s5[bk][{LANEWIDTH}*k +: {LANEWIDTH}])
         );
+//module instance 
 
       vlane_flagalu vflagalu_k_bk(
         .clk(clk), 
@@ -2571,7 +2529,8 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
         .result(flagalu_result_s4[bk][k])
         );
 
-      pipereg #(1) flagaluresultreg_k_bk (
+//module instance 
+      pipereg_1 flagaluresultreg_k_bk (
         .d( (ctrl4_vf_wbsel[bk]) ? alu_cmpresult_s4[bk][k] : 
                                    flagalu_result_s4[bk][k]),
         .clk(clk),
@@ -2587,7 +2546,9 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
 
         string6_basic2='''
 
-    pipe #(REGIDWIDTH,1) aludstpipe_bk (
+//module instance 
+
+    pipe_{REGIDWIDTH}_1 aludstpipe_bk (
       .d( dst_s4[FU_ALU+bk] ),  
       .clk(clk),
       .resetn(resetn),
@@ -2595,7 +2556,9 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
       .squash(squash_aludstpipe_NC),
       .q({CBS}dst[FU_ALU+bk][5],dst[FU_ALU+bk][4]{CBE}));
 
-    pipe #(1,3) aludstwepipe_bk (
+//module instance 
+
+   pipe_1_3 aludstwepipe_bk (
       .d( dst_we_s4[FU_ALU+bk] & ~ctrl4_vf_wbsel[bk] ),  
       .clk(clk),
       .resetn(resetn),
@@ -2603,7 +2566,9 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
       .squash( pipe_squash[6:4] ),
       .q({CBS}dst_we[FU_ALU+bk][5],dst_we[FU_ALU+bk][4]{CBE}));
 
-    pipe #({NUMLANES},1) aludstmaskpipe_bk (
+
+//module instance 
+    pipe_{NUMLANES}_1 aludstmaskpipe_bk (
       .d( vmask[FU_ALU+bk] ),  
       .clk(clk),
       .resetn(resetn),
@@ -2611,7 +2576,8 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
       .squash(squash_aludstmaskpipe_NC),
       .q({CBS}dst_mask[FU_ALU+bk][5],dst_mask[FU_ALU+bk][4]{CBE}));
 
-    pipe #(REGIDWIDTH,1) faludstpipe_bk (
+//module instance 
+    pipe_{REGIDWIDTH}_1 faludstpipe_bk (
       .d( dst_s4[FU_FALU+bk] ),  
       .clk(clk),
       .resetn(resetn),
@@ -2619,7 +2585,8 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
       .squash(squash_faludstpipe_NC),
       .q({CBS}dst[FU_FALU+bk][5],dst[FU_FALU+bk][4]{CBE}));
 
-    pipe #(1,3) faludstwepipe_bk (
+//module instance 
+    pipe_1_3 faludstwepipe_bk (
       .d( dst_we_s4[FU_FALU+bk] ),  
       .clk(clk),
       .resetn(resetn),
@@ -2658,7 +2625,10 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
 ///////////////////////////
 // Matmul unit
 ///////////////////////////
-matmul_unit #(REGIDWIDTH,`MATMUL_STAGES,{NUMLANES}) u_matmul(
+
+//module instance 
+
+matmul_unit_{REGIDWIDTH}_33_{NUMLANES} u_matmul(
 .clk(clk),
 .resetn(resetn),
 .activate(ctrl4_matmul_en),
@@ -2680,7 +2650,9 @@ matmul_unit #(REGIDWIDTH,`MATMUL_STAGES,{NUMLANES}) u_matmul(
 .out_dst_mask(dst_mask_matmul)
 );
 
-trp_unit #(REGIDWIDTH) u_trp (
+//module instance 
+
+trp_unit_{REGIDWIDTH} u_trp (
 .clk(clk),
 .resetn(resetn),
 .en(ctrl4_trp_en),
@@ -2700,7 +2672,9 @@ trp_unit #(REGIDWIDTH) u_trp (
 // Bfloat unit
 ///////////////////////////
 
-    bfloat_adder #(REGIDWIDTH) bf_add_g_func(
+//module instance 
+
+    bfloat_adder_{REGIDWIDTH} bf_add_g_func(
     .clk(clk),
     .resetn(resetn),
     .en(ctrl4_bfadder_en),
@@ -2710,7 +2684,8 @@ trp_unit #(REGIDWIDTH) u_trp (
     .out(bfadder_result_s5[g_func*{LANEWIDTH} +: {LANEWIDTH}])
     );
     
-    bfloat_mult #(REGIDWIDTH) bf_mult_g_func(
+//module instance 
+    bfloat_mult_{REGIDWIDTH} bf_mult_g_func(
     .clk(clk),
     .resetn(resetn),
     .en(ctrl4_bfmult_en),
@@ -2724,7 +2699,8 @@ trp_unit #(REGIDWIDTH) u_trp (
 // activation unit
 ///////////////////////////
 
-    activation #(REGIDWIDTH) inst_activation_g_func(
+//module instance 
+    activation_{REGIDWIDTH} inst_activation_g_func(
     .clk(clk),
     .resetn(resetn),
     .en(ctrl4_act_en),
@@ -2914,9 +2890,10 @@ endmodule
 
         return output_string.format( NUMLANES = numlanes, \
                               LOG2NUMLANES = log2numlanes, \
-                              NUMPARALLELLANES = numparallellanes, \
-                              LOG2NUMPARALLELLANES = log2numparallellanes, \
+                              NUMMEMPARALLELLANES = nummemparallellanes, \
+                              LOG2NUMMEMPARALLELLANES = log2nummemparallellanes, \
                               NUMMULLANES = nummullanes, \
+                              LOG2NUMMULLANES = log2nummullanes, \
                               MVL = mvl, \
                               LOG2MVL = log2mvl, \
                               VPW = vpw, \
@@ -2934,12 +2911,22 @@ endmodule
                               VSWIDTH = vswidth, \
                               NUMVSREGS  = numvsregs, \
                               LOG2NUMVSREGS = log2numvsregs, \
+                              PIPE1REGWIDTH = pipe1regwidth ,\
+                              DISPATCHERWIDTH = dispatcherwidth ,\
+                              LOG2NUMLANESP1 = log2numlanesp1 ,\
+                              TOTALALUS = totalalus ,\
+                              TOTALFLAGALUS = totalflagalus ,\
+                              REGIDWIDTH = regidwidth ,\
+                              VELMIDWIDTH = velmidwidth ,\
+                              TOTALVPW = totalvpw ,\
+                              TOTALREGS = totalregs ,\
+                              VRMINUSREGWIDTH = vrminusregwidth ,\
                               CBS = "{" , \
                               CBE = "}" \
                             )
 
-    def write (self, numlanes, log2numlanes, numparallellanes, log2numparallellanes, nummullanes, mvl, log2mvl, vpw, log2vpw, lanewidth, log2lanewidth, numbanks, log2numbanks, aluperbank, dmem_writewidth,log2dmem_writewidth, dmem_readwidth, log2dmem_readwidth, vcwidth, vswidth, numvsregs, log2numvsregs):
-        self.fp.write(self.make_str(numlanes, log2numlanes, numparallellanes, log2numparallellanes, nummullanes, mvl, log2mvl, vpw, log2vpw, lanewidth, log2lanewidth, numbanks, log2numbanks, aluperbank, dmem_writewidth,log2dmem_writewidth, dmem_readwidth, log2dmem_readwidth, vcwidth, vswidth, numvsregs, log2numvsregs))
+    def write (self, numlanes, log2numlanes, nummemparallellanes, log2nummemparallellanes, nummullanes, mvl, log2mvl, vpw, log2vpw, lanewidth, log2lanewidth, numbanks, log2numbanks, aluperbank, dmem_writewidth,log2dmem_writewidth, dmem_readwidth, log2dmem_readwidth, vcwidth, vswidth, numvsregs, log2numvsregs):
+        self.fp.write(self.make_str(numlanes, log2numlanes, nummemparallellanes, log2nummemparallellanes, nummullanes, mvl, log2mvl, vpw, log2vpw, lanewidth, log2lanewidth, numbanks, log2numbanks, aluperbank, dmem_writewidth,log2dmem_writewidth, dmem_readwidth, log2dmem_readwidth, vcwidth, vswidth, numvsregs, log2numvsregs))
 
 
 
