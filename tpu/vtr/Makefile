@@ -1,7 +1,7 @@
 BASE_DIR = ~/Desktop/utexas_thesis
-BASE_FILE_NAME = matmul_8x8
+BASE_FILE_NAME = system
 
-SUB_DIR = top
+SUB_DIR = scalar
 
 VTR_VERILOG_DIR = $(BASE_DIR)/vtr-verilog-to-routing/vtr_flow/benchmarks/verilog/ml_benchmarks/tpu_subunits/$(SUB_DIR)
 VTR_TASK_DIR = $(BASE_DIR)/vtr-verilog-to-routing/vtr_flow/tasks

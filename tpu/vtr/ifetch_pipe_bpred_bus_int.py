@@ -262,12 +262,14 @@ register_{I_DATAWIDTH} pcrollbacknt( pc, clk, resetn, pcrollbacknt_en, pc_rollba
 
 wire [2-1: 0] buf_predict_d;
 wire buf_predict_en;
+wire [2-1:0] buf_predict_q;
 
 assign buf_predict_d = {{prediction,predict_en&(pcwrop!=1'b1)}};
 assign buf_predict_en = en&predict_en;
+assign {{prediction_saved,predict_en_saved}} = buf_predict_q;
 
 register_2 buf_predict(buf_predict_d,clk,resetn,buf_predict_en, 
-    {{prediction_saved,predict_en_saved}});
+    buf_predict_q);
   //defparam buf_predict.WIDTH=2;
   //predict_en_saved saves if it wa
 

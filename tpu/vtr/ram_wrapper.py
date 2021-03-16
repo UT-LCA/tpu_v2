@@ -83,10 +83,10 @@ endmodule'''
 if __name__ == '__main__':
     fp = open(parser.parse(), "w")
     uut = ram_wrapper(fp)
-    uut.write(10, 1024, 32)
+    uut.write(5, 32, 32)
     fp.close()
     fp = open(parser.parse(), "a")
     fp.write("\r\r")
     ram = dpram(fp)
-    ram.write(10, 1024, 32)
+    ram.write(5, 32, 32)
     fp.close()

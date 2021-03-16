@@ -162,10 +162,16 @@ parameter     OP_LBU          = 6'b100100;
 parameter     OP_LHU          = 6'b100101;
 parameter     OP_LWR          = 6'b100110;
 
-parameter     OP_SB           = 6'b101x00;
-parameter     OP_SH           = 6'b101x01;
+// parameter     OP_SB           = 6'b101x00;
+parameter     OP_SB_0           = 6'b101000;
+parameter     OP_SB_1           = 6'b101100;
+// parameter     OP_SH           = 6'b101x01;
+parameter     OP_SH_0           = 6'b101001;
+parameter     OP_SH_1           = 6'b101101;
 parameter     OP_SWL          = 6'b101010;
-parameter     OP_SW           = 6'b101x11;
+// parameter     OP_SW           = 6'b101x11;
+parameter     OP_SW_0           = 6'b101011;
+parameter     OP_SW_1           = 6'b101111;
 parameter     OP_SWR          = 6'b101110;
 
 /****** FUNCTION CLASS - bits 5...0 *******/
@@ -176,18 +182,58 @@ parameter     FUNC_SLLV       = 6'b000100;
 parameter     FUNC_SRLV       = 6'b000110;
 parameter     FUNC_SRAV       = 6'b000111;
 
-parameter     FUNC_JR         = 6'b001xx0;
-parameter     FUNC_JALR       = 6'b001xx1;
+// parameter     FUNC_JR         = 6'b001xx0;
+parameter     FUNC_JR_00         = 6'b001000;
+parameter     FUNC_JR_01         = 6'b001010;
+parameter     FUNC_JR_10         = 6'b001100;
+parameter     FUNC_JR_11         = 6'b001110;
+// parameter     FUNC_JALR       = 6'b001xx1;
+parameter     FUNC_JALR_00       = 6'b001001;
+parameter     FUNC_JALR_01       = 6'b001011;
+parameter     FUNC_JALR_10       = 6'b001101;
+parameter     FUNC_JALR_11       = 6'b001111;
 
-parameter     FUNC_MFHI       = 6'bx10x00;
-parameter     FUNC_MTHI       = 6'bx10x01;
-parameter     FUNC_MFLO       = 6'bx10x10;
-parameter     FUNC_MTLO       = 6'bx10x11;
+// parameter     FUNC_MFHI       = 6'bx10x00;
+parameter     FUNC_MFHI_00       = 6'b010000;
+parameter     FUNC_MFHI_01       = 6'b010100;
+parameter     FUNC_MFHI_10       = 6'b110000;
+parameter     FUNC_MFHI_11       = 6'b110100;
+// parameter     FUNC_MTHI       = 6'bx10x01;
+parameter     FUNC_MTHI_00       = 6'b010001;
+parameter     FUNC_MTHI_01       = 6'b010101;
+parameter     FUNC_MTHI_10       = 6'b110001;
+parameter     FUNC_MTHI_11       = 6'b110101;
+// parameter     FUNC_MFLO       = 6'bx10x10;
+parameter     FUNC_MFLO_00       = 6'b010010;
+parameter     FUNC_MFLO_01       = 6'b010110;
+parameter     FUNC_MFLO_10       = 6'b110010;
+parameter     FUNC_MFLO_11       = 6'b110110;
+// parameter     FUNC_MTLO       = 6'bx10x11;
+parameter     FUNC_MTLO_00       = 6'b010011;
+parameter     FUNC_MTLO_01       = 6'b010111;
+parameter     FUNC_MTLO_10       = 6'b110011;
+parameter     FUNC_MTLO_11       = 6'b110111;
 
-parameter     FUNC_MULT       = 6'bx11x00;
-parameter     FUNC_MULTU      = 6'bx11x01;
-parameter     FUNC_DIV        = 6'bx11x10;
-parameter     FUNC_DIVU       = 6'bx11x11;
+// parameter     FUNC_MULT       = 6'bx11x00;
+parameter     FUNC_MULT_00       = 6'b011000;
+parameter     FUNC_MULT_01       = 6'b011100;
+parameter     FUNC_MULT_10       = 6'b111000;
+parameter     FUNC_MULT_11       = 6'b111100;
+// parameter     FUNC_MULTU      = 6'bx11x01;
+parameter     FUNC_MULTU_00      = 6'b011001;
+parameter     FUNC_MULTU_01      = 6'b011101;
+parameter     FUNC_MULTU_10      = 6'b111001;
+parameter     FUNC_MULTU_11      = 6'b111101;
+// parameter     FUNC_DIV        = 6'bx11x10;
+parameter     FUNC_DIV_00        = 6'b011010;
+parameter     FUNC_DIV_01        = 6'b011110;
+parameter     FUNC_DIV_10        = 6'b111010;
+parameter     FUNC_DIV_11        = 6'b111110;
+// parameter     FUNC_DIVU       = 6'bx11x11;
+parameter     FUNC_DIVU_00       = 6'b011011;
+parameter     FUNC_DIVU_01       = 6'b011111;
+parameter     FUNC_DIVU_10       = 6'b111011;
+parameter     FUNC_DIVU_11       = 6'b111111;
 
 parameter     FUNC_ADD        = 6'b100000;
 parameter     FUNC_ADDU       = 6'b100001;
@@ -720,7 +766,7 @@ begin
 				ctrl_zeroer_en = 1;
 			end
 		endcase
-		OP_SB:
+		OP_SB_0:
 		begin
             ctrl_mux2to1_pipereg6_d_sel = 0;
             ctrl_mux3to1_zeroer4_d_sel = 0;
@@ -729,7 +775,25 @@ begin
 			ctrl_zeroer0_en = 1;
 			ctrl_zeroer_en = 1;
 		end
-		OP_SH:
+		OP_SB_1:
+		begin
+            ctrl_mux2to1_pipereg6_d_sel = 0;
+            ctrl_mux3to1_zeroer4_d_sel = 0;
+			ctrl_mux2to1_pipereg_d_sel = 0;
+            ctrl_zeroer4_en = 0;
+			ctrl_zeroer0_en = 1;
+			ctrl_zeroer_en = 1;
+		end
+		OP_SH_0:
+		begin
+            ctrl_mux2to1_pipereg6_d_sel = 0;
+            ctrl_mux3to1_zeroer4_d_sel = 0;
+			ctrl_mux2to1_pipereg_d_sel = 0;
+            ctrl_zeroer4_en = 0;
+			ctrl_zeroer0_en = 1;
+			ctrl_zeroer_en = 1;
+		end
+		OP_SH_1:
 		begin
             ctrl_mux2to1_pipereg6_d_sel = 0;
             ctrl_mux3to1_zeroer4_d_sel = 0;
@@ -785,7 +849,7 @@ begin
 				ctrl_zeroer0_en = 1;
 				ctrl_zeroer_en = 1;
 			end
-			FUNC_DIV:
+			FUNC_DIV_00:
 			begin
                 ctrl_mux2to1_pipereg6_d_sel = 0;
                 ctrl_mux3to1_zeroer4_d_sel = 0;
@@ -794,7 +858,7 @@ begin
 				ctrl_zeroer0_en = 1;
 				ctrl_zeroer_en = 1;
 			end
-			FUNC_DIVU:
+			FUNC_DIV_01:
 			begin
                 ctrl_mux2to1_pipereg6_d_sel = 0;
                 ctrl_mux3to1_zeroer4_d_sel = 0;
@@ -803,7 +867,61 @@ begin
 				ctrl_zeroer0_en = 1;
 				ctrl_zeroer_en = 1;
 			end
-			FUNC_JALR:
+			FUNC_DIV_10:
+			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+                ctrl_mux3to1_zeroer4_d_sel = 0;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+                ctrl_zeroer4_en = 0;
+				ctrl_zeroer0_en = 1;
+				ctrl_zeroer_en = 1;
+			end
+			FUNC_DIV_11:
+			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+                ctrl_mux3to1_zeroer4_d_sel = 0;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+                ctrl_zeroer4_en = 0;
+				ctrl_zeroer0_en = 1;
+				ctrl_zeroer_en = 1;
+			end
+			FUNC_DIVU_00:
+			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+                ctrl_mux3to1_zeroer4_d_sel = 0;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+                ctrl_zeroer4_en = 0;
+				ctrl_zeroer0_en = 1;
+				ctrl_zeroer_en = 1;
+			end
+			FUNC_DIVU_01:
+			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+                ctrl_mux3to1_zeroer4_d_sel = 0;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+                ctrl_zeroer4_en = 0;
+				ctrl_zeroer0_en = 1;
+				ctrl_zeroer_en = 1;
+			end
+			FUNC_DIVU_10:
+			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+                ctrl_mux3to1_zeroer4_d_sel = 0;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+                ctrl_zeroer4_en = 0;
+				ctrl_zeroer0_en = 1;
+				ctrl_zeroer_en = 1;
+			end
+			FUNC_DIVU_11:
+			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+                ctrl_mux3to1_zeroer4_d_sel = 0;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+                ctrl_zeroer4_en = 0;
+				ctrl_zeroer0_en = 1;
+				ctrl_zeroer_en = 1;
+			end
+			FUNC_JALR_00:
 			begin
                 ctrl_mux2to1_pipereg6_d_sel = 0;
 				ctrl_mux3to1_zeroer4_d_sel = 1;
@@ -812,7 +930,34 @@ begin
                 ctrl_zeroer0_en = 0;
 				ctrl_zeroer_en = 1;
 			end
-			FUNC_JR:
+			FUNC_JALR_01:
+			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+				ctrl_mux3to1_zeroer4_d_sel = 1;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+				ctrl_zeroer4_en = 1;
+                ctrl_zeroer0_en = 0;
+				ctrl_zeroer_en = 1;
+			end
+			FUNC_JALR_10:
+			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+				ctrl_mux3to1_zeroer4_d_sel = 1;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+				ctrl_zeroer4_en = 1;
+                ctrl_zeroer0_en = 0;
+				ctrl_zeroer_en = 1;
+			end
+			FUNC_JALR_11:
+			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+				ctrl_mux3to1_zeroer4_d_sel = 1;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+				ctrl_zeroer4_en = 1;
+                ctrl_zeroer0_en = 0;
+				ctrl_zeroer_en = 1;
+			end
+			FUNC_JR_00:
             begin
                 ctrl_mux2to1_pipereg6_d_sel = 0;
                 ctrl_mux3to1_zeroer4_d_sel = 0;
@@ -821,7 +966,34 @@ begin
                 ctrl_zeroer0_en = 0;
 				ctrl_zeroer_en = 1;
             end
-			FUNC_MFHI:
+			FUNC_JR_01:
+            begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+                ctrl_mux3to1_zeroer4_d_sel = 0;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+                ctrl_zeroer4_en = 0;
+                ctrl_zeroer0_en = 0;
+				ctrl_zeroer_en = 1;
+            end
+			FUNC_JR_10:
+            begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+                ctrl_mux3to1_zeroer4_d_sel = 0;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+                ctrl_zeroer4_en = 0;
+                ctrl_zeroer0_en = 0;
+				ctrl_zeroer_en = 1;
+            end
+			FUNC_JR_11:
+            begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+                ctrl_mux3to1_zeroer4_d_sel = 0;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+                ctrl_zeroer4_en = 0;
+                ctrl_zeroer0_en = 0;
+				ctrl_zeroer_en = 1;
+            end
+			FUNC_MFHI_00:
 			begin
                 ctrl_mux2to1_pipereg6_d_sel = 0;
 				ctrl_mux3to1_zeroer4_d_sel = 1;
@@ -830,7 +1002,7 @@ begin
                 ctrl_zeroer0_en = 0;
                 ctrl_zeroer_en = 0;
 			end
-			FUNC_MFLO:
+			FUNC_MFHI_01:
 			begin
                 ctrl_mux2to1_pipereg6_d_sel = 0;
 				ctrl_mux3to1_zeroer4_d_sel = 1;
@@ -839,7 +1011,61 @@ begin
                 ctrl_zeroer0_en = 0;
                 ctrl_zeroer_en = 0;
 			end
-			FUNC_MULT:
+			FUNC_MFHI_10:
+			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+				ctrl_mux3to1_zeroer4_d_sel = 1;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+				ctrl_zeroer4_en = 1;
+                ctrl_zeroer0_en = 0;
+                ctrl_zeroer_en = 0;
+			end
+			FUNC_MFHI_11:
+			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+				ctrl_mux3to1_zeroer4_d_sel = 1;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+				ctrl_zeroer4_en = 1;
+                ctrl_zeroer0_en = 0;
+                ctrl_zeroer_en = 0;
+			end
+			FUNC_MFLO_00:
+			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+				ctrl_mux3to1_zeroer4_d_sel = 1;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+				ctrl_zeroer4_en = 1;
+                ctrl_zeroer0_en = 0;
+                ctrl_zeroer_en = 0;
+			end
+			FUNC_MFLO_01:
+			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+				ctrl_mux3to1_zeroer4_d_sel = 1;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+				ctrl_zeroer4_en = 1;
+                ctrl_zeroer0_en = 0;
+                ctrl_zeroer_en = 0;
+			end
+			FUNC_MFLO_10:
+			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+				ctrl_mux3to1_zeroer4_d_sel = 1;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+				ctrl_zeroer4_en = 1;
+                ctrl_zeroer0_en = 0;
+                ctrl_zeroer_en = 0;
+			end
+			FUNC_MFLO_11:
+			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+				ctrl_mux3to1_zeroer4_d_sel = 1;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+				ctrl_zeroer4_en = 1;
+                ctrl_zeroer0_en = 0;
+                ctrl_zeroer_en = 0;
+			end
+			FUNC_MULT_00:
 			begin
                 ctrl_mux2to1_pipereg6_d_sel = 0;
                 ctrl_mux3to1_zeroer4_d_sel = 0;
@@ -848,7 +1074,61 @@ begin
 				ctrl_zeroer0_en = 1;
 				ctrl_zeroer_en = 1;
 			end
-			FUNC_MULTU:
+			FUNC_MULT_01:
+			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+                ctrl_mux3to1_zeroer4_d_sel = 0;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+                ctrl_zeroer4_en = 0;
+				ctrl_zeroer0_en = 1;
+				ctrl_zeroer_en = 1;
+			end
+			FUNC_MULT_10:
+			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+                ctrl_mux3to1_zeroer4_d_sel = 0;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+                ctrl_zeroer4_en = 0;
+				ctrl_zeroer0_en = 1;
+				ctrl_zeroer_en = 1;
+			end
+			FUNC_MULT_11:
+			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+                ctrl_mux3to1_zeroer4_d_sel = 0;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+                ctrl_zeroer4_en = 0;
+				ctrl_zeroer0_en = 1;
+				ctrl_zeroer_en = 1;
+			end
+			FUNC_MULTU_00:
+			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+                ctrl_mux3to1_zeroer4_d_sel = 0;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+                ctrl_zeroer4_en = 0;
+				ctrl_zeroer0_en = 1;
+				ctrl_zeroer_en = 1;
+			end
+			FUNC_MULTU_01:
+			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+                ctrl_mux3to1_zeroer4_d_sel = 0;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+                ctrl_zeroer4_en = 0;
+				ctrl_zeroer0_en = 1;
+				ctrl_zeroer_en = 1;
+			end
+			FUNC_MULTU_10:
+			begin
+                ctrl_mux2to1_pipereg6_d_sel = 0;
+                ctrl_mux3to1_zeroer4_d_sel = 0;
+                ctrl_mux2to1_pipereg_d_sel = 0;
+                ctrl_zeroer4_en = 0;
+				ctrl_zeroer0_en = 1;
+				ctrl_zeroer_en = 1;
+			end
+			FUNC_MULTU_11:
 			begin
                 ctrl_mux2to1_pipereg6_d_sel = 0;
                 ctrl_mux3to1_zeroer4_d_sel = 0;
@@ -975,7 +1255,16 @@ begin
 				ctrl_zeroer_en = 1;
 			end
 		endcase
-		OP_SW:
+		OP_SW_0:
+		begin
+            ctrl_mux2to1_pipereg6_d_sel = 0;
+            ctrl_mux3to1_zeroer4_d_sel = 0;
+			ctrl_mux2to1_pipereg_d_sel = 0;
+            ctrl_zeroer4_en = 0;
+			ctrl_zeroer0_en = 1;
+			ctrl_zeroer_en = 1;
+		end
+		OP_SW_1:
 		begin
             ctrl_mux2to1_pipereg6_d_sel = 0;
             ctrl_mux3to1_zeroer4_d_sel = 0;
@@ -1371,7 +1660,7 @@ begin
 				ctrl_logic_unit_op = 0;
 			end
 		endcase
-		OP_SB:
+		OP_SB_0:
 		begin
 			ctrl_mux6to1_pipereg7_d_sel = 0;
 			ctrl_mux9to1_nop13_d_sel = 0;
@@ -1388,7 +1677,41 @@ begin
 			ctrl_mul_op = 0;
 			ctrl_logic_unit_op = 0;
 		end
-		OP_SH:
+		OP_SB_1:
+		begin
+			ctrl_mux6to1_pipereg7_d_sel = 0;
+			ctrl_mux9to1_nop13_d_sel = 0;
+			ctrl_mux3to1_nop9_d_sel = 2;
+			ctrl_mux2to1_lo_reg_d_sel = 0;
+			ctrl_mux2to1_hi_reg_d_sel = 0;
+			ctrl_mux2to1_mul_opA_sel = 0;
+			ctrl_mux3to1_mul_sa_sel = 0;
+			ctrl_mux2to1_addersub_opA_sel = 0;
+			ctrl_ifetch_pcwrop = 0;
+			ctrl_addersub_op = 3;
+			ctrl_data_mem_op = 11;
+			ctrl_div_sign = 0;
+			ctrl_mul_op = 0;
+			ctrl_logic_unit_op = 0;
+		end
+		OP_SH_0:
+		begin
+			ctrl_mux6to1_pipereg7_d_sel = 0;
+			ctrl_mux9to1_nop13_d_sel = 0;
+			ctrl_mux3to1_nop9_d_sel = 2;
+			ctrl_mux2to1_lo_reg_d_sel = 0;
+			ctrl_mux2to1_hi_reg_d_sel = 0;
+			ctrl_mux2to1_mul_opA_sel = 0;
+			ctrl_mux3to1_mul_sa_sel = 0;
+			ctrl_mux2to1_addersub_opA_sel = 0;
+			ctrl_ifetch_pcwrop = 0;
+			ctrl_addersub_op = 3;
+			ctrl_data_mem_op = 9;
+			ctrl_div_sign = 0;
+			ctrl_mul_op = 0;
+			ctrl_logic_unit_op = 0;
+		end
+		OP_SH_1:
 		begin
 			ctrl_mux6to1_pipereg7_d_sel = 0;
 			ctrl_mux9to1_nop13_d_sel = 0;
@@ -1492,7 +1815,7 @@ begin
 				ctrl_mul_op = 0;
 				ctrl_logic_unit_op = 0;
 			end
-			FUNC_DIV:
+			FUNC_DIV_00:
 			begin
 				ctrl_mux6to1_pipereg7_d_sel = 0;
 				ctrl_mux9to1_nop13_d_sel = 0;
@@ -1509,7 +1832,58 @@ begin
 				ctrl_mul_op = 0;
 				ctrl_logic_unit_op = 0;
 			end
-			FUNC_DIVU:
+			FUNC_DIV_01:
+			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
+				ctrl_mux9to1_nop13_d_sel = 0;
+				ctrl_mux3to1_nop9_d_sel = 0;
+				ctrl_mux2to1_lo_reg_d_sel = 1;
+				ctrl_mux2to1_hi_reg_d_sel = 1;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 1;
+				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
+			end
+			FUNC_DIV_10:
+			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
+				ctrl_mux9to1_nop13_d_sel = 0;
+				ctrl_mux3to1_nop9_d_sel = 0;
+				ctrl_mux2to1_lo_reg_d_sel = 1;
+				ctrl_mux2to1_hi_reg_d_sel = 1;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 1;
+				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
+			end
+			FUNC_DIV_11:
+			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
+				ctrl_mux9to1_nop13_d_sel = 0;
+				ctrl_mux3to1_nop9_d_sel = 0;
+				ctrl_mux2to1_lo_reg_d_sel = 1;
+				ctrl_mux2to1_hi_reg_d_sel = 1;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 1;
+				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
+			end
+			FUNC_DIVU_00:
 			begin
 				ctrl_mux6to1_pipereg7_d_sel = 0;
 				ctrl_mux9to1_nop13_d_sel = 0;
@@ -1526,7 +1900,58 @@ begin
 				ctrl_mul_op = 0;
 				ctrl_logic_unit_op = 0;
 			end
-			FUNC_JALR:
+			FUNC_DIVU_01:
+			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
+				ctrl_mux9to1_nop13_d_sel = 0;
+				ctrl_mux3to1_nop9_d_sel = 0;
+				ctrl_mux2to1_lo_reg_d_sel = 1;
+				ctrl_mux2to1_hi_reg_d_sel = 1;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
+			end
+			FUNC_DIVU_10:
+			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
+				ctrl_mux9to1_nop13_d_sel = 0;
+				ctrl_mux3to1_nop9_d_sel = 0;
+				ctrl_mux2to1_lo_reg_d_sel = 1;
+				ctrl_mux2to1_hi_reg_d_sel = 1;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
+			end
+			FUNC_DIVU_11:
+			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
+				ctrl_mux9to1_nop13_d_sel = 0;
+				ctrl_mux3to1_nop9_d_sel = 0;
+				ctrl_mux2to1_lo_reg_d_sel = 1;
+				ctrl_mux2to1_hi_reg_d_sel = 1;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
+			end
+			FUNC_JALR_00:
 			begin
 				ctrl_mux6to1_pipereg7_d_sel = 0;
 				ctrl_mux9to1_nop13_d_sel = 6;
@@ -1543,7 +1968,58 @@ begin
 				ctrl_mul_op = 0;
 				ctrl_logic_unit_op = 0;
 			end
-			FUNC_MFHI:
+			FUNC_JALR_01:
+			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
+				ctrl_mux9to1_nop13_d_sel = 6;
+				ctrl_mux3to1_nop9_d_sel = 0;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 1;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 1;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
+			end
+			FUNC_JALR_10:
+			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
+				ctrl_mux9to1_nop13_d_sel = 6;
+				ctrl_mux3to1_nop9_d_sel = 0;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 1;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 1;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
+			end
+			FUNC_JALR_11:
+			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
+				ctrl_mux9to1_nop13_d_sel = 6;
+				ctrl_mux3to1_nop9_d_sel = 0;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 1;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 1;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
+			end
+			FUNC_MFHI_00:
 			begin
 				ctrl_mux6to1_pipereg7_d_sel = 0;
 				ctrl_mux9to1_nop13_d_sel = 1;
@@ -1560,7 +2036,58 @@ begin
 				ctrl_mul_op = 0;
 				ctrl_logic_unit_op = 0;
 			end
-			FUNC_MFLO:
+			FUNC_MFHI_01:
+			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
+				ctrl_mux9to1_nop13_d_sel = 1;
+				ctrl_mux3to1_nop9_d_sel = 0;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
+			end
+			FUNC_MFHI_10:
+			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
+				ctrl_mux9to1_nop13_d_sel = 1;
+				ctrl_mux3to1_nop9_d_sel = 0;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
+			end
+			FUNC_MFHI_11:
+			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
+				ctrl_mux9to1_nop13_d_sel = 1;
+				ctrl_mux3to1_nop9_d_sel = 0;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
+			end
+			FUNC_MFLO_00:
 			begin
 				ctrl_mux6to1_pipereg7_d_sel = 0;
 				ctrl_mux9to1_nop13_d_sel = 0;
@@ -1577,7 +2104,58 @@ begin
 				ctrl_mul_op = 0;
 				ctrl_logic_unit_op = 0;
 			end
-			FUNC_MULT:
+			FUNC_MFLO_01:
+			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
+				ctrl_mux9to1_nop13_d_sel = 0;
+				ctrl_mux3to1_nop9_d_sel = 0;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
+			end
+			FUNC_MFLO_10:
+			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
+				ctrl_mux9to1_nop13_d_sel = 0;
+				ctrl_mux3to1_nop9_d_sel = 0;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
+			end
+			FUNC_MFLO_11:
+			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
+				ctrl_mux9to1_nop13_d_sel = 0;
+				ctrl_mux3to1_nop9_d_sel = 0;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 0;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 0;
+				ctrl_logic_unit_op = 0;
+			end
+			FUNC_MULT_00:
 			begin
 				ctrl_mux6to1_pipereg7_d_sel = 0;
 				ctrl_mux9to1_nop13_d_sel = 0;
@@ -1594,7 +2172,109 @@ begin
 				ctrl_mul_op = 6;
 				ctrl_logic_unit_op = 0;
 			end
-			FUNC_MULTU:
+			FUNC_MULT_01:
+			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
+				ctrl_mux9to1_nop13_d_sel = 0;
+				ctrl_mux3to1_nop9_d_sel = 0;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 1;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 6;
+				ctrl_logic_unit_op = 0;
+			end
+			FUNC_MULT_10:
+			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
+				ctrl_mux9to1_nop13_d_sel = 0;
+				ctrl_mux3to1_nop9_d_sel = 0;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 1;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 6;
+				ctrl_logic_unit_op = 0;
+			end
+			FUNC_MULT_11:
+			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
+				ctrl_mux9to1_nop13_d_sel = 0;
+				ctrl_mux3to1_nop9_d_sel = 0;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 1;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 6;
+				ctrl_logic_unit_op = 0;
+			end
+			FUNC_MULTU_00:
+			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
+				ctrl_mux9to1_nop13_d_sel = 0;
+				ctrl_mux3to1_nop9_d_sel = 0;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 1;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 4;
+				ctrl_logic_unit_op = 0;
+			end
+			FUNC_MULTU_01:
+			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
+				ctrl_mux9to1_nop13_d_sel = 0;
+				ctrl_mux3to1_nop9_d_sel = 0;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 1;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 4;
+				ctrl_logic_unit_op = 0;
+			end
+			FUNC_MULTU_10:
+			begin
+				ctrl_mux6to1_pipereg7_d_sel = 0;
+				ctrl_mux9to1_nop13_d_sel = 0;
+				ctrl_mux3to1_nop9_d_sel = 0;
+				ctrl_mux2to1_lo_reg_d_sel = 0;
+				ctrl_mux2to1_hi_reg_d_sel = 0;
+				ctrl_mux2to1_mul_opA_sel = 1;
+				ctrl_mux3to1_mul_sa_sel = 0;
+				ctrl_mux2to1_addersub_opA_sel = 0;
+				ctrl_ifetch_pcwrop = 0;
+				ctrl_addersub_op = 0;
+				ctrl_data_mem_op = 0;
+				ctrl_div_sign = 0;
+				ctrl_mul_op = 4;
+				ctrl_logic_unit_op = 0;
+			end
+			FUNC_MULTU_11:
 			begin
 				ctrl_mux6to1_pipereg7_d_sel = 0;
 				ctrl_mux9to1_nop13_d_sel = 0;
@@ -1833,7 +2513,24 @@ begin
 				ctrl_logic_unit_op = 2;
 			end
 		endcase
-		OP_SW:
+		OP_SW_0:
+		begin
+			ctrl_mux6to1_pipereg7_d_sel = 0;
+			ctrl_mux9to1_nop13_d_sel = 0;
+			ctrl_mux3to1_nop9_d_sel = 2;
+			ctrl_mux2to1_lo_reg_d_sel = 0;
+			ctrl_mux2to1_hi_reg_d_sel = 0;
+			ctrl_mux2to1_mul_opA_sel = 0;
+			ctrl_mux3to1_mul_sa_sel = 0;
+			ctrl_mux2to1_addersub_opA_sel = 0;
+			ctrl_ifetch_pcwrop = 0;
+			ctrl_addersub_op = 3;
+			ctrl_data_mem_op = 8;
+			ctrl_div_sign = 0;
+			ctrl_mul_op = 0;
+			ctrl_logic_unit_op = 0;
+		end
+		OP_SW_1:
 		begin
 			ctrl_mux6to1_pipereg7_d_sel = 0;
 			ctrl_mux9to1_nop13_d_sel = 0;
@@ -2201,7 +2898,7 @@ begin
                 ctrl_mul_start = 0;
             end
 		endcase
-		OP_SB:
+		OP_SB_0:
         begin
 			ctrl_data_mem_en = 1 &~stall_out_stage3;
             ctrl_cop0_fromcpu_en = 0;
@@ -2215,7 +2912,35 @@ begin
             ctrl_div_en = 0;
             ctrl_mul_start = 0;
         end
-		OP_SH:
+		OP_SB_1:
+        begin
+			ctrl_data_mem_en = 1 &~stall_out_stage3;
+            ctrl_cop0_fromcpu_en = 0;
+            ctrl_cop0_tocpu_en = 0;
+            ctrl_cop2_fromcpu_en = 0;
+            ctrl_cop2_tocpu_en = 0;
+            ctrl_lo_reg_en = 0;
+            ctrl_hi_reg_en = 0;
+            ctrl_branchresolve_en = 0;
+            ctrl_reg_file_c_we = 0;
+            ctrl_div_en = 0;
+            ctrl_mul_start = 0;
+        end
+		OP_SH_0:
+        begin
+			ctrl_data_mem_en = 1 &~stall_out_stage3;
+            ctrl_cop0_fromcpu_en = 0;
+            ctrl_cop0_tocpu_en = 0;
+            ctrl_cop2_fromcpu_en = 0;
+            ctrl_cop2_tocpu_en = 0;
+            ctrl_lo_reg_en = 0;
+            ctrl_hi_reg_en = 0;
+            ctrl_branchresolve_en = 0;
+            ctrl_reg_file_c_we = 0;
+            ctrl_div_en = 0;
+            ctrl_mul_start = 0;
+        end
+		OP_SH_1:
         begin
 			ctrl_data_mem_en = 1 &~stall_out_stage3;
             ctrl_cop0_fromcpu_en = 0;
@@ -2301,7 +3026,7 @@ begin
                 ctrl_div_en = 0;
                 ctrl_mul_start = 0;
             end
-			FUNC_DIV:
+			FUNC_DIV_00:
 			begin
 				ctrl_lo_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
 				ctrl_hi_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
@@ -2315,7 +3040,7 @@ begin
                 ctrl_data_mem_en = 0;
                 ctrl_mul_start = 0;
 			end
-			FUNC_DIVU:
+			FUNC_DIV_01:
 			begin
 				ctrl_lo_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
 				ctrl_hi_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
@@ -2329,7 +3054,91 @@ begin
                 ctrl_data_mem_en = 0;
                 ctrl_mul_start = 0;
 			end
-			FUNC_JALR:
+			FUNC_DIV_10:
+			begin
+				ctrl_lo_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+				ctrl_hi_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+				ctrl_div_en = 1 &~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_reg_file_c_we = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_mul_start = 0;
+			end
+			FUNC_DIV_11:
+			begin
+				ctrl_lo_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+				ctrl_hi_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+				ctrl_div_en = 1 &~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_reg_file_c_we = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_mul_start = 0;
+			end
+			FUNC_DIVU_00:
+			begin
+				ctrl_lo_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+				ctrl_hi_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+				ctrl_div_en = 1 &~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_reg_file_c_we = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_mul_start = 0;
+			end
+			FUNC_DIVU_01:
+			begin
+				ctrl_lo_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+				ctrl_hi_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+				ctrl_div_en = 1 &~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_reg_file_c_we = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_mul_start = 0;
+			end
+			FUNC_DIVU_10:
+			begin
+				ctrl_lo_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+				ctrl_hi_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+				ctrl_div_en = 1 &~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_reg_file_c_we = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_mul_start = 0;
+			end
+			FUNC_DIVU_11:
+			begin
+				ctrl_lo_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+				ctrl_hi_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+				ctrl_div_en = 1 &~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_reg_file_c_we = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_mul_start = 0;
+			end
+			FUNC_JALR_00:
             begin
 				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
                 ctrl_cop0_fromcpu_en = 0;
@@ -2343,7 +3152,7 @@ begin
                 ctrl_div_en = 0;
                 ctrl_mul_start = 0;
             end
-			FUNC_MFHI:
+			FUNC_JALR_01:
             begin
 				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
                 ctrl_cop0_fromcpu_en = 0;
@@ -2357,7 +3166,7 @@ begin
                 ctrl_div_en = 0;
                 ctrl_mul_start = 0;
             end
-			FUNC_MFLO:
+			FUNC_JALR_10:
             begin
 				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
                 ctrl_cop0_fromcpu_en = 0;
@@ -2371,7 +3180,133 @@ begin
                 ctrl_div_en = 0;
                 ctrl_mul_start = 0;
             end
-			FUNC_MULT:
+			FUNC_JALR_11:
+            begin
+				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+                ctrl_mul_start = 0;
+            end
+			FUNC_MFHI_00:
+            begin
+				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+                ctrl_mul_start = 0;
+            end
+			FUNC_MFHI_01:
+            begin
+				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+                ctrl_mul_start = 0;
+            end
+			FUNC_MFHI_10:
+            begin
+				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+                ctrl_mul_start = 0;
+            end
+			FUNC_MFHI_11:
+            begin
+				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+                ctrl_mul_start = 0;
+            end
+			FUNC_MFLO_00:
+            begin
+				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+                ctrl_mul_start = 0;
+            end
+			FUNC_MFLO_01:
+            begin
+				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+                ctrl_mul_start = 0;
+            end
+			FUNC_MFLO_10:
+            begin
+				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+                ctrl_mul_start = 0;
+            end
+			FUNC_MFLO_11:
+            begin
+				ctrl_reg_file_c_we = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_lo_reg_en = 0;
+                ctrl_hi_reg_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+                ctrl_mul_start = 0;
+            end
+			FUNC_MULT_00:
 			begin
 				ctrl_lo_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
 				ctrl_hi_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
@@ -2385,7 +3320,91 @@ begin
                 ctrl_data_mem_en = 0;
                 ctrl_div_en = 0;
 			end
-			FUNC_MULTU:
+			FUNC_MULT_01:
+			begin
+				ctrl_lo_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+				ctrl_hi_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+				ctrl_mul_start = 1 &~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_reg_file_c_we = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+			end
+			FUNC_MULT_10:
+			begin
+				ctrl_lo_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+				ctrl_hi_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+				ctrl_mul_start = 1 &~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_reg_file_c_we = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+			end
+			FUNC_MULT_11:
+			begin
+				ctrl_lo_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+				ctrl_hi_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+				ctrl_mul_start = 1 &~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_reg_file_c_we = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+			end
+			FUNC_MULTU_00:
+			begin
+				ctrl_lo_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+				ctrl_hi_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+				ctrl_mul_start = 1 &~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_reg_file_c_we = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+			end
+			FUNC_MULTU_01:
+			begin
+				ctrl_lo_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+				ctrl_hi_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+				ctrl_mul_start = 1 &~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_reg_file_c_we = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+			end
+			FUNC_MULTU_10:
+			begin
+				ctrl_lo_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+				ctrl_hi_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
+				ctrl_mul_start = 1 &~stall_out_stage3;
+                ctrl_cop0_fromcpu_en = 0;
+                ctrl_cop0_tocpu_en = 0;
+                ctrl_cop2_fromcpu_en = 0;
+                ctrl_cop2_tocpu_en = 0;
+                ctrl_branchresolve_en = 0;
+                ctrl_reg_file_c_we = 0;
+                ctrl_data_mem_en = 0;
+                ctrl_div_en = 0;
+			end
+			FUNC_MULTU_11:
 			begin
 				ctrl_lo_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
 				ctrl_hi_reg_en = 1 &~ctrl_cop0_stalled&~ctrl_cop2_stalled&~ctrl_div_stalled&~ctrl_data_mem_stalled&~ctrl_mul_stalled&~stall_out_stage3;
@@ -2582,7 +3601,21 @@ begin
                 ctrl_mul_start = 0;
             end
 		endcase
-		OP_SW:
+		OP_SW_0:
+        begin
+			ctrl_data_mem_en = 1 &~stall_out_stage3;
+            ctrl_cop0_fromcpu_en = 0;
+            ctrl_cop0_tocpu_en = 0;
+            ctrl_cop2_fromcpu_en = 0;
+            ctrl_cop2_tocpu_en = 0;
+            ctrl_lo_reg_en = 0;
+            ctrl_hi_reg_en = 0;
+            ctrl_branchresolve_en = 0;
+            ctrl_reg_file_c_we = 0;
+            ctrl_div_en = 0;
+            ctrl_mul_start = 0;
+        end
+		OP_SW_1:
         begin
 			ctrl_data_mem_en = 1 &~stall_out_stage3;
             ctrl_cop0_fromcpu_en = 0;
@@ -2634,9 +3667,21 @@ begin
 		endcase
 		OP_SPECIAL:
 		case (pipereg19_q)
-			FUNC_JALR:
+			FUNC_JALR_00:
 				ctrl_ifetch_op = 1;
-			FUNC_JR:
+			FUNC_JALR_01:
+				ctrl_ifetch_op = 1;
+			FUNC_JALR_10:
+				ctrl_ifetch_op = 1;
+			FUNC_JALR_11:
+				ctrl_ifetch_op = 1;
+			FUNC_JR_00:
+				ctrl_ifetch_op = 1;
+			FUNC_JR_01:
+				ctrl_ifetch_op = 1;
+			FUNC_JR_10:
+				ctrl_ifetch_op = 1;
+			FUNC_JR_11:
 				ctrl_ifetch_op = 1;
 		endcase
         default: 
@@ -2665,9 +3710,21 @@ begin
 		endcase
 		OP_SPECIAL:
 		case (pipereg19_q)
-			FUNC_JALR:
+			FUNC_JALR_00:
 				ctrl_ifetch_we = 1 &~1'b0;
-			FUNC_JR:
+			FUNC_JALR_01:
+				ctrl_ifetch_we = 1 &~1'b0;
+			FUNC_JALR_10:
+				ctrl_ifetch_we = 1 &~1'b0;
+			FUNC_JALR_11:
+				ctrl_ifetch_we = 1 &~1'b0;
+			FUNC_JR_00:
+				ctrl_ifetch_we = 1 &~1'b0;
+			FUNC_JR_01:
+				ctrl_ifetch_we = 1 &~1'b0;
+			FUNC_JR_10:
+				ctrl_ifetch_we = 1 &~1'b0;
+			FUNC_JR_11:
 				ctrl_ifetch_we = 1 &~1'b0;
 		endcase
         default:
@@ -3422,127 +4479,118 @@ if __name__ == '__main__':
 	uut = system(fp)
 	uut.write()
 	fp = open(parser.parse(), "a")
-	fp.write("\r\r")
+	fp.write("\n\n")
 	adder = addersub(fp)
 	adder.write(width)
-	fp.write("\r\r")
+	fp.write("\n\n")
 	local_adder = local_add_sub(fp)
 	local_adder.write(width+1, 0, "SIGNED")
-	fp.write("\r\r")
+	fp.write("\n\n")
 	logic_unit_obj = logic_unit(fp)
 	logic_unit_obj.write(width)
-	fp.write("\r\r")
+	fp.write("\n\n")
 	fetcher = ifetch(fp)
 	fetcher.write(67108896, width, 14, 16384)
-	fp.write("\r\r")
+	fp.write("\n\n")
 	reg1 = register(fp)
 	reg1.write(width)
-	fp.write("\r\r")
+	fp.write("\n\n")
 	reg2 = register(fp)
 	reg2.write(2) 
-	fp.write("\r\r")
-	br_detect = branch_detector(fp)
-	br_detect.write() 
-	# fp.write("\r\r")
-	# pipe_reg = pipereg(fp)
-	# pipe_reg.write(1) 
-	fp.write("\r\r")
+	fp.write("\n\n")
 	br_pred = branchpredict(fp)
 	br_pred.write(width, 4096, 12, 1)
-	fp.write("\r\r")
+	fp.write("\n\n")
 	bpred_ram = dpram(fp)
 	bpred_ram.write(12, 4096, 1) 
-	fp.write("\r\r")
+	fp.write("\n\n")
 	multiplier = mul(fp)
 	multiplier.write(width)
-	fp.write("\r\r")
+	fp.write("\n\n")
 	local_mult = local_mult(fp)
 	local_mult.write(width+1, width+1, 2*(width+1))
-	fp.write("\r\r")
+	fp.write("\n\n")
 	mult_stall = onecyclestall(fp)
 	mult_stall.write()
-	fp.write("\r\r")
+	fp.write("\n\n")
 	divider = div(fp)
 	divider.write(0, 1, 2)
-	fp.write("\r\r")
+	fp.write("\n\n")
 	data_memory = data_mem(fp)
 	data_memory.write(width, width, 4, 16, 16384)
-	fp.write("\r\r")
+	fp.write("\n\n")
 	store = store_data_translator(fp)
 	store.write(width)
-	fp.write("\r\r")
+	fp.write("\n\n")
 	load = load_data_translator(fp)
 	load.write(width) 
-	# fp.write("\r\r")
-	# reg = register(fp)
-	# reg.write(2)
-	fp.write("\r\r")
+	fp.write("\n\n")
 	register_file = reg_file(fp)
 	register_file.write(width, 32, 5)
-	fp.write("\r\r")
+	fp.write("\n\n")
 	wrapper = ram_wrapper(fp)
 	wrapper.write(5, 32, width)
-	fp.write("\r\r")
+	fp.write("\n\n")
 	reg_file_ram = dpram(fp)
 	reg_file_ram.write(5, 32, width)
-	fp.write("\r\r")
+	fp.write("\n\n")
 	pc_adder = pcadder(fp)
 	pc_adder.write(width)
-	fp.write("\r\r")
+	fp.write("\n\n")
 	sign_ext = signext16(fp)
 	sign_ext.write()
-	fp.write("\r\r")
+	fp.write("\n\n")
 	merge26lo_obj = merge26lo(fp)
 	merge26lo_obj.write()
-	fp.write("\r\r")
+	fp.write("\n\n")
 	branch_resolver = branchresolve(fp)
 	branch_resolver.write(width)
-	fp.write("\r\r")
+	fp.write("\n\n")
 	lo_reg_obj = lo_reg(fp)
 	lo_reg_obj.write(width)
-	fp.write("\r\r")
+	fp.write("\n\n")
 	hi_reg_obj = hi_reg(fp)
 	hi_reg_obj.write(width)
-	fp.write("\r\r")
+	fp.write("\n\n")
 	const11 = const(fp)
 	const11.write(width, 0)
-	fp.write("\r\r")
+	fp.write("\n\n")
 	const12 = const(fp)
 	const12.write(width, 16)
-	fp.write("\r\r")
+	fp.write("\n\n")
 	const_obj = const(fp)
 	const_obj.write(width, 31)
-	fp.write("\r\r")
+	fp.write("\n\n")
 	pipe_reg1 = pipereg(fp)
 	pipe_reg1.write(width)
-	fp.write("\r\r")
+	fp.write("\n\n")
 	pipe_reg2 = pipereg(fp)
 	pipe_reg2.write(5)
-	fp.write("\r\r")
+	fp.write("\n\n")
 	pipe_reg3 = pipereg(fp)
 	pipe_reg3.write(1)
-	fp.write("\r\r")
+	fp.write("\n\n")
 	fake_delay1 = fakedelay(fp)
 	fake_delay1.write(width)
-	fp.write("\r\r")
+	fp.write("\n\n")
 	nop_obj = nop(fp)
 	nop_obj.write(width)
-	fp.write("\r\r")
+	fp.write("\n\n")
 	zeroer_obj = zeroer(fp)
 	zeroer_obj.write(5)
-	fp.write("\r\r")
+	fp.write("\n\n")
 	cop2_obj = cop2(fp)
 	cop2_obj.write()
-	fp.write("\r\r")
+	fp.write("\n\n")
 	cop0_obj = cop0(fp)
 	cop0_obj.write()
-	fp.write("\r\r")
+	fp.write("\n\n")
 	cop0_stall = multicyclestall(fp)
 	cop0_stall.write()
-	fp.write("\r\r")
+	fp.write("\n\n")
 	pipe_reg4 = pipereg(fp)
 	pipe_reg4.write(6)
-	# fp.write("\r\r")
-	# branch_detect = branch_detector(fp)
-	# branch_detect.write()
+	fp.write("\n\n")
+	branch_detect = branch_detector(fp)
+	branch_detect.write()
 	fp.close()
