@@ -7,7 +7,7 @@ class vmem_crossbar():
         self.fp = fp
 
     def make_str(self, inwidth, log2inwidth, numouts, outwidth, log2outwidth):
-        string = '''\
+        string1 = '''\
 /************************
  *
  *************************/
@@ -24,24 +24,25 @@ parameter SELWIDTH={LOG2INWIDTH}-{LOG2OUTWIDTH};   // LOG2(INWIDTH/OUTWIDTH) = 4
 
 input                             clk;
 input                             resetn;
-input  [(SELWIDTH*{NUMOUTS})-1 : 0] sel;
+input  [(SELWIDfTH*{NUMOUTS})-1 : 0] sel;
 input  [{INWIDTH}-1 : 0]            in;
 output [({OUTWIDTH}*{NUMOUTS})-1 : 0] out;
 
-genvar i;
-
- generate
-   for (i=0; i < {NUMOUTS}; i=i+1) begin : MEM
+'''
+        string2_basic = '''
      vmem_busmux_{INWIDTH}_{LOG2INWIDTH}_{OUTWIDTH}_{LOG2OUTWIDTH} bmux(clk,resetn,
         sel[(i+1)*SELWIDTH - 1 : i*SELWIDTH],
         in,
         out[(i+1)*{OUTWIDTH} - 1 : i*{OUTWIDTH}]);
-   end
- endgenerate
-
-
-endmodule
 '''
+
+        string2 =""
+        for i in range (0,numouts):
+            string2 += string2_basic.replace('i',str(i))
+
+        string2 += "\n endmodule \n"
+        string = string1 + string2
+
         return string.format(INWIDTH=inwidth, LOG2INWIDTH = log2inwidth, NUMOUTS=numouts ,OUTWIDTH=outwidth, LOG2OUTWIDTH=log2outwidth) 
 
     def write (self,inwidth, log2inwidth, numouts, outwidth, log2outwidth):

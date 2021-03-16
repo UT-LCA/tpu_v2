@@ -1,3 +1,4 @@
+from ram_wrapper import ram_wrapper
 from math import log
 from optparse import OptionParser
 
@@ -49,7 +50,7 @@ genvar k;
 generate
 for (k=0; k<{NUMBANKS}; k=k+1)
 begin : bank_gen
-      ram_wrapper_{log2numregsperbank}_{numregsperbank}_{width} reg_file1(
+      ram_wrapper_{LOG2NUMREGSPERBANK}_{NUMREGSPERBANK}_{WIDTH} reg_file1(
           .clk(clk),
           .resetn(resetn),
           .rden_a(1'b0),
@@ -83,6 +84,10 @@ endgenerate
 
 endmodule
 '''
+        fp = open("ram_wrapper.v", 'a')
+        uut = ram_wrapper(fp)
+        uut.write(log2numregsperbank, numregsperbank, width)
+        fp.close()
         return string.format(NUMBANKS=numbanks, LOG2NUMBANKS=log2numbanks, WIDTH=width, NUMREGS=numregs, LOG2NUMREGS = log2numregs, NUMREGSPERBANK=numregsperbank, LOG2NUMREGSPERBANK= log2numregsperbank) 
 
     def write(self,numbanks, log2numbanks, width, numregs, log2numregs):

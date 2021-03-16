@@ -1,3 +1,18 @@
+from vdispatcher import vdispatcher
+from vregfile_vector import vregfile_vector
+from vregfile_flag import vregfile_flag
+from vmem_unit import vmem_unit
+from vmul_unit import vmul_unit
+from vlane_alu import vlane_alu
+from vlane_flagalu import vlane_flagalu
+from matmul_unit import matmul_unit
+from trp_unit import trp_unit
+from bfloat_adder import bfloat_adder
+from bfloat_mult import bfloat_mult
+from activation import activation
+from vcomponents import pipe
+from components import pipereg
+
 from math import log
 import re
 from optparse import OptionParser
@@ -1839,7 +1854,7 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
 wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
 
 //module instance
-  vdispatcher_{NUMBANKS}_{DISPATCHERWIDTH}_{LOG2MVL}_{LOG2MVL}_{LOG2MVL}_{LOG2NUMLANESP1} vdispatcher(
+  vdispatcher_{NUMBANKS}_{DISPATCHERWIDTH}_{LOG2MVL}_{LOG2MVL}__{LOG2NUMLANESP1} vdispatcher(
       .clk(clk),
       .resetn(resetn),
       .shift(dispatcher_shift),
@@ -2887,6 +2902,73 @@ endmodule
                   string7 + string8 + string9 + string10 + string11 + string12
         
         output_string = self.process_case_stmt(string)
+        fp = open("verilog/vdispatcher.v",'w')
+        uut = vdispatcher(fp)
+        uut.write(numbanks,dispatcherwidth,log2mvl,log2mvl,log2numlanesp1)
+        fp.close()
+        fp = open("verilog/vregfile_vector.v",'w')
+        uut = vregfile_vector(fp)
+        uut.write(numbanks,log2numbanks,totalvpw,totalregs,regidwidth)
+        fp.close()
+        fp = open("verilog/vregfile_flag.v",'w')
+        uut = vregfile_flag(fp)
+        uut.write(numbanks,log2numbanks,numlanes,totalregs,regidwidth)
+        fp.close()
+        fp = open("verilog/vmem_unit.v",'w')
+        uut = vmem_unit(fp)
+        uut.write(lanewidth,numlanes,log2numlanes,nummemparallellanes,log2nummemparallellanes,vcwidth,dmem_writewidth,log2dmem_writewidth,dmem_readwidth,log2dmem_readwidth,vrminusregwidth,regidwidth)
+        fp.close()
+        fp = open("verilog/vmul_unit.v",'w')
+        uut = vmul_unit(fp)
+        uut.write(log2lanewidth,nummullanes,log2numlanes,regidwidth)
+        fp.close()
+        fp = open("verilog/vmul_unit.v",'w')
+        uut = vmul_unit(fp)
+        uut.write(log2lanewidth,nummullanes,log2numlanes,regidwidth)
+        fp.close()
+        fp = open("verilog/vlane_alu.v",'w')
+        uut = vlane_alu(fp)
+        uut.write(lanewidth)
+        fp.close()
+        fp = open("verilog/vlane_flagalu.v",'w')
+        uut = vlane_flagalu(fp)
+        uut.write()
+        fp.close()
+        fp = open("verilog/matmul_unit.v",'w')
+        uut = matmul_unit(fp)
+        uut.write(regidwidth,33,numlanes)
+        fp.close()
+        fp = open("verilog/trp_unit.v",'w')
+        uut = trp_unit(fp)
+        uut.write(regidwidth)
+        fp.close()
+        fp = open("verilog/bfloat_adder.v",'w')
+        uut = bfloat_adder(fp)
+        uut.write(regidwidth)
+        fp.close()
+        fp = open("verilog/bfloat_mult.v",'w')
+        uut = bfloat_mult(fp)
+        uut.write(regidwidth)
+        fp.close()
+        fp = open("verilog/activation.v",'w')
+        uut = activation(fp)
+        uut.write(lanewidth)
+        fp.close()
+        fp = open("verilog/pipereg.v",'w')
+        uut = pipereg(fp)
+        uut.write(17)
+        uut.write(1)
+        uut.write(8)
+        uut.write(pipe1regwidth)
+        fp.close()
+        fp = open("verilog/pipe.v",'w')
+        uut = pipe(fp)
+        uut.write(7,5)
+        uut.write(vcwidth,4)
+        uut.write(regidwidth,1)
+        uut.write(1,3)
+        uut.write(8,1)
+        fp.close()
 
         return output_string.format( NUMLANES = numlanes, \
                               LOG2NUMLANES = log2numlanes, \
@@ -2925,7 +3007,7 @@ endmodule
                               CBE = "}" \
                             )
 
-    def write (self, numlanes, log2numlanes, nummemparallellanes, log2nummemparallellanes, nummullanes, mvl, log2mvl, vpw, log2vpw, lanewidth, log2lanewidth, numbanks, log2numbanks, aluperbank, dmem_writewidth,log2dmem_writewidth, dmem_readwidth, log2dmem_readwidth, vcwidth, vswidth, numvsregs, log2numvsregs):
+    def write(self, numlanes, log2numlanes, nummemparallellanes, log2nummemparallellanes, nummullanes, mvl, log2mvl, vpw, log2vpw, lanewidth, log2lanewidth, numbanks, log2numbanks, aluperbank, dmem_writewidth,log2dmem_writewidth, dmem_readwidth, log2dmem_readwidth, vcwidth, vswidth, numvsregs, log2numvsregs):
         self.fp.write(self.make_str(numlanes, log2numlanes, nummemparallellanes, log2nummemparallellanes, nummullanes, mvl, log2mvl, vpw, log2vpw, lanewidth, log2lanewidth, numbanks, log2numbanks, aluperbank, dmem_writewidth,log2dmem_writewidth, dmem_readwidth, log2dmem_readwidth, vcwidth, vswidth, numvsregs, log2numvsregs))
 
 

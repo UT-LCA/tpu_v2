@@ -1,3 +1,10 @@
+from vlanes import vlanes
+from vregfile_scalar import vregfile_scalar
+from vregfile_inc import vregfile_inc
+from vregfile_base import vregfile_base
+from vregfile_control import vregfile_control
+from vregfile_stride import vregfile_stride
+from components import pipereg
 from math import log
 from optparse import OptionParser
 parser = OptionParser()
@@ -1203,10 +1210,10 @@ reg is_cop2_s1;
                          (!ir_vcr_r[3]) ? vinc_readdataout : 
                          vstride_readdataout;
 
-  pipereg #(VCWIDTH) scalar_out_reg(
+  pipereg_{VCWIDTH} scalar_out_reg(
       vc_combined_out,clk,resetn,ctrl_scalar_out_en_s2,1'b1,vc_combined_out_s3);
 
-  pipereg #(1) scalar_out_en_reg(
+  pipereg_1 scalar_out_en_reg(
       ctrl_scalar_out_en_s2,clk,~squash2,~stall2,1'b1,scalar_out_en_s3);
 
 
@@ -1335,6 +1342,41 @@ reg is_cop2_s1;
 endmodule
 
                  '''
+        fp = open("verilog/vregfile_scalar.v",'a')
+        uut = vregfile_scalar(fp)
+        uut.write(vcwidth,numvsregs,log2numvsregs)
+        fp.close()
+        fp = open("verilog/vregfile_stride.v",'a')
+        uut = vregfile_stride(fp)
+        uut.write(vcwidth,numvstrideregs,log2numvstrideregs)
+        fp.close()
+        fp = open("verilog/vregfile_inc.v",'a')
+        uut = vregfile_inc(fp)
+        uut.write(vcwidth,numvincregs,log2numvincregs)
+        fp.close()
+        fp = open("verilog/vregfile_base.v",'a')
+        uut = vregfile_base(fp)
+        uut.write(vcwidth,numvbaseregs,log2numvbaseregs)
+        fp.close()
+        fp = open("verilog/vregfile_control.v",'a')
+        uut = vregfile_control(fp)
+        uut.write(vcwidth,numnonmemvcregs,log2numnonmemvcregs,8)
+        fp.close()
+        fp = open("verilog/vlanes.v",'a')
+        uut = vlanes(fp)
+        uut.write(numlanes,log2numlanes,nummemparallellanes, log2nummemparallellanes,nummullanes,mvl,log2mvl,vpw,log2vpw,lanewidth,log2lanewidth,numbanks,log2numbanks,aluperbank,dmem_writewidth,log2dmem_writewidth,dmem_readwidth,log2dmem_readwidth, vcwidth,vswidth,numvsregs,log2numvsregs)
+        fp.close()
+        fp = open("verilog/pipereg.v",'a')
+        uut = pipereg(fp)
+        uut.write(32)
+        uut.write(log2numnonmemvcregs)
+        uut.write(log2numvsregs)
+        uut.write(vcwidth)
+        uut.write(6)
+        uut.write(2)
+        fp.close()
+
+
         return string.format(LOG2DMEM_WRITEWIDTH=log2dmem_writewidth , \
                              LOG2DMEM_READWIDTH= log2dmem_readwidth , \
                              NUMLANES = numlanes , \

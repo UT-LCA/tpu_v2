@@ -1,3 +1,7 @@
+from velmshifter_serial import velmshifter_jump
+from velmshifter_serial import velmshifter
+from vmem_crossbar import vmem_crossbar
+from components import pipereg
 from optparse import OptionParser
 parser = OptionParser()
 (_,args) = parser.parse_args()
@@ -563,7 +567,7 @@ integer p;
 
         string2_basic='''
 
-       vstore_data_translator vstore_data_translator[i](
+       vstore_data_translator vstore_data_translator_i(
          //Pad vshifted_writedata with zeros incase signal is less than 32-bits
       .write_data({CBS}32'b0,vshifted_writedata[[i]*{VPUWIDTH} +: {VPUWIDTH}]{CBE}),
       .d_address(vshifted_address[[i]*32 +: 2]),
@@ -790,7 +794,38 @@ endmodule
 
 '''
         string = string1 + string2 + string3 + string4 + string5
+        fp = open("verilog/velmshifter_jump.v",'a')
+        uut = velmshifter_jump(fp)
+        uut.write(numlanes,numparallellanes,vpuwidth)
+        uut.write(numlanes,numparallellanes,controlwidth)
+        uut.write(numlanes,numparallellanes,1)
+        fp.close()
 
+        fp = open("verilog/velmshifter.v",'a')
+        uut = velmshifter(fp)
+        uut.write(numlanes,1)
+        fp.close()
+
+        fp = open("verilog/vstore_data_translator.v",'a')
+        uut = vstore_data_translator(fp)
+        uut.write()
+        fp.close()
+
+        fp = open("verilog/vmem_crossbar.v",'a')
+        uut = vmem_crossbar(fp)
+        uut.write(dmem_readwidth,log2dmem_readwidth,numparallellanes,32,5)
+        fp.close()
+
+        fp = open("verilog/vload_data_translator.v",'a')
+        uut = vload_data_translator(fp)
+        uut.write()
+        fp.close()
+
+        fp = open("verilog/pipereg.v",'a')
+        uut = pipereg(fp)
+        uut.write(1)
+        fp.close()
+  
         return string.format( VPUWIDTH = vpuwidth , \
                               NUMLANES = numlanes , \
                               LOG2NUMLANES = log2numlanes, \
@@ -930,7 +965,7 @@ begin
 end
 endmodule
 
-                 '''
+'''
         return string
     def write (self):
         self.fp.write(self.make_str())

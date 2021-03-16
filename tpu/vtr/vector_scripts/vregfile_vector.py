@@ -1,3 +1,4 @@
+from ram_wrapper import ram_wrapper
 from math import log
 from optparse import OptionParser
 
@@ -74,6 +75,10 @@ input [{NUMBANKS}-1:0] c_we;
 
 endmodule
 '''
+        fp = open("ram_wrapper.v", 'a')
+        uut = ram_wrapper(fp)
+        uut.write(log2numregs, numregs, width)
+        fp.close()
         return string.format(NUMBANKS=numbanks, LOG2NUMBANKS=log2numbanks, WIDTH=width, NUMREGS=numregs, LOG2NUMREGS = log2numregs, NUMREGSPERBANK=numregsperbank, LOG2NUMREGSPERBANK= log2numregsperbank) 
 
     def write(self,numbanks, log2numbanks, width, numregs, log2numregs):

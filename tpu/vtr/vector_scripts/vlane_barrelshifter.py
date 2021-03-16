@@ -1,3 +1,5 @@
+from vcomponents import pipe
+from local_shifter import local_shifter
 from optparse import OptionParser
 parser = OptionParser()
 (_,args) = parser.parse_args()
@@ -49,7 +51,7 @@ wire dum,dum_,dum2;
 wire [{WIDTH}-1:0] partial_result_,partial_result;
 
 `ifdef USE_INHOUSE_LOGIC
- local_shifter_WIDTHP1_2_ARITHMATIC local_shifter_inst1(
+ local_shifter_{WIDTHP1}_2_ARITHMATIC local_shifter_inst1(
   .data({CBS}sign_ext&opB[{WIDTH}-1],opB{CBE}),
   .distance(sa&(32'hffffffff<<((({LOG2WIDTH}-2)>0) ? ({LOG2WIDTH}-2) : 0))),
   .direction(shift_direction),
@@ -71,21 +73,18 @@ lpm_clshift shifter_inst1(
     shifter_inst1.lpm_shifttype="ARITHMETIC";
 `endif
 
-register partial_reg
+register_{WIDTHP1} partial_reg
   ({CBS}dum,partial_result{CBE},clk,resetn,1'b1,{CBS}dum_,partial_result_{CBE});
-    defparam partial_reg.{WIDTH}={WIDTH}+1;
 
 wire [5-1:0] sa_2;
 wire shift_direction_2;
 
-register secondstage (sa, clk,resetn,1'b1,sa_2); 
-  defparam secondstage.{WIDTH}=5;
+register_5 secondstage (sa, clk,resetn,1'b1,sa_2); 
 
-register secondstagedir (shift_direction, clk,resetn,1'b1,shift_direction_2); 
-  defparam secondstagedir.{WIDTH}=1;
+register_1 secondstagedir (shift_direction, clk,resetn,1'b1,shift_direction_2); 
 
 `ifdef USE_INHOUSE_LOGIC
- local_shifter_WIDTHP1_2_ARITHMATIC local_shifter_inst2(
+ local_shifter_{WIDTHP1}_2_ARITHMATIC local_shifter_inst2(
   .data({CBS}dum_,partial_result_{CBE}),
   .distance(sa_2[((({LOG2WIDTH}-2)>0) ? ({LOG2WIDTH}-2)-1 : 0):0]),
   .direction(shift_direction_2),
@@ -96,7 +95,7 @@ register secondstagedir (shift_direction, clk,resetn,1'b1,shift_direction_2);
     local_shifter_inst2.LPM_WIDTHDIST = (({LOG2WIDTH}-2)>0) ? ({LOG2WIDTH}-2) : 1,
     local_shifter_inst2.LPM_SHIFTTYPE ="ARITHMETIC";
 `else
-lpm_clshift_WIDTHP1_2_ARITHMATIC shifter_inst2(
+lpm_clshift_{WIDTHP1}_2_ARITHMATIC shifter_inst2(
     .data({CBS}dum_,partial_result_{CBE}),
     .distance(sa_2[((({LOG2WIDTH}-2)>0) ? ({LOG2WIDTH}-2)-1 : 0):0]),
     .direction(shift_direction_2),
@@ -111,6 +110,16 @@ lpm_clshift_WIDTHP1_2_ARITHMATIC shifter_inst2(
 endmodule
 
         '''
+        fp = open("verilog/local_shifter.v",'a')
+        uut = local_shifter(fp)
+        uut.write(widthp1,2,"ARITHMATIC")
+        fp.close()
+       #
+       # fp = open("verilog/pipe.v",'a')
+       # uut = pipe(fp)
+       # uut.write(widthp1)
+       # uut.write(5)
+      #  uut.write(1)
         return string.format(WIDTH=width, LOG2WIDTH=log2width, WIDTHP1 = widthp1, CBS="{", CBE="}") 
 
     def write (self, width,log2width):

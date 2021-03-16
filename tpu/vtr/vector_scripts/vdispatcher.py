@@ -1,3 +1,4 @@
+from velmshifter_serial import velmshifter
 from optparse import OptionParser
 parser = OptionParser()
 (_,args) = parser.parse_args()
@@ -140,6 +141,15 @@ vdispatcher_add_{NUMENTRIES}_{WIDTHCOUNT} vdispatcher_count(
 
 endmodule
 '''
+        fp = open("verilog/vdispatcher_shift.v",'a')
+        uut = vdispatcher_shift(fp)
+        uut.write(numentries,widthinstr)
+        uut.write(numentries,1)
+        fp = open("verilog/vdispatcher_add.v" ,'a')
+        uut = vdispatcher_add(fp)
+        uut.write(numentries,widthrdelm)
+        uut.write(numentries,widthwrelm)
+        uut.write(numentries,widthcount)
 
         return string.format(NUMENTRIES= numentries, WIDTHINSTR = widthinstr, WIDTHRDELM=widthrdelm, WIDTHWRELM=widthwrelm, WIDTHCOUNT=widthcount , CBS ="{", CBE = "}") 
 
@@ -210,6 +220,9 @@ wire [ {WIDTH}-1:0 ]  shiftin_right;
 endmodule
 
 '''
+        fp = open("verilog/velmshifter.v",'a')
+        uut = velmshifter(fp)
+        uut.write(numentries,width)
 
         return string.format(NUMENTRIES=numentries, WIDTH=width) 
 

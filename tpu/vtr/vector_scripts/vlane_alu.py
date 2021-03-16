@@ -263,7 +263,17 @@ wire [1:0] ctrl_flag_sel;
 
 endmodule'''       
 
+        fp = open("verilog/local_add_sub.v",'w')
+        uut = local_add_sub(fp)
+        uut.write(width+2,0,"SIGNED")
+        fp = open("verilog/vlane_saturatesize.v",'w')
+        uut = vlane_saturatesize(fp)
+        uut.write()
+        fp = open("verilog/vlane_saturatesum.v",'w')
+        uut = vlane_saturatesum(fp)
+        uut.write(width)
         return string.format(WIDTH=width, ADD_SUB_WIDTH=width+2)
+        
 
     def write (self, width):
         self.fp.write(self.make_str(width))

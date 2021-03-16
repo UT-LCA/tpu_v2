@@ -1,3 +1,7 @@
+from velmshifter_serial import velmshifter
+from vlane_mulshift import vlane_mulshift
+from vlane_barrelshifter import vlane_barrelshifter
+from vcomponents import pipe
 from optparse import OptionParser
 parser = OptionParser()
 (_,args) = parser.parse_args()
@@ -306,6 +310,28 @@ output [NUMLANES*WIDTH-1:0] result;
 endmodule
 '''
         string = string1 + string2 + string3
+        fp = open("verilog/velmshifter.v",'a')
+        uut = velmshifter(fp)
+        uut.write(shifter_lane,shifter_width)
+        uut.write(shifter_lane,nummullanes)
+        fp.close()
+        fp = open("verilog/vlane_mulshift.v",'a')
+        uut = vlane_mulshift(fp)
+        uut.write(width,log2width)
+        fp.close()
+        fp = open("verilog/vlane_barrelshifter.v",'a')
+        uut = vlane_barrelshifter(fp)
+        uut.write(shifter_lane,nummullanes)
+        fp.close()
+        fp = open("verilog/pipe.v",'a')
+        uut = pipe(fp)
+        uut.write(regidwidth,2)
+        uut.write(1,2)
+        uut.write(5,2)
+        uut.write(log2width,2)
+        uut.write(regidwidth,2)
+        uut.write(numlanes,2)
+        fp.close()
 
         return string.format(LOG2WIDTH = log2width, \
                              NUMMULLANES = nummullanes, \

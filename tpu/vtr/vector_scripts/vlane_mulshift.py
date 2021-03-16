@@ -166,6 +166,10 @@ begin
     decoded_sa=1<<left_sa;
 end
 endmodule'''
+        
+        fp = open("verilog/local_mult.v",'a')
+        uut = local_mult(fp)
+        uut.write(widtha,widthb,widthp)
 
         return string.format(WIDTH=width, LOG2WIDTH=log2width, WIDTHA=widtha, WIDTHB=widthb, WIDTHP=widthp)
 

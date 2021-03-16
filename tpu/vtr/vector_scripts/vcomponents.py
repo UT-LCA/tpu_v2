@@ -6,14 +6,14 @@ class pipe():
     def __init__(self, fp):
         self.fp = fp
 
-    def make_str(self, width,depth,resetvalue):
+    def make_str(self, width,depth):
         string = '''\
 /****************************************************************************
           Pipeline register - for transmitting a signal down several stages
 
   DEPTH - number of actual pipeline registers needed
 ****************************************************************************/
-module pipe(
+module pipe_{WIDTH}_{DEPTH}(
     d,
     clk,
     resetn,
@@ -36,14 +36,14 @@ integer i;
   begin
     // 1st register
     if (!resetn || squash[0] )
-      tq[ {WIDTH}-1:0 ]<={RESETVALUE};
+      tq[ {WIDTH}-1:0 ]<= 0;
     else if (en[0])
       tq[ {WIDTH}-1:0 ]<=d;
 
     // All the rest registers
     for (i=1; i<{DEPTH}; i=i+1)
       if (!resetn || squash[i] )
-        tq[i*{WIDTH} +: {WIDTH} ]<={RESETVALUE};
+        tq[i*{WIDTH} +: {WIDTH} ]<= 0;
       else if (en[i])
         tq[i*{WIDTH} +: {WIDTH} ]<=tq[(i-1)*{WIDTH} +: {WIDTH} ];
   end
@@ -52,10 +52,10 @@ integer i;
   assign q[{WIDTH}*({DEPTH}+1)-1:{WIDTH}]=tq;
 endmodule
         '''
-        return string.format(WIDTH=width, DEPTH=depth, RESETVALUE=resetvalue)
+        return string.format(WIDTH=width, DEPTH=depth)
 
-    def write (self, width,depth,resetvalue):
-        self.fp.write(self.make_str(width,depth,resetvalue))
+    def write (self, width,depth):
+        self.fp.write(self.make_str(width,depth))
 
 class hazardchecker():
     def __init__(self, fp):
@@ -68,7 +68,7 @@ class hazardchecker():
  if mode==0 compare entire width of src & dests,
  if mode==1 compare upper WIDTH-SUBWIDTH bits of src & dests
 ****************************************************************************/
-module hazardchecker (
+module hazardchecker_{WIDTH}_{SUBWIDTH}_{DEPTH}_{LTDEPTH}
     src,
     src_valid,
     dst,

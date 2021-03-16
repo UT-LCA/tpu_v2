@@ -1,3 +1,4 @@
+from ram_wrapper import ram_wrapper
 from optparse import OptionParser
 parser = OptionParser()
 (_,args) = parser.parse_args()
@@ -52,6 +53,10 @@ input a_en, c_we;
 endmodule
 
         '''
+        fp = open("ram_wrapper.v", 'a')
+        uut = ram_wrapper(fp)
+        uut.write(log2numregs, numregs, width)
+        fp.close()
         return string.format(WIDTH=width, NUMREGS=numregs, LOG2NUMREGS = log2numregs) 
 
     def write (self, width, numregs, log2numregs):

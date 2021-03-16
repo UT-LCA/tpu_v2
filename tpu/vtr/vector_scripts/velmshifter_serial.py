@@ -1,4 +1,6 @@
 from optparse import OptionParser
+from os import path
+
 parser = OptionParser()
 (_,args) = parser.parse_args()
 
@@ -24,7 +26,7 @@ class velmrotator():
   shiftin_left -> bn-1 <-> bn-2 <-> ... <-> b1 <-> b0 <- shiftin_right
 ***************************************************************************/
 
-module velmrotator (
+module velmrotator_{NUMLANES}_{WIDTH} (
     clk,
     resetn,
 
@@ -90,7 +92,7 @@ class velmshifter_jump():
 /**************************** Shifter w Jump **********************************/
 /******************************************************************************/
 
-module velmshifter_jump (
+module velmshifter_jump_{WIDTH}_{NUMLANES}_{JUMPSIZE} (
     clk,
     resetn,
 
@@ -158,13 +160,13 @@ class velmshifter():
         self.fp = fp
 
     def make_str(self, numlanes, width):
-        string = '''\
+        string1 = '''\
 
 /******************************************************************************/
 /******************************** Shifter *************************************/
 /******************************************************************************/
 
-module velmshifter (
+module velmshifter_{NUMLANES}_{WIDTH} (
     clk,
     resetn,
 
@@ -219,9 +221,8 @@ genvar j;
 
   //Generate everything in between 
 
-  generate
-    for (i=1; i<{NUMLANES}-1; i=i+1)
-    begin : elmshift
+'''
+        string2_basic = '''
       velmshifter_laneunit_{WIDTH} velmshifter_laneunit(clk,resetn,load,shift,dir_left,
           squash[i],
           inpipe[(i+1)*{WIDTH}-1:i*{WIDTH}],
@@ -229,9 +230,12 @@ genvar j;
           _outpipe[(i)*{WIDTH}-1:(i-1)*{WIDTH}],
           _outpipe[(i+1)*{WIDTH}-1:i*{WIDTH}]);
      // defparam velmshifter_laneunit.{WIDTH}={WIDTH};
-    end
-  endgenerate
 
+'''
+        string2 = ""
+        for i in range(0,numlanes):
+            string2 = string2 + string2_basic.replace('i',str(i))
+        string3 = '''
   //HANDLE lane NUMLANE specially
 
     velmshifter_laneunit_{WIDTH} velmshifter_laneunitlast(
@@ -248,6 +252,11 @@ assign outpipe=_outpipe;
 
 endmodule
         '''
+        string = string1 + string2 + string3
+        fp = open("verilog/velmshifter_laneunit.v",'a')
+        uut = velmshifter_laneunit(fp)
+        uut.write(width)
+
         return string.format(NUMLANES=numlanes, WIDTH=width)
 
     def write (self, numlanes, width):
@@ -259,7 +268,7 @@ class velmshifter_laneunit():
 
     def make_str(self, width):
         string = '''\
-module velmshifter_laneunit (
+module velmshifter_laneunit_{WIDTH} (
     clk,
     resetn,
 

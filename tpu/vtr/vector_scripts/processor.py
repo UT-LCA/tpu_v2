@@ -1,3 +1,6 @@
+from mem_dcache_wb import mem_dcache_wb
+from mem_icache import mem_icache
+from vlanes import vlanes
 from optparse import OptionParser
 parser = OptionParser()
 (_,args) = parser.parse_args()
@@ -5,7 +8,7 @@ parser = OptionParser()
 class processor():
     def __init__(self, fp):
         self.fp = fp
-
+        
     def make_str(self):
         log2dcachewidthbits = 32 
         log2dcachedepth = 4096
@@ -400,6 +403,12 @@ input                          mem_icache_wren;
 endmodule
 
                  '''
+        fp1 = open("verilog/mem_dcache_wb.v", "w")
+        uut2 = mem_dcache_wb(fp1)
+        uut2.write(log2dramwidthbits,log2dcachewidthbits,log2dcachedepth)
+        fp2 = open("verilog/mem_icache.v", "w")
+        uut3 = mem_icache(fp2)
+        uut3.write(log2icachedepth,log2icachewidthbits)
         return string.format(LOG2DCACHEWIDTHBITS = log2dcachewidthbits ,\
                              LOG2DCACHEDEPTH = log2dcachedepth , \
                              LOG2ICACHEWIDTHBITS = log2icachewidthbits , \
