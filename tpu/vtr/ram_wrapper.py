@@ -6,7 +6,7 @@ class ram_wrapper():
         self.fp = fp
 
     def make_str(self, awidth, num_words, dwidth):
-        string = '''
+        string = '''\
 module ram_wrapper_{AWIDTH}_{NUM_WORDS}_{DWIDTH} (
 	clk,
         resetn,
@@ -73,8 +73,7 @@ always@(*)begin
     mux_address_b = q_address_b; 
 end
 
-endmodule
-'''       
+endmodule'''       
 
         return string.format(AWIDTH=awidth, NUM_WORDS=num_words, DWIDTH=dwidth)
 

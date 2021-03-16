@@ -5,7 +5,7 @@ class local_add_sub():
         self.fp = fp
 
     def make_str(self, width, pipeline, representation):
-        string = '''
+        string = '''\
 module local_add_sub_{WIDTH}_{PIPELINE}_{REPRESENTATION}(
 dataa,
 datab,
@@ -27,8 +27,7 @@ always @(*)begin
          result = dataa - datab;
 end
 
-endmodule
-'''
+endmodule'''
 
         return string.format(WIDTH=width, PIPELINE=pipeline, REPRESENTATION=representation)
 

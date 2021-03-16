@@ -7,7 +7,7 @@ class matmul_unit():
         self.fp = fp
 
     def make_str(self, regidwidth, pipe_stages_matmul, numlanes):
-        string = '''
+        string = '''\
 `define DWIDTH 32
 `define AWIDTH 10
 `define MEM_SIZE 1024
@@ -140,8 +140,7 @@ pipe #({NUMLANES},{PIPE_STAGES_MATMUL}-1) dstmaskpipe (
     .en(en[{PIPE_STAGES_MATMUL}-1:1] & {{1'b1,{{({PIPE_STAGES_MATMUL}-2){{~stall}}}}}} ),
     .squash(squash_dstmaskpipe_NC),
     .q(out_dst_mask));
-endmodule
-'''
+endmodule'''
 
         return string.format(REGIDWIDTH=regidwidth, PIPE_STAGES_MATMUL=pipe_stages_matmul, NUMLANES=numlanes)
 

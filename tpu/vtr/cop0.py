@@ -6,7 +6,7 @@ class cop0():
         self.fp = fp
 
     def make_str(self):
-        string = '''
+        string = '''\
 /*******
  * SPREE limitation - by not specifying stall signal name and assuming
  * "stalled" requires you to have only one opcode port which stalls
@@ -128,8 +128,7 @@ reg  [31:0] tocpu;
 
   assign exception = ((|(cause_in[15:8] & status[15:8])) && status[0]);
 
-endmodule
-'''       
+endmodule'''       
 
         return string
 

@@ -5,7 +5,7 @@ class signext16():
         self.fp = fp
 
     def make_str(self):
-        string = '''
+        string = '''\
 module signext16 ( in, out);
 
 input [15:0] in;
@@ -13,8 +13,7 @@ output [31:0] out;
 
 assign out={{{{16{{in[15]}}}},in[15:0]}};
 
-endmodule
-'''       
+endmodule'''       
         return string
 
     def write (self):

@@ -7,7 +7,7 @@ class reg_file():
         self.fp = fp
 
     def make_str(self, width, numregs, log2numregs):
-        string = '''
+        string = '''\
 /****************************************************************************
           Register File
 
@@ -185,8 +185,7 @@ assign reg_file2_wren_a = c_we & (|c_reg);
 
 `endif
 
-endmodule
-'''       
+endmodule'''       
 
         return string.format(WIDTH=width, NUMREGS=numregs, LOG2NUMREGS=log2numregs)
 

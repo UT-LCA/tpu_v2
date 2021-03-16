@@ -5,7 +5,7 @@ class local_shifter():
         self.fp = fp
 
     def make_str(self, lpm_width, lpm_widthdist, lpm_shifttype):
-        string = '''
+        string = '''\
 module local_shifter_{LPM_WIDTH}_{LPM_WIDTHDIST}_{LPM_SHIFTTYPE}(
   data,
   distance,
@@ -43,8 +43,7 @@ always @* begin
     end
   end 
 end
-endmodule
-'''
+endmodule'''
 
         return string.format(LPM_WIDTH=lpm_width, LPM_WIDTHDIST=lpm_widthdist, LPM_SHIFTTYPE=lpm_shifttype)
 

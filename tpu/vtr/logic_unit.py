@@ -5,7 +5,7 @@ class logic_unit():
         self.fp = fp
 
     def make_str(self, width):
-        string = '''
+        string = '''\
 /****************************************************************************
           logic unit
 - note ALU must be able to increment PC for JAL type instructions
@@ -44,8 +44,7 @@ always@(opA or opB or op )
 assign result=logic_result;
 
 
-endmodule
-'''       
+endmodule'''       
 
         return string.format(WIDTH=width)
 

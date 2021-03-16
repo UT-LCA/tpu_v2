@@ -58,7 +58,7 @@ class system():
         self.fp = fp
 
     def make_str(self):
-        string = '''
+        string = '''\
 //`include "bpred_1bittable.v"
 //`include "cop0.v"
 //`include "cop2.v"
@@ -4466,8 +4466,7 @@ assign trc_we=ctrl_reg_file_c_we;
 assign trc_addr=pipereg5_q;
 assign trc_pipestall=stall_out_stage2;
 
-endmodule
-'''       
+endmodule'''       
 
         return string
 

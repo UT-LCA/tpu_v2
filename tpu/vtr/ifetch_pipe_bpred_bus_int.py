@@ -10,7 +10,7 @@ class ifetch():
         self.fp = fp
 
     def make_str(self, exception_address, i_datawidth, i_addresswidth, i_size):
-        string = '''
+        string = '''\
 /****************************************************************************
             Fetch Unit with branch prediction
 
@@ -402,8 +402,7 @@ branchpredict_32_4096_12_1 bpredictor (
 
 assign prediction=(pcwrop!=1) ? prediction_tmp :1;
 
-endmodule
-'''
+endmodule'''
         
         return string.format(EXCEPTION_ADDRESS=exception_address, I_DATAWIDTH=i_datawidth, I_ADDRESSWIDTH=i_addresswidth, I_SIZE=i_size)
 

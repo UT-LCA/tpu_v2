@@ -9,7 +9,7 @@ class gen_config():
         config_path = base_dir + "/vtr-verilog-to-routing/vtr_flow/tasks/tpu/config/config.txt"
         fp = open(config_path, "w")
 
-        string = '''
+        string = '''\
 ##############################################
 # Configuration file for running experiments
 ##############################################

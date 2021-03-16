@@ -7,7 +7,7 @@ class mul():
         self.fp = fp
 
     def make_str(self, width):
-        string = '''
+        string = '''\
 /****************************************************************************
           MUL/DIV unit
 
@@ -114,8 +114,7 @@ wire staller_request;
 assign staller_request = (start&is_mul)|(start&(|dst)&~is_mul);
 onecyclestall staller(staller_request,clk,resetn,stalled);
 
-endmodule
-'''       
+endmodule'''       
 
         return string.format(WIDTH=width, MULT_WIDTHA=width+1, MULT_WIDTHB=width+1, MULT_WIDTHP=2*(width+1))
 

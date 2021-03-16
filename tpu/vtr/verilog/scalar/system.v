@@ -1,4 +1,3 @@
-
 //`include "bpred_1bittable.v"
 //`include "cop0.v"
 //`include "cop2.v"
@@ -4406,9 +4405,7 @@ assign trc_we=ctrl_reg_file_c_we;
 assign trc_addr=pipereg5_q;
 assign trc_pipestall=stall_out_stage2;
 
-endmodule
-
-/****************************************************************************
+endmodule/****************************************************************************
           AddSub unit
 - Should perform ADD, ADDU, SUBU, SUB, SLT, SLTU
 
@@ -4498,9 +4495,7 @@ defparam
 `endif
 
 assign carry_out=sum[32];
-endmodule
-
-module local_add_sub_33_0_SIGNED(
+endmodulemodule local_add_sub_33_0_SIGNED(
 dataa,
 datab,
 cin,
@@ -4521,9 +4516,7 @@ always @(*)begin
          result = dataa - datab;
 end
 
-endmodule
-
-/****************************************************************************
+endmodule/****************************************************************************
           logic unit
 - note ALU must be able to increment PC for JAL type instructions
 
@@ -4561,9 +4554,7 @@ always@(opA or opB or op )
 assign result=logic_result;
 
 
-endmodule
-
-/****************************************************************************
+endmodule/****************************************************************************
             Fetch Unit with branch prediction
 
   IMPORTANT: tgt_pc should arrive 1 cycle after instruction to account for delay slot.
@@ -4954,9 +4945,7 @@ branchpredict_32_4096_12_1 bpredictor (
 
 assign prediction=(pcwrop!=1) ? prediction_tmp :1;
 
-endmodule
-
-/****************************************************************************
+endmodule/****************************************************************************
           Generic Register
 ****************************************************************************/
 module register_32(d,clk,resetn,en,q);
@@ -4976,9 +4965,7 @@ begin
 		q<=d;
 end
 
-endmodule
-
-/****************************************************************************
+endmodule/****************************************************************************
           Generic Register
 ****************************************************************************/
 module register_2(d,clk,resetn,en,q);
@@ -4998,9 +4985,7 @@ begin
 		q<=d;
 end
 
-endmodule
-
-/****************************************************************************
+endmodule/****************************************************************************
           Branch detector
 ****************************************************************************/
 module branch_detector(opcode, func, is_branch);
@@ -5017,9 +5002,7 @@ assign is_special=!(|opcode);
 assign is_branch=((!(|opcode[5:3])) && !is_special) || 
                   ((is_special)&&(func_local==6'b001000));
 
-endmodule
-
-module branchpredict_32_4096_12_1 ( clk, resetn,
+endmodulemodule branchpredict_32_4096_12_1 ( clk, resetn,
     predict,
     prediction,
     pc_predict,
@@ -5128,9 +5111,7 @@ assign address_b=pc_predict_local[12+2-1:2];
 		pred_table.intended_device_family = "Stratix";
 
 `endif
-endmodule
-
-module dpram_12_4096_1 (
+endmodulemodule dpram_12_4096_1 (
 	clk,
 	address_a,
 	address_b,
@@ -5190,9 +5171,7 @@ dual_port_ram u_dual_port_ram(
 
 `endif
 
-endmodule
-
-/****************************************************************************
+endmodule/****************************************************************************
           MUL/DIV unit
 
 Operation table
@@ -5298,9 +5277,7 @@ wire staller_request;
 assign staller_request = (start&is_mul)|(start&(|dst)&~is_mul);
 onecyclestall staller(staller_request,clk,resetn,stalled);
 
-endmodule
-
-module local_mult_33_33_66(
+endmodulemodule local_mult_33_33_66(
 dataa,
 datab,
 clock,
@@ -5336,9 +5313,7 @@ always @(posedge gated_clock)begin
     else
        result <= unsignedoutputP; 
 end
-endmodule
-
-/****************************************************************************
+endmodule/****************************************************************************
           One cycle Stall circuit
 ****************************************************************************/
 module onecyclestall(request,clk,resetn,stalled);
@@ -5363,9 +5338,7 @@ output stalled;
     else    
       T<=Tnext;
   assign stalled=(request&~T);
-endmodule
-
-module div_0_1_2(en,resetn,stalled,quotient,remainder,dividend,divider,sign,clk);
+endmodulemodule div_0_1_2(en,resetn,stalled,quotient,remainder,dividend,divider,sign,clk);
 
    input         clk;
    input         resetn;
@@ -5451,9 +5424,7 @@ module div_0_1_2(en,resetn,stalled,quotient,remainder,dividend,divider,sign,clk)
         bits = bits - 1'b1;
 
      end
-endmodule
-
-/******************************************************************************
+endmodule/******************************************************************************
             Data memory and interface
 
 Operation table:
@@ -5615,9 +5586,7 @@ altsyncram  dmem (
         dmem.lpm_type = "altsyncram";
 */
   
-endmodule
-
-/****************************************************************************
+endmodule/****************************************************************************
           Store data translator
           - moves store data to appropriate byte/halfword 
           - interfaces with altera blockrams
@@ -5684,9 +5653,7 @@ begin
         end
     endcase
 end
-endmodule
-
-/****************************************************************************
+endmodule/****************************************************************************
           Load data translator
           - moves read data to appropriate byte/halfword and zero/sign extends
 ****************************************************************************/
@@ -5731,9 +5698,7 @@ begin
     endcase
 end
 
-endmodule
-
-/****************************************************************************
+endmodule/****************************************************************************
           Register File
 
    - Has two read ports (a and b) and one write port (c)
@@ -5910,9 +5875,7 @@ assign reg_file2_wren_a = c_we & (|c_reg);
 
 `endif
 
-endmodule
-
-module ram_wrapper_5_32_32 (
+endmodulemodule ram_wrapper_5_32_32 (
 	clk,
         resetn,
 	address_a,
@@ -5978,9 +5941,7 @@ always@(*)begin
     mux_address_b = q_address_b; 
 end
 
-endmodule
-
-module dpram_5_32_32 (
+endmodulemodule dpram_5_32_32 (
 	clk,
 	address_a,
 	address_b,
@@ -6040,9 +6001,7 @@ dual_port_ram u_dual_port_ram(
 
 `endif
 
-endmodule
-
-module pcadder_32(pc, offset, result);
+endmodulemodule pcadder_32(pc, offset, result);
 
 input [32-1:0] pc;
 input [32-1:0] offset;
@@ -6056,18 +6015,14 @@ wire dum;
 
 assign {dum,result} = pc + {offset[32-3:0],2'b0};
 
-endmodule
-
-module signext16 ( in, out);
+endmodulemodule signext16 ( in, out);
 
 input [15:0] in;
 output [31:0] out;
 
 assign out={{{{16{{in[15]}}}},in[15:0]}};
 
-endmodule
-
-module merge26lo(in1, in2, out);
+endmodulemodule merge26lo(in1, in2, out);
 input [31:0] in1;
 input [25:0] in2;
 output [31:0] out;
@@ -6078,8 +6033,6 @@ assign in1_nc = in1;
 
 assign out[31:0]={in1[31:28],in2[25:0],2'b0};
 endmodule
-
-
 module branchresolve_32 ( en, rs, rt, eq, ne, ltz, lez, gtz, gez, eqz);
 parameter WIDTH=32;
 input en;
@@ -6101,9 +6054,7 @@ assign lez=(en)&rs[WIDTH-1] | eqz;
 assign gtz=(en)&(~rs[WIDTH-1]) & ~eqz;
 assign gez=(en)&(~rs[WIDTH-1]);
 
-endmodule
-
-/****************************************************************************
+endmodule/****************************************************************************
           Generic Register
 ****************************************************************************/
 module lo_reg_32 (d,clk,resetn,squashn,en,q);
@@ -6124,9 +6075,7 @@ begin
 		q<=d;
 end
 
-endmodule
-
-/****************************************************************************
+endmodule/****************************************************************************
           Generic Register
 ****************************************************************************/
 module hi_reg_32(d,clk,resetn,squashn,en,q);
@@ -6147,9 +6096,7 @@ begin
 		q<=d;
 end
 
-endmodule
-
-/****************************************************************************
+endmodule/****************************************************************************
           Const
 ****************************************************************************/
 module const_32_0 (out);
@@ -6158,9 +6105,7 @@ output [32-1:0] out;
 
 assign out=0;
 
-endmodule
-
-/****************************************************************************
+endmodule/****************************************************************************
           Const
 ****************************************************************************/
 module const_32_16 (out);
@@ -6169,9 +6114,7 @@ output [32-1:0] out;
 
 assign out=16;
 
-endmodule
-
-/****************************************************************************
+endmodule/****************************************************************************
           Const
 ****************************************************************************/
 module const_32_31 (out);
@@ -6180,9 +6123,7 @@ output [32-1:0] out;
 
 assign out=31;
 
-endmodule
-
-/****************************************************************************
+endmodule/****************************************************************************
           Generic Pipelined Register
 
           - Special component, components starting with "pipereg" have
@@ -6207,9 +6148,7 @@ begin
     q<=d;
 end
 
-endmodule
-
-/****************************************************************************
+endmodule/****************************************************************************
           Generic Pipelined Register
 
           - Special component, components starting with "pipereg" have
@@ -6234,9 +6173,7 @@ begin
     q<=d;
 end
 
-endmodule
-
-/****************************************************************************
+endmodule/****************************************************************************
           Generic Pipelined Register
 
           - Special component, components starting with "pipereg" have
@@ -6261,9 +6198,7 @@ begin
     q<=d;
 end
 
-endmodule
-
-/****************************************************************************
+endmodule/****************************************************************************
           Fake Delay
 ****************************************************************************/
 module fakedelay_32(d,clk,q);
@@ -6278,9 +6213,7 @@ assign clk_nc = clk;
 
 assign q=d;
 
-endmodule
-
-/****************************************************************************
+endmodule/****************************************************************************
           NOP - used to hack position of multiplexors
 ****************************************************************************/
 module nop_32(d,q);
@@ -6290,9 +6223,7 @@ output [32-1:0] q;
 
   assign q=d;
 
-endmodule
-
-/****************************************************************************
+endmodule/****************************************************************************
           Zeroer
 ****************************************************************************/
 module zeroer_5(d,en,q);
@@ -6302,9 +6233,7 @@ input [5-1:0] d;
 output [5-1:0] q;
 assign q= (en) ? d : 0;
 
-endmodule
-
-/*******
+endmodule/*******
  * SPREE limitation - by not specifying stall signal name and assuming
  * "stalled" requires you to have only one opcode port which stalls
  *
@@ -6361,9 +6290,7 @@ assign resetn_nc = resetn;
 
   assign stalled= (fromcpu_en & tocop2_wait) || (tocpu_en & ~fromcop2_en);
 
-endmodule
-
-/*******
+endmodule/*******
  * SPREE limitation - by not specifying stall signal name and assuming
  * "stalled" requires you to have only one opcode port which stalls
  *
@@ -6484,9 +6411,7 @@ reg  [31:0] tocpu;
 
   assign exception = ((|(cause_in[15:8] & status[15:8])) && status[0]);
 
-endmodule
-
-/****************************************************************************
+endmodule/****************************************************************************
           Multi cycle Stall circuit - with wait signal
 
           - One FF plus one 2:1 mux to stall 1st cycle on request, then wait
@@ -6508,9 +6433,7 @@ output stalled;
       T<=stalled;
 
   assign stalled=(T) ? devwait : request;
-endmodule
-
-/****************************************************************************
+endmodule/****************************************************************************
           Generic Pipelined Register
 
           - Special component, components starting with "pipereg" have

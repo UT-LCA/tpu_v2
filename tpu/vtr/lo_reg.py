@@ -5,7 +5,7 @@ class lo_reg():
         self.fp = fp
 
     def make_str(self, width):
-        string = '''
+        string = '''\
 /****************************************************************************
           Generic Register
 ****************************************************************************/
@@ -27,8 +27,7 @@ begin
 		q<=d;
 end
 
-endmodule
-'''       
+endmodule'''       
 
         return string.format(WIDTH=width)
 
