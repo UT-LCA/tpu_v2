@@ -5,7 +5,7 @@ class local_mult():
         self.fp = fp
 
     def make_str(self, lpm_widtha, lpm_widthb, lpm_widthp):
-        str = '''\
+        str = '''
 module local_mult_{LPM_WIDTHA}_{LPM_WIDTHB}_{LPM_WIDTHP}(
 dataa,
 datab,
@@ -42,7 +42,8 @@ always @(posedge gated_clock)begin
     else
        result <= unsignedoutputP; 
 end
-endmodule'''
+endmodule
+'''
 
         return str.format(LPM_WIDTHA=lpm_widtha, LPM_WIDTHB=lpm_widthb, LPM_WIDTHP=lpm_widthp)
 

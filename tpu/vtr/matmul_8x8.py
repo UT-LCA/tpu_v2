@@ -5,7 +5,7 @@ class defines():
         self.fp = fp
 
     def make_str(self):
-        string = '''\
+        string = '''
 `ifndef _OPTIONS_V_
 `define _OPTIONS_V_ 1
 
@@ -140,7 +140,7 @@ class matmul_8x8():
         self.fp = fp
 
     def make_str(self):
-        string = '''\
+        string = '''
 module matmul_8x8(
  clk,
  //Reset for the whole matmul
@@ -684,7 +684,8 @@ systolic_pe_matrix u_systolic_pe_matrix(
 .b_data_out(b_data_out)
 );
 
-endmodule'''
+endmodule
+'''
 
         return string
 
@@ -698,7 +699,7 @@ class systolic_data_setup():
         self.fp = fp
 
     def make_str(self):
-        string = '''\
+        string = '''
 //////////////////////////////////////////////////////////////////////////
 // Systolic data setup
 //////////////////////////////////////////////////////////////////////////
@@ -1022,7 +1023,8 @@ always @(posedge clk) begin
  
   end
 end
-endmodule'''
+endmodule
+'''
 
         return string
 
@@ -1034,7 +1036,7 @@ class output_logic():
         self.fp = fp
 
     def make_str(self):
-        string = '''\
+        string = '''
 //////////////////////////////////////////////////////////////////////////
 // Output logic
 //////////////////////////////////////////////////////////////////////////
@@ -1282,7 +1284,8 @@ always @(posedge clk) begin
   end
 end
 
-endmodule'''
+endmodule
+'''
 
         return string
 
@@ -1294,7 +1297,7 @@ class systolic_pe_matrix():
         self.fp = fp
 
     def make_str(self):
-        string = '''\
+        string = '''
 //////////////////////////////////////////////////////////////////////////
 // Systolically connected PEs
 //////////////////////////////////////////////////////////////////////////
@@ -1568,7 +1571,8 @@ processing_element pe7_7(.reset(effective_rst), .clk(clk),  .in_a(a7_6to7_7), .i
 assign a_data_out = {a7_7to7_8,a6_7to6_8,a5_7to5_8,a4_7to4_8,a3_7to3_8,a2_7to2_8,a1_7to1_8,a0_7to0_8};
 assign b_data_out = {b7_7to8_7,b7_6to8_6,b7_5to8_5,b7_4to8_4,b7_3to8_3,b7_2to8_2,b7_1to8_1,b7_0to8_0};
 
-endmodule'''
+endmodule
+'''
 
         return string
 
@@ -1580,7 +1584,7 @@ class processing_element():
         self.fp = fp
 
     def make_str(self):
-        string = '''\
+        string = '''
 module processing_element(
  reset, 
  clk, 
@@ -1620,7 +1624,8 @@ module processing_element(
     end
  end
  
-endmodule'''
+endmodule
+'''
 
         return string
 
@@ -1632,7 +1637,7 @@ class seq_mac():
         self.fp = fp
 
     def make_str(self):
-        string = '''\
+        string = '''
 module seq_mac(a, b, out, reset, clk);
 input [`DWIDTH-1:0] a;
 input [`DWIDTH-1:0] b;
@@ -1698,7 +1703,8 @@ assign out =
              {out_temp[2*`DWIDTH-1] , {(`DWIDTH-1){1'b0}}} //sign bit and then all 0s
         );
 
-endmodule'''
+endmodule
+'''
 
         return string
 
@@ -1710,7 +1716,7 @@ class qmult():
         self.fp = fp
 
     def make_str(self):
-        string = '''\
+        string = '''
 module qmult(i_multiplicand,i_multiplier,o_result);
 input [`DWIDTH-1:0] i_multiplicand;
 input [`DWIDTH-1:0] i_multiplier;
@@ -1719,7 +1725,8 @@ output [2*`DWIDTH-1:0] o_result;
 assign o_result = i_multiplicand * i_multiplier;
 //DW02_mult #(`DWIDTH,`DWIDTH) u_mult(.A(i_multiplicand), .B(i_multiplier), .TC(1'b1), .PRODUCT(o_result));
 
-endmodule'''
+endmodule
+'''
 
         return string
 
@@ -1731,7 +1738,7 @@ class qadd():
         self.fp = fp
 
     def make_str(self):
-        string = '''\
+        string = '''
 module qadd(a,b,c);
     input [2*`DWIDTH-1:0] a;
     input [2*`DWIDTH-1:0] b;
@@ -1739,7 +1746,8 @@ module qadd(a,b,c);
 
     assign c = a + b;
     //DW01_add #(`DWIDTH) u_add(.A(a), .B(b), .CI(1'b0), .SUM(c), .CO());
-endmodule'''
+endmodule
+'''
 
         return string
 

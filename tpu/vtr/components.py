@@ -5,7 +5,7 @@ class register():
         self.fp = fp
 
     def make_str(self, width):
-        string = '''\
+        string = '''
 /****************************************************************************
           Generic Register
 ****************************************************************************/
@@ -26,7 +26,8 @@ begin
 		q<=d;
 end
 
-endmodule'''       
+endmodule
+'''       
 
         return string.format(WIDTH=width)
 
@@ -39,7 +40,7 @@ class register_sync():
         self.fp = fp
 
     def make_str(self, width):
-        string = '''\
+        string = '''
 /****************************************************************************
           Generic Register - synchronous reset
 ****************************************************************************/
@@ -60,7 +61,8 @@ begin
 		q<=d;
 end
 
-endmodule'''       
+endmodule
+'''       
 
         return string.format(WIDTH=width)
 
@@ -72,7 +74,7 @@ class pipereg():
         self.fp = fp
 
     def make_str(self, width):
-        string = '''\
+        string = '''
 /****************************************************************************
           Generic Pipelined Register
 
@@ -98,7 +100,8 @@ begin
     q<=d;
 end
 
-endmodule'''       
+endmodule
+'''       
 
         return string.format(WIDTH=width)
 
@@ -110,7 +113,7 @@ class onecyclestall():
         self.fp = fp
 
     def make_str(self):
-        string = '''\
+        string = '''
 /****************************************************************************
           One cycle Stall circuit
 ****************************************************************************/
@@ -136,7 +139,8 @@ output stalled;
     else    
       T<=Tnext;
   assign stalled=(request&~T);
-endmodule'''       
+endmodule
+'''       
 
         return string
 
@@ -148,7 +152,7 @@ class multicyclestall():
         self.fp = fp
 
     def make_str(self):
-        string = '''\
+        string = '''
 /****************************************************************************
           Multi cycle Stall circuit - with wait signal
 
@@ -171,7 +175,8 @@ output stalled;
       T<=stalled;
 
   assign stalled=(T) ? devwait : request;
-endmodule'''       
+endmodule
+'''       
 
         return string
 
@@ -183,7 +188,7 @@ class pipedelayreg():
         self.fp = fp
 
     def make_str(self, width):
-        string = '''\
+        string = '''
 /****************************************************************************
           One cycle - Pipeline delay register
 ****************************************************************************/
@@ -224,7 +229,8 @@ output [{WIDTH}-1:0] q;
   end
 
   assign stalled=(en&~T&(|dst));
-endmodule'''       
+endmodule
+'''       
 
         return string.format(WIDTH=width)
 
@@ -236,7 +242,7 @@ class fakedelay():
         self.fp = fp
 
     def make_str(self, width):
-        string = '''\
+        string = '''
 /****************************************************************************
           Fake Delay
 ****************************************************************************/
@@ -252,7 +258,8 @@ assign clk_nc = clk;
 
 assign q=d;
 
-endmodule'''       
+endmodule
+'''       
 
         return string.format(WIDTH=width)
 
@@ -264,7 +271,7 @@ class zeroer():
         self.fp = fp
 
     def make_str(self, width):
-        string = '''\
+        string = '''
 /****************************************************************************
           Zeroer
 ****************************************************************************/
@@ -275,7 +282,8 @@ input [{WIDTH}-1:0] d;
 output [{WIDTH}-1:0] q;
 assign q= (en) ? d : 0;
 
-endmodule'''       
+endmodule
+'''       
 
         return string.format(WIDTH=width)
 
@@ -287,7 +295,7 @@ class nop():
         self.fp = fp
 
     def make_str(self, width):
-        string = '''\
+        string = '''
 /****************************************************************************
           NOP - used to hack position of multiplexors
 ****************************************************************************/
@@ -298,7 +306,8 @@ output [{WIDTH}-1:0] q;
 
   assign q=d;
 
-endmodule'''       
+endmodule
+'''       
 
         return string.format(WIDTH=width)
 
@@ -310,7 +319,7 @@ class const():
         self.fp = fp
 
     def make_str(self, width, val):
-        string = '''\
+        string = '''
 /****************************************************************************
           Const
 ****************************************************************************/
@@ -320,7 +329,8 @@ output [{WIDTH}-1:0] out;
 
 assign out={VAL};
 
-endmodule'''       
+endmodule
+'''       
 
         return string.format(WIDTH=width, VAL=val)
 
@@ -332,7 +342,7 @@ class branch_detector():
         self.fp = fp
 
     def make_str(self):
-        string = '''\
+        string = '''
 /****************************************************************************
           Branch detector
 ****************************************************************************/
@@ -350,7 +360,8 @@ assign is_special=!(|opcode);
 assign is_branch=((!(|opcode[5:3])) && !is_special) || 
                   ((is_special)&&(func_local==6'b001000));
 
-endmodule'''       
+endmodule
+'''       
 
         return string.format()
 

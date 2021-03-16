@@ -5,7 +5,7 @@ class dpram():
         self.fp = fp
 
     def make_str(self, awidth, num_words, dwidth):
-        string = '''\
+        string = '''
 module dpram_{AWIDTH}_{NUM_WORDS}_{DWIDTH} (
 	clk,
 	address_a,
@@ -66,7 +66,8 @@ dual_port_ram u_dual_port_ram(
 
 `endif
 
-endmodule'''
+endmodule
+'''
 
         return string.format(AWIDTH=awidth, NUM_WORDS=num_words, DWIDTH=dwidth)
 
@@ -78,7 +79,7 @@ class spram():
         self.fp = fp
 
     def make_str(self, awidth, num_words, dwidth):
-        string = '''\
+        string = '''
 module spram_{AWIDTH}_{NUM_WORDS}_{DWIDTH} (
     clk,
 	address,
@@ -118,7 +119,8 @@ single_port_ram u_single_port_ram(
 
 `endif
 
-endmodule'''
+endmodule
+'''
 
         return string.format(AWIDTH=awidth, NUM_WORDS=num_words, DWIDTH=dwidth)
 

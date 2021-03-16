@@ -8,7 +8,7 @@ class local_fifo():
 
     def make_str(self, fifo_width, fifo_depth):
         awidth = int(math.log(fifo_depth, 2))
-        string = '''\
+        string = '''
 module fifo_{FIFO_WIDTH}_{FIFO_DEPTH}(
 input                      clk,
 input                      reset,
@@ -82,7 +82,8 @@ dpram_{AWIDTH}_{FIFO_DEPTH}_{FIFO_WIDTH} ram(
     .out_a(rddata),
     .out_b(out_b_nc)
 );
-endmodule'''
+endmodule
+'''
         return string.format(FIFO_WIDTH=fifo_width, FIFO_DEPTH=fifo_depth, AWIDTH=awidth)
 
     def write (self, fifo_width, fifo_depth):

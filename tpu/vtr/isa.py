@@ -5,7 +5,7 @@ class isa():
         self.fp = fp
 
     def make_str(self):
-        string = '''\
+        string = '''
 /****************************************************************************
           ISA definition file
 

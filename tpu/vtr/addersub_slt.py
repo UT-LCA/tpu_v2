@@ -6,7 +6,7 @@ class addersub():
         self.fp = fp
 
     def make_str(self, width):
-        string = '''\
+        string = '''
 /****************************************************************************
           AddSub unit
 - Should perform ADD, ADDU, SUBU, SUB, SLT, SLTU
@@ -97,7 +97,8 @@ defparam
 `endif
 
 assign carry_out=sum[{WIDTH}];
-endmodule'''       
+endmodule
+'''       
 
         return string.format(WIDTH=width, ADD_SUB_WIDTH=width+1, PIPELINE=0, REPRESENTATION="SIGNED")
 

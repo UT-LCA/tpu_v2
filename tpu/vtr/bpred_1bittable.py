@@ -6,7 +6,7 @@ class branchpredict():
         self.fp = fp
 
     def make_str(self, pcwidth, tabledepth, log2tabledepth, tablewidth):
-        string = '''\
+        string = '''
 module branchpredict_{PCWIDTH}_{TABLEDEPTH}_{LOG2TABLEDEPTH}_{TABLEWIDTH} ( clk, resetn,
     predict,
     prediction,
@@ -116,7 +116,8 @@ assign address_b=pc_predict_local[{LOG2TABLEDEPTH}+2-1:2];
 		pred_table.intended_device_family = "Stratix";
 
 `endif
-endmodule'''       
+endmodule
+'''       
 
         return string.format(PCWIDTH=pcwidth, TABLEDEPTH=tabledepth, LOG2TABLEDEPTH=log2tabledepth, TABLEWIDTH=tablewidth)
 

@@ -6,7 +6,7 @@ class data_mem():
         self.fp = fp
 
     def make_str(self, d_addresswidth, dm_datawidth, dm_byteenawidth, dm_addresswidth, dm_size):
-        string = '''\
+        string = '''
 /******************************************************************************
             Data memory and interface
 
@@ -169,7 +169,8 @@ altsyncram  dmem (
         dmem.lpm_type = "altsyncram";
 */
   
-endmodule'''
+endmodule
+'''
         return string.format(D_ADDRESSWIDTH=d_addresswidth, DM_DATAWIDTH=dm_datawidth, DM_BYTEENAWIDTH=dm_byteenawidth,DM_ADDRESSWIDTH=dm_addresswidth, DM_SIZE=dm_size)
 
     def write (self, d_addresswidth, dm_datawidth, dm_byteenawidth, dm_addresswidth, dm_size):
@@ -182,7 +183,7 @@ class store_data_translator():
         self.fp = fp
 
     def make_str(self, width):
-        string='''\
+        string='''
 /****************************************************************************
           Store data translator
           - moves store data to appropriate byte/halfword 
@@ -250,7 +251,8 @@ begin
         end
     endcase
 end
-endmodule'''
+endmodule
+'''
 
         return string.format(WIDTH=width)
 
@@ -263,7 +265,7 @@ class load_data_translator():
         self.fp = fp
 
     def make_str(self, width):
-        string='''\
+        string='''
 /****************************************************************************
           Load data translator
           - moves read data to appropriate byte/halfword and zero/sign extends
@@ -309,7 +311,8 @@ begin
     endcase
 end
 
-endmodule'''       
+endmodule
+'''       
 
         return string.format(WIDTH=width)
 

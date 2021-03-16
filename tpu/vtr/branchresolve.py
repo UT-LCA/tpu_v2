@@ -5,7 +5,7 @@ class branchresolve():
         self.fp = fp
 
     def make_str(self, width):
-        string = '''\
+        string = '''
 
 module branchresolve_{WIDTH} ( en, rs, rt, eq, ne, ltz, lez, gtz, gez, eqz);
 parameter WIDTH={WIDTH};
@@ -28,7 +28,8 @@ assign lez=(en)&rs[WIDTH-1] | eqz;
 assign gtz=(en)&(~rs[WIDTH-1]) & ~eqz;
 assign gez=(en)&(~rs[WIDTH-1]);
 
-endmodule'''       
+endmodule
+'''       
 
         return string.format(WIDTH=width)
 

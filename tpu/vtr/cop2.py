@@ -5,7 +5,7 @@ class cop2():
         self.fp = fp
 
     def make_str(self):
-        string = '''\
+        string = '''
 /*******
  * SPREE limitation - by not specifying stall signal name and assuming
  * "stalled" requires you to have only one opcode port which stalls
@@ -63,7 +63,8 @@ assign resetn_nc = resetn;
 
   assign stalled= (fromcpu_en & tocop2_wait) || (tocpu_en & ~fromcop2_en);
 
-endmodule'''       
+endmodule
+'''       
 
         return string
 

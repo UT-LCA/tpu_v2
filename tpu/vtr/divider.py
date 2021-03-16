@@ -5,7 +5,7 @@ class div():
         self.fp = fp
 
     def make_str(self, idle, dividing, done):
-        string = '''\
+        string = '''
 module div_{IDLE}_{DIVIDING}_{DONE}(en,resetn,stalled,quotient,remainder,dividend,divider,sign,clk);
 
    input         clk;
@@ -92,7 +92,8 @@ module div_{IDLE}_{DIVIDING}_{DONE}(en,resetn,stalled,quotient,remainder,dividen
         bits = bits - 1'b1;
 
      end
-endmodule'''       
+endmodule
+'''       
 
         return string.format(IDLE=idle, DIVIDING=dividing, DONE=done)
 

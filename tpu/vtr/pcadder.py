@@ -5,7 +5,7 @@ class pcadder():
         self.fp = fp
 
     def make_str(self, pc_width):
-        string = '''\
+        string = '''
 module pcadder_{PC_WIDTH}(pc, offset, result);
 
 input [{PC_WIDTH}-1:0] pc;
@@ -20,7 +20,8 @@ wire dum;
 
 assign {{dum,result}} = pc + {{offset[{PC_WIDTH}-3:0],2'b0}};
 
-endmodule'''       
+endmodule
+'''       
 
         return string.format(PC_WIDTH=pc_width)
 
