@@ -66,9 +66,12 @@ assign opB_mux_out= (is_mul) ? {{is_signed&opB[{WIDTH}-1],opB}} : decoded_sa;
 `ifdef USE_INHOUSE_LOGIC
 wire [{MULT_WIDTHA}-1:0] mult_dataa;
 wire mult_aclr;
+wire [{MULT_WIDTHP}-1:0] mult_result;
 
 assign mult_dataa = {{is_signed&opA[{WIDTH}-1],opA}};
 assign mult_aclr = ~resetn;
+
+assign {{dum2,dum,hi,lo}} = mult_result;
 
 local_mult_{MULT_WIDTHA}_{MULT_WIDTHB}_{MULT_WIDTHP} local_mult_component (
 .dataa(mult_dataa),
@@ -76,7 +79,7 @@ local_mult_{MULT_WIDTHA}_{MULT_WIDTHB}_{MULT_WIDTHP} local_mult_component (
 .clock(clk),
 .clken(1'b1),
 .aclr(mult_aclr),
-.result({{dum2,dum,hi,lo}})
+.result(mult_result)
 );
 
 `else

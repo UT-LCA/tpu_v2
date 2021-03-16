@@ -29,7 +29,7 @@ circuit_list_add={verilog_file}
 # Add architectures to list to sweep
 #arch_list_add=k6_frac_N10_mem32K_40nm_aman.xml
 #arch_list_add=k6_frac_N10_mem32K_40nm.xml
-arch_list_add=agilex_arch.auto_layout.xml
+arch_list_add=agilex_like_arch.auto_layout.xml
 
 # Parse info and how to parse
 parse_file=vpr_standard.txt
