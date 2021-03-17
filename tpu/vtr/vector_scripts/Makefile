@@ -1,6 +1,6 @@
 BASE_DIR = /home/sangramkate
 FINAL_FILE_NAME = final
-BASE_FILE_NAME = vdispatcher
+BASE_FILE_NAME = vregfile_vector
 
 SUB_DIR = vector
 

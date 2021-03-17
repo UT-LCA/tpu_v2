@@ -10,7 +10,7 @@ class trp_unit():
         self.fp = fp
 
     def make_str(self, width):
-        logwidth = log(width,2)
+        logwidth = int(log(width,2))
         string = '''\
 
 module trp_unit_{WIDTH} (
@@ -68,7 +68,7 @@ always@(*)begin
   end
 end
 
-reduction_layer u_reduction_layer(
+reduction_layer_{WIDTH}_{LOGWIDTH}_32_5_10 u_reduction_layer(
   .clk(clk),
   .resetn(resetn),
   .en(en_reduction),
@@ -80,7 +80,7 @@ reduction_layer u_reduction_layer(
   .busy(reduction_busy)
 );
 
-transpose u_transpose(
+transpose_{WIDTH}_2_1 u_transpose(
   .clk(clk),
   .resetn(resetn),
   .read(),
@@ -99,10 +99,10 @@ endmodule
         fp1.close()
         fp2 = open("verilog/transpose.v",'a')
         uut2 = transpose(fp2)
-        uut2.write(32,2,1)
+        uut2.write(width,2,1)
         fp2.close()
 
-        return string.format(WIDTH=width) 
+        return string.format(WIDTH=width,LOGWIDTH=logwidth) 
 
     def write (self, width):
         self.fp.write(self.make_str(width))

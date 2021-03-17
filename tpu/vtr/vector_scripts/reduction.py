@@ -59,6 +59,8 @@ module reduction_layer_{DWIDTH}_{LOGDWIDTH}_{AWIDTH}_{MEM_SIZE}_{NUM_INPUTS}
   output reg busy
 );
 
+wire [8 * {DWIDTH} -1:0] reduced_out_1; //output
+wire [8 * {DWIDTH} -1:0] reduced_out_add; //output
 wire [{DWIDTH} + {LOGDWIDTH}-1:0] reduced_out_unrounded;
 
 reduction_unit_{DWIDTH}_{LOGDWIDTH} ucu(
@@ -73,7 +75,7 @@ reduction_unit_{DWIDTH}_{LOGDWIDTH} ucu(
   .inp6(a[7*{DWIDTH}-1:6*{DWIDTH}]), 
   .inp7(a[8*{DWIDTH}-1:7*{DWIDTH}]), 
   .mode(reduction_type),
-  .outp(reduced_out_unrounded1)
+  .outp(reduced_out_unrounded)
 );
 
 ////////////////////////////////////////////////////////////////
@@ -83,7 +85,7 @@ reduction_unit_{DWIDTH}_{LOGDWIDTH} ucu(
 rounding_{WIDTH}_{DWIDTH} u_round(.i_data(reduced_out_unrounded), .o_data(reduced_out_add));
 
 assign reduced_out_1 = (reduction_type==2'b0) ? reduced_out_add : reduced_out_unrounded[{DWIDTH}-1:0];
-assign reduced_out = {CBS}8{CBE}reduced_out_1{CBE}{CBE};
+assign reduced_out = {CBS}8{CBS}reduced_out_1{CBE}{CBE};
 
 reg[2:0] count;
 
@@ -212,8 +214,6 @@ module reduction_unit_{DWIDTH}_{LOGDWIDTH}(
   mode,
   outp
 );
-//  parameter {DWIDTH} = 16;
-//  parameter {LOGDWIDTH} = 4;
 
   input clk;
   input reset;
@@ -229,6 +229,23 @@ module reduction_unit_{DWIDTH}_{LOGDWIDTH}(
   input [1:0] mode;
   output [{DWIDTH}+{LOGDWIDTH}-1 : 0] outp;
 
+  wire   [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute0_out_stage4;
+  reg    [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute0_out_stage4_reg;
+  wire   [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute1_out_stage4;
+  reg    [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute1_out_stage4_reg;
+  wire   [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute2_out_stage4;
+  reg    [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute2_out_stage4_reg;
+  wire   [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute3_out_stage4;
+  wire   [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute3_out_stage4_reg;
+  wire   [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute4_out_stage4;
+  reg    [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute4_out_stage4_reg;
+  wire   [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute5_out_stage4;
+  reg    [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute5_out_stage4_reg;
+  wire   [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute6_out_stage4;
+  reg    [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute6_out_stage4_reg;
+  wire   [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute7_out_stage4;
+  wire   [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute7_out_stage4_reg;
+
   wire   [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute0_out_stage3;
   reg    [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute0_out_stage3_reg;
   wire   [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute1_out_stage3;
@@ -236,7 +253,7 @@ module reduction_unit_{DWIDTH}_{LOGDWIDTH}(
   wire   [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute2_out_stage3;
   reg    [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute2_out_stage3_reg;
   wire   [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute3_out_stage3;
-  reg    [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute3_out_stage3_reg;
+  wire   [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute3_out_stage3_reg;
 
   wire   [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute0_out_stage2;
   reg    [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute0_out_stage2_reg;
@@ -311,8 +328,6 @@ class rounding():
 //here: https://zipcpu.com/dsp/2017/07/22/rounding.html
 ///////////////////////////////////////////////////////
 module rounding_{IWID}_{OWID}( i_data, o_data );
-parameter {IWID} = 32;
-parameter {OWID} = 16;
 input  [{IWID}-1:0] i_data;
 output [{OWID}-1:0] o_data;
 
@@ -324,9 +339,6 @@ assign	w_convergent = i_data[({IWID}-1):0]
                                 {CBS}({IWID}-{OWID}-1){CBS}!i_data[({IWID}-{OWID})]{CBE}{CBE}{CBE};
 
 assign o_data = w_convergent[({IWID}-1):({IWID}-{OWID})];
-
-endmodule
-
 
 endmodule
         '''

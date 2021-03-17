@@ -1,6 +1,8 @@
 from rams import dpram
-import parser
-
+from optparse import OptionParser
+parser = OptionParser()
+(_,args) = parser.parse_args()
+import os
 class ram_wrapper():
     def __init__(self, fp):
         self.fp = fp
@@ -73,12 +75,14 @@ always@(*)begin
     mux_address_b = q_address_b; 
 end
 
-endmodule'''       
-
-        fp =open("dpram.v",'a')
-        uut = dpram(fp)
-        uut.write(awidth,num_words,dwidth)
-        fp.close()
+endmodule
+'''       
+        filename = "verilog/dpram_"+str(awidth)+"_"+str(num_words)+"_"+dwidth+".v"
+        if(os.path.exists(filename) == False):
+            fp =open(filename,'w')
+            uut = dpram(fp)
+            uut.write(awidth,num_words,dwidth)
+            fp.close()
 
         return string.format(AWIDTH=awidth, NUM_WORDS=num_words, DWIDTH=dwidth)
 
