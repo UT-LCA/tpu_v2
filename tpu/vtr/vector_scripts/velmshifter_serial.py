@@ -1,6 +1,7 @@
 from optparse import OptionParser
 from os import path
 import os
+import re
 parser = OptionParser()
 (_,args) = parser.parse_args()
 
@@ -155,6 +156,16 @@ class velmshifter():
     def __init__(self, fp):
         self.fp = fp
 
+    def collapse_bit_slices(self, string):
+        all_bit_slices = re.findall(r'\[\d*:\d*\]', string)
+        all_bit_slices = list(set(all_bit_slices))
+        for slice in all_bit_slices:
+            print("slice is: ", slice)
+            m = re.search(r'(\d*):(\d*)', slice)
+            if m.group(1) == m.group(2):
+                string = re.sub(re.escape(slice), "["+m.group(1)+"]", string)
+        return string
+
     def make_str(self, numlanes, width):
         string1 = '''\
 
@@ -214,7 +225,14 @@ wire [ ({NUMLANES}+1)*{WIDTH}-1:0 ] _outpipe;
   //Generate everything in between 
 
 '''
-        string2_basic1 = string2_basic1.replace("{WIDTH}-1",str(width-1))
+        if width == 1:
+            string2_basic1 = string2_basic1.replace("{WIDTH}-1:0","0")
+            string2_basic1 = string2_basic1.replace("{WIDTH}+:{WIDTH}","1")
+        else:
+            string2_basic1 = string2_basic1.replace("{WIDTH}-1:0",str(width-1)+":0")
+            string2_basic1 = string2_basic1.replace("{WIDTH}+:{WIDTH}",str(2*width-1)+":"+str(width))
+
+        string2_basic1 = self.collapse_bit_slices(string2_basic1)
      
         string2_basic = '''
       velmshifter_laneunit_{WIDTH} velmshifter_laneunit_(_i_)(clk,resetn,load,shift,dir_left,
@@ -227,14 +245,17 @@ wire [ ({NUMLANES}+1)*{WIDTH}-1:0 ] _outpipe;
 
 '''
         string2 = ""
-        for i in range(0,numlanes):
-            string2_basic = string2_basic.replace('(_i_+1)*{WIDTH}-1',str( ((i+1+2)*width)-1))
-            string2_basic = string2_basic.replace('(_i_+1)*{WIDTH}',str( (i+1+2) * width))
-            string2_basic = string2_basic.replace('(_i_+2)*{WIDTH}-1',str(((i+2+2) * width)-1))
-            string2_basic = string2_basic.replace('(_i_-1)*{WIDTH}',str((i+2-1)*width))
-            string2_basic = string2_basic.replace('(_i_)*{WIDTH}-1',str((i+2)*width))
-            string2_basic = string2_basic.replace('(_i_)*{WIDTH}',str((i+2)*width))
-            string2 = string2 + string2_basic.replace('(_i_)',str((i+2)))
+        for i in range(1,numlanes-1):
+            string2_basic = string2_basic.replace('(_i_+1)*{WIDTH}-1',str( ((i+1)*width)-1))
+            string2_basic = string2_basic.replace('(_i_+1)*{WIDTH}',str( (i+1) * width))
+            string2_basic = string2_basic.replace('(_i_+2)*{WIDTH}-1',str(((i+2) * width)-1))
+            string2_basic = string2_basic.replace('(_i_-1)*{WIDTH}',str((i-1)*width))
+            string2_basic = string2_basic.replace('(_i_)*{WIDTH}-1',str((i)*width-1))
+            string2_basic = string2_basic.replace('(_i_)*{WIDTH}',str((i)*width))
+            string2 = string2 + string2_basic.replace('(_i_)',str((i)))
+
+        string2 = self.collapse_bit_slices(string2)
+
         string3 = '''
   //HANDLE lane NUMLANE specially
 
@@ -252,12 +273,21 @@ assign outpipe=_outpipe;
 
 endmodule
         '''
+        if width==1:
+            string3 = string3.replace("({NUMLANES}-2)*{WIDTH} +: {WIDTH}",str((numlanes-2)*width))
+            string3 = string3.replace("({NUMLANES}-1)*{WIDTH} +: {WIDTH}",str((numlanes-1)*width))
+        else:
+            string3 = string3.replace("({NUMLANES}-2)*{WIDTH} +: {WIDTH}", str(((numlanes-2)*width) + width-1) + ":" + str((numlanes-2)*width) )
+            string3 = string3.replace("({NUMLANES}-1)*{WIDTH} +: {WIDTH}", str(((numlanes-1)*width) + width-1) + ":" + str((numlanes-1)*width) )
         string3 = string3.replace("({NUMLANES}-1)*{WIDTH}",str((numlanes-1)*width))
         string3 = string3.replace("({NUMLANES}-2)*{WIDTH}",str((numlanes-2)*width))
         string3 = string3.replace("{NUMLANES}*{WIDTH}-1",str(numlanes*width-1))
         string3 = string3.replace("{NUMLANES}-1",str(numlanes-1))
 
+        string3 = self.collapse_bit_slices(string3)
+
         string = string1 + string2_basic1 + string2 + string3
+
  
         filename = "verilog/velmshifter_laneunit_"+str(width)
         if(os.path.exists(filename) == False):
