@@ -35,7 +35,7 @@ output [{NUMBANKS}*{WIDTH}-1:0] a_readdataout, b_readdataout;
 wire [{NUMBANKS}*{WIDTH}-1:0] a_temp, b_temp;
 
 input [{NUMBANKS}*{WIDTH}-1:0] c_writedatain;
-input [(({WIDTH}>=8) ? {NUMBANKS}*{WIDTH}/8-1 : {NUMBANKS}-1):0] c_byteen;
+input [{NUMBANKS}*{WIDTH}/8-1:0] c_byteen;
 input [{NUMBANKS}-1:0] c_we;
 
 '''
@@ -72,19 +72,20 @@ input [{NUMBANKS}-1:0] c_we;
 '''
         string2=""
         for k in range(0,numbanks):
-            string2_basic = string2_basic.replace("_k_*{LOG2NUMREGSPERBANK} +: {LOG2NUMREGSPERBANK}",str((k*log2numregsperbank+log2numregsperbank)-1)+":"+str(log2numregsperbank))
-            string2_basic = string2_basic.replace("_k_*{WIDTH}+:{WIDTH}",str(((k+1)*width)-1)+":"+str(width))
+            string2_basic = string2_basic.replace("_k_*{LOG2NUMREGSPERBANK} +: {LOG2NUMREGSPERBANK}",str((((k+1)*log2numregsperbank)-1))+":"+str(k* log2numregsperbank))
+            string2_basic = string2_basic.replace("_k_*{WIDTH}+:{WIDTH}",str(((k+1)*width)-1)+":"+str(k*width))
             string2 += string2_basic.replace("_k_",str(k))
         string3='''
 endmodule
 
 '''
         string = string1+string2+string3
-
-        fp = open("verilog/ram_wrapper.v", 'a')
-        uut = ram_wrapper(fp)
-        uut.write(log2numregsperbank, numregsperbank, width)
-        fp.close()
+        filename = "verilog/ram_wrapper_"+str(log2numregs)+"_"+str(numregs)+"_"+str(width)+".v"
+        if(os.path.exists(filename) == False):
+            fp = open(filename, 'a')
+            uut = ram_wrapper(fp)
+            uut.write(log2numregsperbank, numregsperbank, width)
+            fp.close()
         return string.format(NUMBANKS=numbanks, LOG2NUMBANKS=log2numbanks, WIDTH=width, NUMREGS=numregs, LOG2NUMREGS = log2numregs, NUMREGSPERBANK=numregsperbank, LOG2NUMREGSPERBANK= log2numregsperbank) 
 
     def write(self,numbanks, log2numbanks, width, numregs, log2numregs):

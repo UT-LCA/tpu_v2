@@ -7,7 +7,7 @@ class pipe():
         self.fp = fp
 
     def make_str(self, width,depth):
-        string = '''\
+        string1 = '''\
 /****************************************************************************
           Pipeline register - for transmitting a signal down several stages
 
@@ -21,7 +21,87 @@ module pipe_{WIDTH}_{DEPTH}(
     squash,
     q
     );
+'''
+        string2a = '''
+input d;
+input              clk;
+input              resetn;
+input en;
+input squash;
+output [1:0] q;
 
+reg  tq;
+reg[31:0] i;
+
+  always@(posedge clk)
+  begin
+    // 1st register
+    if (!resetn || squash[0] )
+      tq <= 0;
+    else if (en[0])
+      tq <=d;
+  end
+
+  assign q[0] = d;
+  assign q[1]=tq;
+endmodule
+        '''
+        string2b = '''
+input  d;
+input              clk;
+input              resetn;
+input  [{DEPTH}-1:0] en;
+input  [{DEPTH}-1:0] squash;
+output [({DEPTH}+1)-1:0] q;
+
+reg [{DEPTH}-1:0] tq;
+reg[31:0] i;
+
+  always@(posedge clk)
+  begin
+    // 1st register
+    if (!resetn || squash[0] )
+      tq <= 0;
+    else if (en[0])
+      tq <=d;
+
+    // All the rest registers
+    for (i=1; i<{DEPTH}; i=i+1)
+      if (!resetn || squash[i] )
+        tq[i]<= 0;
+      else if (en[i])
+        tq[i]<=tq[(i-1)];
+  end
+
+  assign q[0] =d;
+  assign q[({DEPTH}+1)-1:1]=tq;
+endmodule
+        '''
+        string2c = '''
+input [{WIDTH}-1:0]  d;
+input              clk;
+input              resetn;
+input en;
+input squash;
+output [{WIDTH}*({DEPTH}+1)-1:0] q;
+
+reg [{WIDTH}*{DEPTH}-1:0] tq;
+reg[31:0] i;
+
+  always@(posedge clk)
+  begin
+    // 1st register
+    if (!resetn || squash[0] )
+      tq[ {WIDTH}-1:0 ]<= 0;
+    else if (en[0])
+      tq[ {WIDTH}-1:0 ]<=d;
+  end
+
+  assign q[{WIDTH}-1:0]=d;
+  assign q[{WIDTH}*({DEPTH}+1)-1:{WIDTH}]=tq;
+endmodule
+        '''
+        string2d = '''
 input [{WIDTH}-1:0]  d;
 input              clk;
 input              resetn;
@@ -30,7 +110,7 @@ input  [{DEPTH}-1:0] squash;
 output [{WIDTH}*({DEPTH}+1)-1:0] q;
 
 reg [{WIDTH}*{DEPTH}-1:0] tq;
-integer i;
+reg[31:0] i;
 
   always@(posedge clk)
   begin
@@ -52,6 +132,16 @@ integer i;
   assign q[{WIDTH}*({DEPTH}+1)-1:{WIDTH}]=tq;
 endmodule
         '''
+        if(width ==1 & depth==1 ):
+            string2 = string2a
+        elif(width == 1):
+            string2 = string2b
+        elif (depth==1 ):
+            string2 = string2c
+        else:
+            string2 = string2d
+        string = string1+ string2 
+
         return string.format(WIDTH=width, DEPTH=depth)
 
     def write (self, width,depth):
@@ -68,7 +158,7 @@ class hazardchecker():
  if mode==0 compare entire width of src & dests,
  if mode==1 compare upper WIDTH-SUBWIDTH bits of src & dests
 ****************************************************************************/
-module hazardchecker_{WIDTH}_{SUBWIDTH}_{DEPTH}_{LTDEPTH}
+module hazardchecker_{WIDTH}_{SUBWIDTH}_{DEPTH}_{LTDEPTH} (
     src,
     src_valid,
     dst,
@@ -79,10 +169,6 @@ module hazardchecker_{WIDTH}_{SUBWIDTH}_{DEPTH}_{LTDEPTH}
     lt_mode,
     haz
     );
-parameter {WIDTH}=10;
-parameter {SUBWIDTH}=5;
-parameter {DEPTH}=1;
-parameter {LTDEPTH}=1;
 
 input [{WIDTH}-1:0]  src;
 input              src_valid;
@@ -97,7 +183,7 @@ output             haz;
 reg             t_haz;
 reg             t_haz_lt;
 
-integer i,j;
+reg[31:0] i,j;
 
   always@*
   begin
@@ -129,8 +215,8 @@ endmodule
 
 if __name__ == '__main__':
     fp = open(args[0], "w")
-    uut1 = pipe(fp)
+    #uut1 = pipe(fp)
     uut2 = hazardchecker(fp)
-    uut1.write(32,1,0)
+   # uut1.write(1,1)
     uut2.write(10,5,1,1)
     fp.close()

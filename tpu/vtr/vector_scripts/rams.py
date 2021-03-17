@@ -1,4 +1,7 @@
 import parser
+from optparse import OptionParser
+parser = OptionParser()
+(_,args) = parser.parse_args()
 
 class dpram():
     def __init__(self, fp=None):
@@ -19,16 +22,14 @@ module dpram_{AWIDTH}_{NUM_WORDS}_{DWIDTH} (
 );
 
 input clk;
-input [({AWIDTH}-1):0] address_a;
-input [({AWIDTH}-1):0] address_b;
+input [{AWIDTH}-1:0] address_a;
+input [{AWIDTH}-1:0] address_b;
 input  wren_a;
 input  wren_b;
-input [({DWIDTH}-1):0] data_a;
-input [({DWIDTH}-1):0] data_b;
-output reg [({DWIDTH}-1):0] out_a;
-output reg [({DWIDTH}-1):0] out_b;
-
-`ifdef SIMULATION_MEMORY
+input [{DWIDTH}-1:0] data_a;
+input [{DWIDTH}-1:0] data_b;
+output reg [{DWIDTH}-1:0] out_a;
+output reg [{DWIDTH}-1:0] out_b;
 
 reg [{DWIDTH}-1:0] ram[{NUM_WORDS}-1:0];
 
@@ -50,23 +51,8 @@ always @ (posedge clk) begin
   end
 end
 
-`else
-
-dual_port_ram u_dual_port_ram(
-.addr1(address_a),
-.we1(wren_a),
-.data1(data_a),
-.out1(out_a),
-.addr2(address_b),
-.we2(wren_b),
-.data2(data_b),
-.out2(out_b),
-.clk(clk)
-);
-
-`endif
-
-endmodule'''
+endmodule
+'''
 
         return string.format(AWIDTH=awidth, NUM_WORDS=num_words, DWIDTH=dwidth)
 

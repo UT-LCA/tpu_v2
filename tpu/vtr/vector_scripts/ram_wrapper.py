@@ -26,20 +26,20 @@ module ram_wrapper_{AWIDTH}_{NUM_WORDS}_{DWIDTH} (
 
 input clk;
 input resetn;
-input [({AWIDTH}-1):0] address_a;
-input [({AWIDTH}-1):0] address_b;
+input [{AWIDTH}-1:0] address_a;
+input [{AWIDTH}-1:0] address_b;
 input  wren_a;
 input  wren_b;
 input  rden_a;
 input  rden_b;
-input [({DWIDTH}-1):0] data_a;
-input [({DWIDTH}-1):0] data_b;
-output [({DWIDTH}-1):0] out_a;
-output [({DWIDTH}-1):0] out_b;
+input [{DWIDTH}-1:0] data_a;
+input [{DWIDTH}-1:0] data_b;
+output [{DWIDTH}-1:0] out_a;
+output [{DWIDTH}-1:0] out_b;
 
-reg [({AWIDTH}-1):0] q_address_a;
-reg [({AWIDTH}-1):0] q_address_b;
-reg [({AWIDTH}-1):0] mux_address_b;
+reg [{AWIDTH}-1:0] q_address_a;
+reg [{AWIDTH}-1:0] q_address_b;
+reg [{AWIDTH}-1:0] mux_address_b;
 
 // not connect ports
 wire rden_a_nc;
@@ -77,7 +77,7 @@ end
 
 endmodule
 '''       
-        filename = "verilog/dpram_"+str(awidth)+"_"+str(num_words)+"_"+dwidth+".v"
+        filename = "verilog/dpram_"+str(awidth)+"_"+str(num_words)+"_"+str(dwidth)+".v"
         if(os.path.exists(filename) == False):
             fp =open(filename,'w')
             uut = dpram(fp)
