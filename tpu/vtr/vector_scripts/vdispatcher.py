@@ -1,5 +1,6 @@
 from velmshifter_serial import velmshifter
 from optparse import OptionParser
+import os
 parser = OptionParser()
 (_,args) = parser.parse_args()
 
@@ -141,15 +142,37 @@ vdispatcher_add_{NUMENTRIES}_{WIDTHCOUNT} vdispatcher_count(
 
 endmodule
 '''
-        fp = open("verilog/vdispatcher_shift.v",'a')
-        uut = vdispatcher_shift(fp)
-        uut.write(numentries,widthinstr)
-        uut.write(numentries,1)
-        fp = open("verilog/vdispatcher_add.v" ,'a')
-        uut = vdispatcher_add(fp)
-        uut.write(numentries,widthrdelm)
-        uut.write(numentries,widthwrelm)
-        uut.write(numentries,widthcount)
+        filename = "verilog/velmshifter_shift_"+str(numentries)+"_"+str(widthinstr)
+        if(os.path.exists(filename) == False):
+            fp = open(filename,'w')
+            uut = vdispatcher_shift(fp)
+            uut.write(numentries,widthinstr)
+            fp.close()
+        filename = "verilog/velmshifter_shift_"+str(numentries)+"_"+"1"
+        if(os.path.exists(filename) == False):
+            fp = open(filename,'w')
+            uut = vdispatcher_shift(fp)
+            uut.write(numentries,1)
+            fp.close()
+
+        filename = "verilog/vdispatcher_add_"+str(numentries)+"_"+str(widthrdelm)
+        if(os.path.exists(filename) == False):
+            fp = open(filename,'w')
+            uut = vdispatcher_add(fp)
+            uut.write(numentries,widthrdelm)
+            fp.close()
+        filename = "verilog/vdispatcher_add_"+str(numentries)+"_"+str(widthwrelm)
+        if(os.path.exists(filename) == False):
+            fp = open(filename,'w')
+            uut = vdispatcher_add(fp)
+            uut.write(numentries,widthwrelm)
+            fp.close()
+        filename = "verilog/vdispatcher_add_"+str(numentries)+"_"+str(widthcount)
+        if(os.path.exists(filename) == False):
+            fp = open(filename,'w')
+            uut = vdispatcher_add(fp)
+            uut.write(numentries,widthcount)
+            fp.close()
 
         return string.format(NUMENTRIES= numentries, WIDTHINSTR = widthinstr, WIDTHRDELM=widthrdelm, WIDTHWRELM=widthwrelm, WIDTHCOUNT=widthcount , CBS ="{", CBE = "}") 
 
@@ -163,7 +186,7 @@ class vdispatcher_shift():
     def make_str(self, numentries,width ):
         string = '''\
 
-module vdispatcher_shift (
+module vdispatcher_shift_{NUMENTRIES}_{WIDTH} (
     clk,
     resetn,
 
@@ -178,9 +201,6 @@ module vdispatcher_shift (
     outparallel_data
 
     );
-
-parameter {NUMENTRIES}=4;      
-parameter {WIDTH}=32;       // Width of the shifter
 
 input clk;
 input resetn;
@@ -220,9 +240,12 @@ wire [ {WIDTH}-1:0 ]  shiftin_right;
 endmodule
 
 '''
-        fp = open("verilog/velmshifter.v",'a')
-        uut = velmshifter(fp)
-        uut.write(numentries,width)
+        filename = "verilog/velmshifter_"+str(numentries)+"_"+str(width)
+        if(os.path.exists(filename) == False):
+            fp = open(filename,'w')
+            uut = velmshifter(fp)
+            uut.write(numentries,width)
+            fp.close()
 
         return string.format(NUMENTRIES=numentries, WIDTH=width) 
 
@@ -237,7 +260,7 @@ class vdispatcher_add():
         string = '''\
 
 
-module vdispatcher_add (
+module vdispatcher_add_{NUMENTRIES}_{WIDTH} (
     clk,
     resetn,
 
@@ -257,8 +280,6 @@ module vdispatcher_add (
 
     );
 
-parameter {NUMENTRIES}=4;      
-parameter {WIDTH}=32;       // Width of the shifter
 
 input clk;
 input resetn;
@@ -287,7 +308,7 @@ reg [ {NUMENTRIES}*{WIDTH}-1:0 ] outparallel_added;
                     outparallel_added[{NUMENTRIES}*{WIDTH}-1:({NUMENTRIES}-1)*{WIDTH}];
 
   reg [ {WIDTH}-1:0 ] v;
-  integer i;
+  reg[31:0] i;
   always@*
     for (i=0; i<{NUMENTRIES}; i=i+1)
     begin
@@ -322,9 +343,5 @@ endmodule
 if __name__ == '__main__':
     fp = open(args[0], "w")
     uut1 = vdispatcher(fp)
-    uut2 = vdispatcher_shift(fp)
-    uut3 = vdispatcher_add(fp)
-    uut1.write(32,16,4,4,8)
-    uut2.write(32,16)
-    uut3.write(32,16)
+    uut1.write(8,32,16,16,8)
     fp.close()

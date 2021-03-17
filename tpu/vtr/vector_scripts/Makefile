@@ -17,7 +17,8 @@ SCRIPT = $(BASE_FILE_NAME).py
 all: $(SCRIPT)
 	        rm -rf verilog
 		mkdir verilog
-		python3 $(SCRIPT) $(SUB_DIR)/$(TPU_VERILOG_FILE)
+		ls verilog/
+		python3 $(SCRIPT) $(TPU_SUB_DIR)/$(TPU_VERILOG_FILE)
 		python3 gen_config.py $(SUB_DIR) final.v
 	        python3 make_one.py 
 		\cp $(TPU_VERILOG_DIR)/final.v $(VTR_VERILOG_DIR)
@@ -28,4 +29,8 @@ config:
 vtr:
 	        python3 make_one.py 
 		\cp $(TPU_VERILOG_DIR)/$(TPU_VERILOG_FILE) $(VTR_VERILOG_DIR)
+		$(VTR_SCRIPTS_DIR)/run_vtr_task.py $(VTR_TASK_DIR)/tpu
+
+rerun:
+		\cp $(TPU_VERILOG_DIR)/final.v $(VTR_VERILOG_DIR)
 		$(VTR_SCRIPTS_DIR)/run_vtr_task.py $(VTR_TASK_DIR)/tpu

@@ -1,6 +1,6 @@
 from optparse import OptionParser
 from os import path
-
+import os
 parser = OptionParser()
 (_,args) = parser.parse_args()
 
@@ -109,9 +109,6 @@ module velmshifter_jump_{WIDTH}_{NUMLANES}_{JUMPSIZE} (
     outpipe
     );
 
-parameter {NUMLANES}=4;      
-parameter {JUMPSIZE}=4;     // We can either shift by 1, or jump by this amount 
-parameter {WIDTH}=32;       // Width of the shifter
 
 input clk;
 input resetn;
@@ -128,7 +125,6 @@ output [ {NUMLANES}*{WIDTH}-1:0 ] outpipe;
 input [ {WIDTH}-1:0 ]  shiftin_left;
 input [ {WIDTH}-1:0 ]  shiftin_right;
 
-genvar i;
 
 /***************************************************************************
   shiftin_left -> bn <-> bn-1 <-> ... <-> b1 <-> b0 <- shiftin_right
@@ -183,9 +179,6 @@ module velmshifter_{NUMLANES}_{WIDTH} (
 
     );
 
-parameter {NUMLANES}=4;      
-parameter {WIDTH}=32;       // Width of the shifter
-
 input clk;
 input resetn;
 
@@ -202,19 +195,18 @@ input [ {WIDTH}-1:0 ]  shiftin_right;
 
 wire [ ({NUMLANES}+1)*{WIDTH}-1:0 ] _outpipe;
 
-genvar i;
-genvar j;
 
 /***************************************************************************
   shiftin_left -> bn <-> bn-1 <-> ... <-> b1 <-> b0 <- shiftin_right
 ***************************************************************************/
 
   //HANDLE lane 0 specially
-
+'''
+        string2_basic1 = '''
   velmshifter_laneunit_{WIDTH} velmshifter_laneunit0(clk,resetn,load,shift,dir_left,
       squash[0],
       inpipe[{WIDTH}-1:0],
-      _outpipe[(({NUMLANES}>1) ? {WIDTH} : 0)+:{WIDTH}], //Support 1 lane
+      _outpipe[{WIDTH}+:{WIDTH}], //Support 1 lane
       shiftin_right,
       _outpipe[{WIDTH}-1:0]);
  // defparam velmshifter_laneunit0.{WIDTH}={WIDTH};
@@ -222,19 +214,27 @@ genvar j;
   //Generate everything in between 
 
 '''
+        string2_basic1 = string2_basic1.replace("{WIDTH}-1",str(width-1))
+     
         string2_basic = '''
-      velmshifter_laneunit_{WIDTH} velmshifter_laneunit(clk,resetn,load,shift,dir_left,
-          squash[i],
-          inpipe[(i+1)*{WIDTH}-1:i*{WIDTH}],
-          _outpipe[(i+2)*{WIDTH}-1:(i+1)*{WIDTH}],
-          _outpipe[(i)*{WIDTH}-1:(i-1)*{WIDTH}],
-          _outpipe[(i+1)*{WIDTH}-1:i*{WIDTH}]);
+      velmshifter_laneunit_{WIDTH} velmshifter_laneunit_(_i_)(clk,resetn,load,shift,dir_left,
+          squash[(_i_)],
+          inpipe[(_i_+1)*{WIDTH}-1:(_i_)*{WIDTH}],
+          _outpipe[(_i_+2)*{WIDTH}-1:(_i_+1)*{WIDTH}],
+          _outpipe[(_i_)*{WIDTH}-1:(_i_-1)*{WIDTH}],
+          _outpipe[(_i_+1)*{WIDTH}-1:(_i_)*{WIDTH}]);
      // defparam velmshifter_laneunit.{WIDTH}={WIDTH};
 
 '''
         string2 = ""
         for i in range(0,numlanes):
-            string2 = string2 + string2_basic.replace('i',str(i))
+            string2_basic = string2_basic.replace('(_i_+1)*{WIDTH}-1',str( ((i+1+2)*width)-1))
+            string2_basic = string2_basic.replace('(_i_+1)*{WIDTH}',str( (i+1+2) * width))
+            string2_basic = string2_basic.replace('(_i_+2)*{WIDTH}-1',str(((i+2+2) * width)-1))
+            string2_basic = string2_basic.replace('(_i_-1)*{WIDTH}',str((i+2-1)*width))
+            string2_basic = string2_basic.replace('(_i_)*{WIDTH}-1',str((i+2)*width))
+            string2_basic = string2_basic.replace('(_i_)*{WIDTH}',str((i+2)*width))
+            string2 = string2 + string2_basic.replace('(_i_)',str((i+2)))
         string3 = '''
   //HANDLE lane NUMLANE specially
 
@@ -243,8 +243,8 @@ genvar j;
       squash[{NUMLANES}-1],
       inpipe[{NUMLANES}*{WIDTH}-1:({NUMLANES}-1)*{WIDTH}],
       shiftin_left,
-      _outpipe[((({NUMLANES}>1) ? {NUMLANES}:2)-2)*{WIDTH} +: {WIDTH}], //L=1
-      _outpipe[(({NUMLANES}>1) ? ({NUMLANES}-1)*{WIDTH} : {WIDTH}) +: {WIDTH}]); //L=1
+      _outpipe[({NUMLANES}-2)*{WIDTH} +: {WIDTH}], //L=1
+      _outpipe[({NUMLANES}-1)*{WIDTH} +: {WIDTH}]); //L=1
    // defparam velmshifter_laneunitlast.{WIDTH}={WIDTH};
 
     //Support L=1 - give _outpipe more bits but ignore them
@@ -252,10 +252,18 @@ assign outpipe=_outpipe;
 
 endmodule
         '''
-        string = string1 + string2 + string3
-        fp = open("verilog/velmshifter_laneunit.v",'a')
-        uut = velmshifter_laneunit(fp)
-        uut.write(width)
+        string3 = string3.replace("({NUMLANES}-1)*{WIDTH}",str((numlanes-1)*width))
+        string3 = string3.replace("({NUMLANES}-2)*{WIDTH}",str((numlanes-2)*width))
+        string3 = string3.replace("{NUMLANES}*{WIDTH}-1",str(numlanes*width-1))
+        string3 = string3.replace("{NUMLANES}-1",str(numlanes-1))
+
+        string = string1 + string2_basic1 + string2 + string3
+ 
+        filename = "verilog/velmshifter_laneunit_"+str(width)
+        if(os.path.exists(filename) == False):
+            fp = open(filename,'w')
+            uut = velmshifter_laneunit(fp)
+            uut.write(width)
 
         return string.format(NUMLANES=numlanes, WIDTH=width)
 
@@ -284,7 +292,6 @@ module velmshifter_laneunit_{WIDTH} (
 
     );
 
-parameter {WIDTH}=32;       // Width of the shifter
 
 input clk;
 input resetn;
