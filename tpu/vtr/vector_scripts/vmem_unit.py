@@ -3,6 +3,8 @@ from velmshifter_serial import velmshifter
 from vmem_crossbar import vmem_crossbar
 from components import pipereg
 from optparse import OptionParser
+import re
+
 parser = OptionParser()
 (_,args) = parser.parse_args()
 
@@ -62,8 +64,6 @@ class vmem_unit():
  *
  * Quartus 5.0: 919 LEs, 137 MHz (CritPath: vip_r to vreaddata)
  *************************/
-`include "velmshifter_serial.v"
-`include "vmem_crossbar.v"
 
 module vmem_unit_{VPUWIDTH}_{NUMLANES}_{LOG2NUMLANES}_{NUMPARALLELLANES}_{LOG2NUMPARALLELLANES}_{CONTROLWIDTH}_{DMEM_WRITEWIDTH}_{LOG2DMEM_WRITEWIDTH}_{DMEM_READWIDTH}_{LOG2DMEM_READWIDTH}_{ELMIDWIDTH}_{REGIDWIDTH} (
     clk,
@@ -242,12 +242,12 @@ wire                        sa_zero;
 reg  [ {NUMLANES}*{VPUWIDTH}-1 : 0 ]  vshiftresult;
 
 genvar i;
-integer j;
+reg [31:0] j;
 genvar k;
-integer l;
-integer m;
-integer n;
-integer p;
+reg [31:0] l;
+reg [31:0] m;
+reg [31:0] n;
+reg [31:0] p;
 
   assign {CBS}op_memop,op_pattern,op_size,op_signed,op_we{CBE}=op;
 
@@ -304,9 +304,9 @@ integer p;
 
   // Detect double write one clock cycle early - also support 1 lane
   assign doublewrite=(~op_memop_s2) && ({NUMLANES}>1) && ( (dir_left_s2) ? 
-              (|vshifted_mask[(({NUMLANES}>1) ? {NUMLANES}:2)-2:0]) && //support L=1
+              (|vshifted_mask[({NUMLANES})-2:0]) && //support L=1
                 (vshifted_mask[{NUMLANES}-1]&(|vshifted_masksave)) :
-              (|vshifted_mask[{NUMLANES}-1:({NUMLANES}>1) ? 1 : 0]) && //support L=1
+              (|vshifted_mask[{NUMLANES}-1:1]) && //support L=1
                 (vshifted_mask[0]&(|vshifted_masksave)));
 
   assign out_dst = {CBS}in_dst_s2[{REGIDWIDTH}-1:{ELMIDWIDTH}],
@@ -351,7 +351,7 @@ integer p;
                (vstrideoffset[m*{CONTROLWIDTH} +: {CONTROLWIDTH}]<<op_size));
 
   wire [{NUMLANES}-1:0] vwritedata_shifter_squash_NC;
-  velmshifter_jump_{NUMLANES}_{NUMPARALLELLANES}_{VPUWIDTH} vwritedatashifter(
+  velmshifter_jump_{VPUWIDTH}_{NUMLANES}_{NUMPARALLELLANES} vwritedatashifter(
       .clk(clk),
       .resetn(resetn),    //Don't use if not a store
       .load(shifter_load && op_we),
@@ -365,7 +365,7 @@ integer p;
       .outpipe(vshifted_writedata));
 
   wire [{NUMLANES}-1:0] vaddress_shifter_squash_NC;
-  velmshifter_jump_{NUMLANES}_{NUMPARALLELLANES}_{CONTROLWIDTH} vaddressshifter(
+  velmshifter_jump_{CONTROLWIDTH}_{NUMLANES}_{NUMPARALLELLANES} vaddressshifter(
       .clk(clk),
       .resetn(resetn), //consider forcing to 0 if not used
       .load(shifter_load),
@@ -378,7 +378,7 @@ integer p;
       .inpipe( address),
       .outpipe(vshifted_address));
 
-  velmshifter_jump_{NUMLANES}_{NUMPARALLELLANES}_1 vmaskshifter(
+  velmshifter_jump_1_{NUMLANES}_{NUMPARALLELLANES} vmaskshifter(
       .clk(clk),
       .resetn(resetn),
       .load(shifter_load),
@@ -525,12 +525,26 @@ integer p;
     else if (shifter_load)
       dmem_address<=address[{CONTROLWIDTH}-1:0];
     else if (shifter_shift)
+'''
+
+        if numlanes<=numparallellanes:
+          string1 += '''
       dmem_address<= (!shifter_jump) ? 
-              vshifted_address[(({NUMLANES}>1) ? 1:0)
-                *{CONTROLWIDTH} +: {CONTROLWIDTH}] :
               vshifted_address[
-                (({NUMLANES}<={NUMPARALLELLANES}) ? 0 : {NUMPARALLELLANES})
-                  *{CONTROLWIDTH} +: {CONTROLWIDTH}];
+                2*{CONTROLWIDTH}-1 : {CONTROLWIDTH} ] :
+              vshifted_address[
+                  {CONTROLWIDTH}-1 : 0 ];
+                  '''
+        else:
+          string1 += '''
+      dmem_address<= (!shifter_jump) ? 
+              vshifted_address[
+                2*{CONTROLWIDTH}-1 : {CONTROLWIDTH}] :
+              vshifted_address[
+                 ({NUMPARALLELLANES})*{CONTROLWIDTH}+{CONTROLWIDTH}-1 : ({NUMPARALLELLANES})*{CONTROLWIDTH}];
+                  '''
+
+        string1 += ''' 
     //Fetch next cache line if partial match on initial cache access
     //else if (parhits_some && ~cachedata_stillvalid)
     else if (addr_advance)
@@ -569,17 +583,19 @@ integer p;
 
        vstore_data_translator vstore_data_translator_i(
          //Pad vshifted_writedata with zeros incase signal is less than 32-bits
-      .write_data({CBS}32'b0,vshifted_writedata[[i]*{VPUWIDTH} +: {VPUWIDTH}]{CBE}),
-      .d_address(vshifted_address[[i]*32 +: 2]),
+      .write_data({CBS}32'b0,vshifted_writedata[[i]*{VPUWIDTH}+{VPUWIDTH}-1 : [i]*{VPUWIDTH}]{CBE}),
+      .d_address(vshifted_address[[i]*32+2-1 : [i]*32]),
       .store_size(op_size_s2), 
-      .d_byteena(_vbyteen[4*[i] +: 4]),  
-      .d_writedataout(_vwritedata[[i]*32 +: 32]));
+      .d_byteena(_vbyteen[4*[i]+4-1 : 4*[i]]),  
+      .d_writedataout(_vwritedata[[i]*32+32-1 : [i]*32]));
 
         '''
         string2 ="// Generate byte/halfword alignment circuitry for each word \
                  "
         for k in range(0,numparallellanes):
-            string2  = string2 + string2_basic.replace("[i]",str(k)) + "\n"
+            temp = string2_basic.replace("[i]",str(k)) + "\n"
+            temp = re.sub(r'_i', "_"+str(k), temp)
+            string2  += temp
 
         string3 = '''
 
@@ -593,10 +609,10 @@ integer p;
                             32-{LOG2DMEM_WRITEWIDTH}+3])
       begin
         dmem_writedata=dmem_writedata| (_vwritedata[l*32 +: 32] << 
-            {CBS}vshifted_address[32*l+2 +: {CBS}{LOG2DMEM_WRITEWIDTH}-5], {CBS}5{CBS}1'b0{CBE}{CBE}{CBE}{CBE});
+            {CBS}vshifted_address[32*l+2 +: {LOG2DMEM_WRITEWIDTH}-5], {CBS}5{CBS}1'b0{CBE}{CBE}{CBE});
         if (vshifted_mask[l] && (shifter_jump || (l==0)))
           dmem_byteen=dmem_byteen | (_vbyteen[4*l+:4]<<
-            {CBS}vshifted_address[32*l+2 +: {CBS}{LOG2DMEM_WRITEWIDTH}-5], {CBS}2{CBS}1'b0{CBE}{CBE}{CBE}{CBE});
+            {CBS}vshifted_address[32*l+2 +: {LOG2DMEM_WRITEWIDTH}-5], {CBS}2{CBS}1'b0{CBE}{CBE}{CBE});
       end
   end
 
@@ -654,11 +670,25 @@ integer p;
     if (!resetn || shifter_load)
       parhits_done<= (shifter_jump_s1) ?  ~vmask : {CBS}{NUMPARALLELLANES}{CBS}~vmask[0]{CBE}{CBE};
     else if ( parhits_doneall )
+    '''
+
+        if numlanes>numparallellanes:
+          string3 += '''
       parhits_done<= (shifter_jump && ({NUMLANES}>{NUMPARALLELLANES})) ? 
                     ~vshifted_mask[ 
-                        (({NUMLANES}>{NUMPARALLELLANES}) ? {NUMPARALLELLANES} : 0) 
-                      +: {NUMPARALLELLANES}] :
+                        2*({NUMPARALLELLANES})-1 : {NUMPARALLELLANES}] :
                     {CBS}{NUMPARALLELLANES}{CBS}({NUMLANES}>1) ? ~vshifted_mask[1] : 1'b0{CBE}{CBE};
+                    '''
+        else:
+          string3 += '''
+      parhits_done<= (shifter_jump && ({NUMLANES}>{NUMPARALLELLANES})) ? 
+                    ~vshifted_mask[ 
+                      {NUMPARALLELLANES}-1:0] :
+                    {CBS}{NUMPARALLELLANES}{CBS}({NUMLANES}>1) ? ~vshifted_mask[1] : 1'b0{CBE}{CBE};
+                    '''
+ 
+
+        string3 += '''
     else           
       parhits_done<= parhits_done|parhits;
 
@@ -683,7 +713,7 @@ integer p;
               vshifted_address[n*{CONTROLWIDTH}+2 +: ({LOG2DMEM_READWIDTH}-5)];
 
   vmem_crossbar_{DMEM_READWIDTH}_{LOG2DMEM_READWIDTH}_{NUMPARALLELLANES}_32_5 vmem_crossbar(
-      .clk(), .resetn(),
+      .clk(clk), .resetn(resetn),
       .sel(crossbar_sel),
       .in(dmem_readdata),
       .out(crossbar));
@@ -708,7 +738,7 @@ integer p;
 
       vload_data_translator load_data_translator[k](
       .d_readdatain(crossbar[32*([k]+1)-1:32*[k]]),
-      .d_address( (shifter_jump) ? vshifted_address[{CONTROLWIDTH}*[k] +: 2] :
+      .d_address( (shifter_jump) ? vshifted_address[{CONTROLWIDTH}*[k]+2-1 : {CONTROLWIDTH}*[k]] :
                                    vshifted_address[1:0]),
       .load_size(op_size_s2[1:0]),
       .load_sign_ext(op_signed_s2),
@@ -796,13 +826,19 @@ endmodule
         string = string1 + string2 + string3 + string4 + string5
         fp = open("verilog/velmshifter_jump.v",'a')
         uut = velmshifter_jump(fp)
-        uut.write(numlanes,numparallellanes,vpuwidth)
-        uut.write(numlanes,numparallellanes,controlwidth)
+        #only need 1 of these because vpuwidth and controlwidth are the same 
+        #here. 
+        if vpuwidth==controlwidth:
+          uut.write(numlanes,numparallellanes,vpuwidth)
+        else:
+          uut.write(numlanes,numparallellanes,vpuwidth)
+          uut.write(numlanes,numparallellanes,controlwidth)
         uut.write(numlanes,numparallellanes,1)
         fp.close()
 
         fp = open("verilog/velmshifter.v",'a')
         uut = velmshifter(fp)
+        uut.write(numlanes,vpuwidth)
         uut.write(numlanes,1)
         fp.close()
 
@@ -973,10 +1009,18 @@ endmodule
 
 if __name__ == '__main__':
     fp = open(args[0], "w")
+    try:
+      options_file = open("../../design/top/options.v", "r")
+      for line in options_file:
+        fp.write(line)
+      options_file.close()
+    except:
+      print("Unable to open file")
+      raise SystemExit(0)
     uut1 = vmem_unit(fp)
-    uut2 = vstore_data_translator(fp)
-    uut3 = vload_data_translator(fp)
+    #uut2 = vstore_data_translator(fp)
+    #uut3 = vload_data_translator(fp)
     uut1.write(32,4,2,2,1,32,128,7,128,7,2,5)
-    uut2.write()
-    uut3.write()
+    #uut2.write()
+    #uut3.write()
     fp.close()
