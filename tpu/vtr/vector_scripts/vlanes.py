@@ -120,6 +120,47 @@ class vlanes():
         totalregs = 32 * mvl / numlanes
         vrminusregwidth = 5-regidwidth
         log2nummullanes = log(nummullanes,2)
+        string_dispatchwidth ='''{LOG2MVL}+ \
+    1+ \
+    1+ \
+    1+ \
+    1+ \
+    1+ \
+    1+ \
+    1+ \
+    1+ \
+    1+ \
+    1+ \
+    1+ \
+    1+ \
+    {REGIDWIDTH}+ \
+    {REGIDWIDTH}+ \
+    {REGIDWIDTH}+ \
+    1+ \
+    1+ \
+    1+ \
+    1+ \
+    1+ \
+    1+ \
+    11+ \
+    2+ \
+    4+ \
+    5+ \
+    7+ \
+    1+ \
+    3+ \
+    1+ \
+    1+ \
+    1+ \
+    1+ \
+    {VCWIDTH}+ \
+    {VSWIDTH}+ \
+    8'''
+        string_dispatchwidth = string_dispatchwidth.format(LOG2MVL=log2mvl, REGIDWIDTH=regidwidth, VCWIDTH=vcwidth, VSWIDTH=vswidth)
+        string_dispatchwidth = re.sub(r'\\', '', string_dispatchwidth)
+        val = eval(string_dispatchwidth)
+        string_dispatchwidth = "`define DISPATCHWIDTH" + " " + str(val) + "\n"
+
         string1 = ''' 
 
 /******************************************************************************
@@ -2307,14 +2348,14 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       vs_in_saved<=vs_in;
     end
 
-  wire [6:2] squash_vcpipe_NC;
+  wire [5:2] squash_vcpipe_NC;
   wire [{VCWIDTH}-1:0] vcpipe_d;
   wire [{VCWIDTH}*(4+1)-1:0] vcpipe_q;
   wire [4-1:0] vcpipe_en;
 
   assign vcpipe_d = (!pipe_advance_s2_r) ? vc_in_saved : vc_in;
   assign {CBS}vc[6],vc[5],vc[4],vc[3],vc[2]{CBE} = vcpipe_q;
-  assign vcpipe_en = pipe_advance[6:2] & {CBS}4'b1,ctrl2_memunit_en{CBE};
+  assign vcpipe_en = pipe_advance[5:2] & {CBS}3'b1,ctrl2_memunit_en{CBE};
 
 //module instance 
  pipe_{VCWIDTH}_4 vcpipe (
@@ -2325,41 +2366,41 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       .squash(squash_vcpipe_NC),
       .q(vcpipe_q));
 
-  wire [6:2] squash_vlpipe_NC;
+  wire [5:2] squash_vlpipe_NC;
 
 //module instance 
   pipe_{VCWIDTH}_4 vlpipe (
       .d( (!pipe_advance_s2_r) ? vl_in_saved : vl_in ),
       .clk(clk),
       .resetn(resetn),
-      .en( pipe_advance[6:2] & {CBS}4'b1,ctrl2_memunit_en{CBE} ),
+      .en( pipe_advance[5:2] & {CBS}3'b1,ctrl2_memunit_en{CBE} ),
       .squash(squash_vlpipe_NC),
       .q( {CBS}vl[6],vl[5],vl[4],vl[3],vl[2]{CBE} ));
 
-  wire [6:2] squash_vbasepipe_NC;
+  wire [5:2] squash_vbasepipe_NC;
 
 //module instance 
   pipe_{VCWIDTH}_4 vbasepipe (
       .d( (!pipe_advance_s2_r) ? vbase_in_saved : vbase_in ),
       .clk(clk),
       .resetn(resetn),
-      .en( pipe_advance[6:2] & {CBS}4'b1,ctrl2_memunit_en{CBE} ),
+      .en( pipe_advance[5:2] & {CBS}3'b1,ctrl2_memunit_en{CBE} ),
       .squash(squash_vbasepipe_NC),
       .q( {CBS}vbase[6],vbase[5],vbase[4],vbase[3],vbase[2]{CBE} ));
 
-  wire [6:2] squash_vincpipe_NC;
+  wire [5:2] squash_vincpipe_NC;
 
 //module instance 
   pipe_{VCWIDTH}_4 vincpipe (
       .d( (!pipe_advance_s2_r) ? vinc_in_saved : vinc_in ),
       .clk(clk),
       .resetn(resetn),
-      .en( pipe_advance[6:2] & {CBS}4'b1,ctrl2_memunit_en{CBE} ),
+      .en( pipe_advance[5:2] & {CBS}3'b1,ctrl2_memunit_en{CBE} ),
       .squash(squash_vincpipe_NC),
       .q( {CBS}vinc[6],vinc[5],vinc[4],vinc[3],vinc[2]{CBE} ));
 
   //stride register also used for elmt shamt for vext/vhalf/etc in memunit
-  wire [6:2] squash_vstridepipe_NC;
+  wire [5:2] squash_vstridepipe_NC;
 
 //module instance 
   pipe_{VCWIDTH}_4 vstridepipe (
@@ -2369,7 +2410,7 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
           (!pipe_advance_s2_r) ? vstride_in_saved : vstride_in ),
       .clk(clk),
       .resetn(resetn),
-      .en( pipe_advance[6:2] & {CBS}4'b1,ctrl2_memunit_en{CBE} ),
+      .en( pipe_advance[5:2] & {CBS}3'b1,ctrl2_memunit_en{CBE} ),
       .squash(squash_vstridepipe_NC),
       .q( {CBS}vstride[6],vstride[5],vstride[4],vstride[3],vstride[2]{CBE} ));
 
@@ -2397,42 +2438,6 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
   assign dispatcher_rotate=(~count[{NUMBANKS}*({LOG2MVL}-{LOG2NUMLANES}+1)-1]) && 
                           ((count>>(({NUMBANKS}-1)*({LOG2MVL}-{LOG2NUMLANES}+1)))!=0);
 
-`define DISPATCHWIDTH {LOG2MVL}+ \
-    1+ \
-    1+ \
-    1+ \
-    1+ \
-    1+ \
-    1+ \
-    1+ \
-    1+ \
-    1+ \
-    1+ \
-    1+ \
-    1+ \
-    REGIDWIDTH+ \
-    REGIDWIDTH+ \
-    REGIDWIDTH+ \
-    1+ \
-    1+ \
-    1+ \
-    1+ \
-    1+ \
-    1+ \
-    11+ \
-    2+ \
-    4+ \
-    5+ \
-    7+ \
-    1+ \
-    3+ \
-    1+ \
-    1+ \
-    1+ \
-    1+ \
-    {VCWIDTH}+ \
-    {VSWIDTH}+ \
-    8
 wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
 
 //module instance
@@ -3480,7 +3485,7 @@ trp_unit_{REGIDWIDTH} u_trp (
 endmodule
 
 '''
-        string = string1 + string2 + string3 + string4 + string5 + string6 + \
+        string = string_dispatchwidth + string1 + string2 + string3 + string4 + string5 + string6 + \
                   string7 + string8 + string9 + string10 + string11 + string12
         
         output_string = self.process_case_stmt(string)
