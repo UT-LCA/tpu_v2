@@ -1,26 +1,10 @@
-from vlane_saturatesize import vlane_saturatesize
-from vlane_saturatesum import vlane_saturatesum
-from local_add_sub import local_add_sub
-from optparse import OptionParser
-
-parser = OptionParser()
-(_,args) = parser.parse_args()
-
-
-class vlane_alu():
-    def __init__(self, fp):
-        self.fp = fp
-
-    def make_str(self, width):
-        string = '''\
 /****************************************************************************
 
   ALU Circuit:
 
          |    _     flags
  src1 ---0---| \    |
-             >+|----+----|Sat|------|M\
- src1 --|M\--|-/         |sum|      |U|---
+             >+|----+----|Sat|------|M src1 --|M\--|-/         |sum|      |U|---
         |U|                       +-|X/
  src2 --|X/                       |    1
                                   |
@@ -71,7 +55,7 @@ ALUOP_MERGE   =11'b101z0000011
 
 //`include "vlane_saturate.v"
 
-module vlane_alu_{WIDTH}(
+module vlane_alu_32(
     clk,
     resetn,
 
@@ -91,7 +75,7 @@ module vlane_alu_{WIDTH}(
 
     );
 
-parameter WIDTH={WIDTH};
+parameter WIDTH=32;
 
 input clk;
 input resetn;
@@ -164,11 +148,11 @@ wire [1:0] ctrl_flag_sel;
   wire [(WIDTH+2)-1:0] datab;
   wire cin;
 
-  assign dataa = {{{{2{{ctrl_signed&adder_opA[WIDTH-1]}}}},adder_opA}};
-  assign datab = {{{{2{{ctrl_signed&adder_opB[WIDTH-1]}}}},adder_opB}};
+  assign dataa = {{2{ctrl_signed&adder_opA[WIDTH-1]}},adder_opA};
+  assign datab = {{2{ctrl_signed&adder_opB[WIDTH-1]}},adder_opB};
   assign cin = ~ctrl_addsub;
 
-  local_add_sub_{ADD_SUB_WIDTH}_0_SIGNED local_adder_inst(
+  local_add_sub_34_0_SIGNED local_adder_inst(
       .dataa(dataa),
       .datab(datab),
       .cin(cin),
@@ -177,8 +161,8 @@ wire [1:0] ctrl_flag_sel;
   );
   `else
   lpm_add_sub adder_inst(
-      .dataa({{{{2{{ctrl_signed&adder_opA[WIDTH-1]}}}},adder_opA}}),
-      .datab({{{{2{{ctrl_signed&adder_opB[WIDTH-1]}}}},adder_opB}}),
+      .dataa({{2{ctrl_signed&adder_opA[WIDTH-1]}},adder_opA}),
+      .datab({{2{ctrl_signed&adder_opB[WIDTH-1]}},adder_opB}),
       .cin(~ctrl_addsub),
       .add_sub(ctrl_addsub),
       .result(adder_result)
@@ -254,7 +238,7 @@ wire [1:0] ctrl_flag_sel;
       .out(satsize_result)
       );
 
-  vlane_saturatesum_{WIDTH} satsum(
+  vlane_saturatesum_32 satsum(
       .in(adder_result_s2),
       .op(satsum_op_s2),
       .out(satsum_result)
@@ -265,25 +249,4 @@ wire [1:0] ctrl_flag_sel;
 
   assign result=mux1_result;
 
-endmodule'''       
-
-        fp = open("verilog/local_add_sub.v",'w')
-        uut = local_add_sub(fp)
-        uut.write(width+2,0,"SIGNED")
-        fp = open("verilog/vlane_saturatesize.v",'w')
-        uut = vlane_saturatesize(fp)
-        uut.write()
-        fp = open("verilog/vlane_saturatesum.v",'w')
-        uut = vlane_saturatesum(fp)
-        uut.write(width)
-        return string.format(WIDTH=width, ADD_SUB_WIDTH=width+2)
-        
-
-    def write (self, width):
-        self.fp.write(self.make_str(width))
-
-if __name__ == '__main__':
-    fp = open(args[0], "w")
-    uut = vlane_alu(fp)
-    uut.write(32)
-    fp.close()
+endmodule
