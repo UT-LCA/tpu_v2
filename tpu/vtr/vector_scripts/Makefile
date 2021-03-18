@@ -1,14 +1,14 @@
-BASE_DIR = /home/sangramkate
+BASE_DIR = ~/Desktop/utexas_thesis
 FINAL_FILE_NAME = final
-BASE_FILE_NAME = vregfile_vector
+BASE_FILE_NAME = vmem_unit
 
 SUB_DIR = vector
 
 TPU_SUB_DIR = verilog
 
-VTR_VERILOG_DIR = $(BASE_DIR)/vtr/vtr_flow/benchmarks/verilog/ml_benchmarks/tpu_subunits/$(SUB_DIR)
-VTR_TASK_DIR = $(BASE_DIR)/vtr/vtr_flow/tasks
-VTR_SCRIPTS_DIR = $(BASE_DIR)/vtr/vtr_flow/scripts
+VTR_VERILOG_DIR = $(BASE_DIR)/vtr-verilog-to-routing/vtr_flow/benchmarks/verilog/ml_benchmarks/tpu_subunits/$(SUB_DIR)
+VTR_TASK_DIR = $(BASE_DIR)/vtr-verilog-to-routing/vtr_flow/tasks
+VTR_SCRIPTS_DIR = $(BASE_DIR)/vtr-verilog-to-routing/vtr_flow/scripts
 
 TPU_VERILOG_DIR = $(BASE_DIR)/tpu_v2/tpu/vtr/vector_scripts/${TPU_SUB_DIR}
 TPU_VERILOG_FILE = $(BASE_FILE_NAME).v
@@ -27,7 +27,7 @@ config:
 		python3 gen_config.py $(SUB_DIR) $(TPU_VERILOG_FILE)
 
 vtr:
-	        python3 make_one.py 
+	    python3 make_one.py 
 		\cp $(TPU_VERILOG_DIR)/$(TPU_VERILOG_FILE) $(VTR_VERILOG_DIR)
 		$(VTR_SCRIPTS_DIR)/run_vtr_task.py $(VTR_TASK_DIR)/tpu
 

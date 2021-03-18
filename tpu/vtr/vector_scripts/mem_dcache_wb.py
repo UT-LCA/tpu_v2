@@ -1,3 +1,5 @@
+from rams import dpram1
+
 from optparse import OptionParser
 parser = OptionParser()
 (_,args) = parser.parse_args()
@@ -23,9 +25,9 @@ class mem_dcache_wb():
  * prefetch
  */
 
-`include "mem_wbbuffer.v"
+// `include "mem_wbbuffer.v"
 
-module mem_dcache_wb (
+module mem_dcache_wb_{LOG2CACHELINESIZE}_{LOG2CACHEDEPTH}_{LOG2DRAMWIDTHBITS} (
 
     resetn,
 
@@ -69,20 +71,20 @@ module mem_dcache_wb (
     );
 
 // Only need to set THESE TWO PARAMETERS
-parameter {LOG2CACHELINESIZE}=7;            // In bits, subtract 3 for bytes
-parameter {LOG2CACHEDEPTH}=6;
-parameter {LOG2DRAMWIDTHBITS}=7;            // In bits, subtract 3 for bytes
+// parameter {LOG2CACHELINESIZE}=7;            // In bits, subtract 3 for bytes
+// parameter {LOG2CACHEDEPTH}=6;
+// parameter {LOG2DRAMWIDTHBITS}=7;            // In bits, subtract 3 for bytes
 
 parameter CACHELINESIZE=2**{LOG2CACHELINESIZE}; 
 parameter CACHEDEPTH=2**{LOG2CACHEDEPTH};  
 parameter DRAMWIDTHBITS=2**{LOG2DRAMWIDTHBITS};
 
-parameter TAGSIZE=32-{LOG2CACHEDEPTH}-{LOG2CACHELINESIZE}+3;
+// parameter TAGSIZE=32-{LOG2CACHEDEPTH}-{LOG2CACHELINESIZE}+3;
 
-`define TAGRANGE 31:32-TAGSIZE
-`define OFFSETRANGE {LOG2CACHEDEPTH}-1+{LOG2CACHELINESIZE}-3:{LOG2CACHELINESIZE}-3
+// `define TAGRANGE 31:32-TAGSIZE
+// `define OFFSETRANGE {LOG2CACHEDEPTH}-1+{LOG2CACHELINESIZE}-3:{LOG2CACHELINESIZE}-3
 // selects 32-bit word
-`define OFFSETWORDRANGE {LOG2CACHEDEPTH}-1+{LOG2CACHELINESIZE}-3:2
+// `define OFFSETWORDRANGE {LOG2CACHEDEPTH}-1+{LOG2CACHELINESIZE}-3:2
 
 
 input           resetn;
@@ -124,48 +126,48 @@ input  [CACHELINESIZE/8-1:0] mem_dcache_byteen;
 input                        mem_dcache_wren;
 
 
-wire [31:0]              mem_dirtyaddr; 
-wire [CACHELINESIZE-1:0] mem_dirtydata;
-wire                     mem_dirtywe;
+//wire [31:0]              mem_dirtyaddr; 
+//wire [CACHELINESIZE-1:0] mem_dirtydata;
+//wire                     mem_dirtywe;
 
-wire                     mem_validout;
-wire                     mem_dirtyout;
-wire [TAGSIZE-1:0]       mem_tagout;
-wire [CACHELINESIZE-1:0] mem_lineout;
+//wire                     mem_validout;
+//wire                     mem_dirtyout;
+// wire [TAGSIZE-1:0]       mem_tagout;
+//wire [CACHELINESIZE-1:0] mem_lineout;
 
-wire [TAGSIZE-1:0]       cache_tagout;
-wire                     cache_validout;
+// wire [TAGSIZE-1:0]       cache_tagout;
+//wire                     cache_validout;
 wire [CACHELINESIZE-1:0] cache_dataout;
 
-wire                     tagmatch;
+//wire                     tagmatch;
 reg  [32-1:0] bus_address_saved;
-wire  [{LOG2CACHEDEPTH}-1:0] mem_ndx_saved;
+//wire  [{LOG2CACHEDEPTH}-1:0] mem_ndx_saved;
 
 wire  cache_hit;
 
-reg  [{LOG2CACHEDEPTH}-1:0] count;
+//reg  [{LOG2CACHEDEPTH}-1:0] count;
 
 reg   [CACHELINESIZE/8-1:0]   bus_byteen_t;
 wire [{LOG2CACHELINESIZE}-5-1:0] wordsel_saved;
 reg  [31:0]  bus_readdata;
 wire [CACHELINESIZE-1:0] bus_writedata_t;
 
-reg [31:0]                  mem_wbaddr_r;  // captures address for writeback
-reg [CACHELINESIZE-1:0]     mem_wbdata_r;
-wire                        mem_wbwe_pulse;
-wire                        mem_wbload;
-reg [31:0]                  mem_filladdr_r; // don't prefetch over dirty lines
-reg [31:0]                  mem_filladdr_r2;
-wire                        t_mem_fillwe;
+//reg [31:0]                  mem_wbaddr_r;  // captures address for writeback
+//reg [CACHELINESIZE-1:0]     mem_wbdata_r;
+//wire                        mem_wbwe_pulse;
+//wire                        mem_wbload;
+//reg [31:0]                  mem_filladdr_r; // don't prefetch over dirty lines
+//reg [31:0]                  mem_filladdr_r2;
+//wire                        t_mem_fillwe;
 
-  always@(posedge mem_clk)
-    if (bus_flush)
-      count <= count + 1'b1;
+//  always@(posedge mem_clk)
+//    if (bus_flush)
+//      count <= count + 1'b1;
 
  dpram1_22_67108864_512 data0 (
     .clk(bus_clk),
     .address_a(bus_address[28:7]),
-    .address_b(mem_dcache_address),
+    .address_b(mem_dcache_address[21:0]),
     .wren_a(bus_wren),
     .wren_b(mem_dcache_wren),
     .data_a(bus_writedata_t),
@@ -203,21 +205,26 @@ wire                        t_mem_fillwe;
 
   assign bus_writedata_t = bus_writedata;
 
-  integer i;
+//   reg [31:0] i;
+  wire [31:0] bus_readdata_wire;
+  assign bus_readdata_wire = cache_dataout >> (wordsel_saved*32);
+
   always @*
   begin
-    bus_readdata<=cache_dataout[31:0];
-    for (i=0; i<CACHELINESIZE/32; i=i+1)
-      if (wordsel_saved==i)
-        bus_readdata<=cache_dataout[32*i +: 32];
+    // bus_readdata<=cache_dataout[31:0];
+    // for (i=0; i<CACHELINESIZE/32; i=i+1)
+    //   if (wordsel_saved==i)
+        bus_readdata<=bus_readdata_wire;
   end
 
 
   assign bus_readdata_line=cache_dataout;
-endmodule
+endmodule'''
 
-
-                 '''
+        fp = open("verilog/dpram1", 'a')
+        uut = dpram1(fp)
+        uut.write(22, 67108864, 512)
+        fp.close()
         return string.format(LOG2DRAMWIDTHBITS = log2dramwidthbits , \
                              LOG2CACHELINESIZE = log2cachewidthbits , \
                              LOG2CACHEDEPTH = log2cachedepth , \
@@ -231,5 +238,5 @@ endmodule
 if __name__ == '__main__':
     fp = open(args[0], "w")
     uut1 = mem_dcache_wb(fp)
-    uut1.write(32,32,4096)
+    uut1.write(7,7,6)
     fp.close()

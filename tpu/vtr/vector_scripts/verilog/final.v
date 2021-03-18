@@ -1,19 +1,4 @@
-from velmshifter_serial import velmshifter_jump
-from velmshifter_serial import velmshifter
-from vmem_crossbar import vmem_crossbar
-from components import pipereg
-from optparse import OptionParser
-import re
-
-parser = OptionParser()
-(_,args) = parser.parse_args()
-
-class vmem_unit():
-    def __init__(self, fp):
-        self.fp = fp
-
-    def make_str(self, vpuwidth,numlanes, log2numlanes, numparallellanes, log2numparallellanes, controlwidth, dmem_writewidth,log2dmem_writewidth, dmem_readwidth, log2dmem_readwidth, elmwidth, regidwidth):
-        string1 = ''' 
+ 
 // THIS UNIT SHOULD BE REDESIGNED!!!!!
 // It started off simple with low performance and after adding a bunch of hacks
 // to make it perform better it's gotten messy.  A new memory unit should
@@ -64,13 +49,15 @@ class vmem_unit():
  *
  * Quartus 5.0: 919 LEs, 137 MHz (CritPath: vip_r to vreaddata)
  *************************/
+//`include "velmshifter_serial.v"
+//`include "vmem_crossbar.v"
 
 // VECTOR DATA CACHE PREFETCHER 0:off, 65535-N:N*veclength, N:pfch N cache lines
 `define DPV 0
 // VECTOR DATA CACHE PREFETCHER 0:off, 65535:vectorlength, N:pfch N cache lines
 `define VECTORPREFETCHES `DPV
 
-module vmem_unit_{VPUWIDTH}_{NUMLANES}_{LOG2NUMLANES}_{NUMPARALLELLANES}_{LOG2NUMPARALLELLANES}_{CONTROLWIDTH}_{DMEM_WRITEWIDTH}_{LOG2DMEM_WRITEWIDTH}_{DMEM_READWIDTH}_{LOG2DMEM_READWIDTH}_{ELMIDWIDTH}_{REGIDWIDTH} (
+module vmem_unit_32_4_2_2_1_32_128_7_128_7_2_5 (
     clk,
     resetn,
 
@@ -142,43 +129,43 @@ output stall;
 input last_subvector;
 
 // Control ports
-input [ {CONTROLWIDTH}-1 : 0 ] cbase;
-input [ {CONTROLWIDTH}-1 : 0 ] cstride;
-input [ {CONTROLWIDTH}-1 : 0 ] cprefetch;
+input [ 32-1 : 0 ] cbase;
+input [ 32-1 : 0 ] cstride;
+input [ 32-1 : 0 ] cprefetch;
 
 // Vector ports
-input  [          {NUMLANES}-1 : 0 ]  vmask;
-input  [ {NUMLANES}*{CONTROLWIDTH}-1 : 0 ]  vstrideoffset;
-input  [ {NUMLANES}*{VPUWIDTH}-1 : 0 ]  vindex;
-input  [ {NUMLANES}*{VPUWIDTH}-1 : 0 ]  vwritedata;
-output [ {NUMLANES}*{VPUWIDTH}-1 : 0 ]  voutput;
-output [          {NUMLANES}-1 : 0 ]  voutput_we;
+input  [          4-1 : 0 ]  vmask;
+input  [ 4*32-1 : 0 ]  vstrideoffset;
+input  [ 4*32-1 : 0 ]  vindex;
+input  [ 4*32-1 : 0 ]  vwritedata;
+output [ 4*32-1 : 0 ]  voutput;
+output [          4-1 : 0 ]  voutput_we;
 
-input   [{REGIDWIDTH}-1:0]  in_dst;
+input   [5-1:0]  in_dst;
 input                     in_dst_we;
-output   [{REGIDWIDTH}-1:0] out_dst;
+output   [5-1:0] out_dst;
 output                    out_dst_we;
 input                     in_vs_dst_we;
 output                    out_vs_dst_we;
 
-input  [      {LOG2NUMLANES}-1 : 0 ]  sa;
+input  [      2-1 : 0 ]  sa;
 input                               dir_left;
 
 // Data memory interface
 output dmem_en;
 output dmem_we;
 output  [ 31 : 0 ]                  dmem_address;
-output  [ {DMEM_WRITEWIDTH}/8-1 : 0 ] dmem_byteen;
-output  [ {DMEM_WRITEWIDTH}-1 : 0 ]   dmem_writedata;
-input   [ {DMEM_READWIDTH}-1 : 0 ]    dmem_readdata;
+output  [ 128/8-1 : 0 ] dmem_byteen;
+output  [ 128-1 : 0 ]   dmem_writedata;
+input   [ 128-1 : 0 ]    dmem_readdata;
 input                               dmem_cachematch;
 input                               dmem_cachemiss;
 output  [ 31 : 0 ]                  dmem_prefetch;
 input                               dmem_wait;
 
 reg     [ 31 : 0 ]                  dmem_address;
-reg     [ {DMEM_WRITEWIDTH}/8-1 : 0 ] dmem_byteen;
-reg     [ {DMEM_WRITEWIDTH}-1 : 0 ]   dmem_writedata;
+reg     [ 128/8-1 : 0 ] dmem_byteen;
+reg     [ 128-1 : 0 ]   dmem_writedata;
 reg     [ 31 : 0 ]                  dmem_prefetch;
 
 wire  [1:0]  op_pattern;      // 0-Unit, 1-Strided, 2-Indexed
@@ -187,24 +174,24 @@ wire         op_signed;       // 0-unsigned, 1-signed
 wire         op_we;         // 0-load, 1-store
 wire         op_memop;         // 1-memory op, 0-vector shift op
 
-wire  [ {NUMPARALLELLANES}*{VPUWIDTH}-1 : 0 ]  __vreaddata;
-reg           [ {NUMLANES}*{CONTROLWIDTH}-1 : 0 ]  address;
-reg              [ {NUMLANES}*{VPUWIDTH}-1:0]  vreaddata;
-reg                    [ {NUMLANES}-1 : 0 ]  vreaddata_we;
-reg   [ {NUMPARALLELLANES}*({LOG2DMEM_READWIDTH}-5)-1 : 0 ] crossbar_sel;
-wire  [ {NUMPARALLELLANES}*32-1 : 0 ] crossbar;
-wire  [ {NUMPARALLELLANES}*32-1 : 0 ]  _vwritedata;
-wire   [ {NUMPARALLELLANES}*4-1 : 0 ]  _vbyteen;
+wire  [ 2*32-1 : 0 ]  __vreaddata;
+reg           [ 4*32-1 : 0 ]  address;
+reg              [ 4*32-1:0]  vreaddata;
+reg                    [ 4-1 : 0 ]  vreaddata_we;
+reg   [ 2*(7-5)-1 : 0 ] crossbar_sel;
+wire  [ 2*32-1 : 0 ] crossbar;
+wire  [ 2*32-1 : 0 ]  _vwritedata;
+wire   [ 2*4-1 : 0 ]  _vbyteen;
 
-reg  [ {CONTROLWIDTH}-1 : 0 ] stride;
-wire [ {CONTROLWIDTH}-1 : 0 ] stride_tmp;
-reg  [ {CONTROLWIDTH}-1 : 0 ] prefetch;
-wire [ {CONTROLWIDTH}-1 : 0 ] t_cprefetch;
+reg  [ 32-1 : 0 ] stride;
+wire [ 32-1 : 0 ] stride_tmp;
+reg  [ 32-1 : 0 ] prefetch;
+wire [ 32-1 : 0 ] t_cprefetch;
 
-wire           [         {NUMLANES}-1 : 0 ]  vshifted_mask;
-wire           [         {NUMLANES}-1 : 0 ]  vshifted_masksave;
-wire          [ {NUMLANES}*{VPUWIDTH}-1 : 0 ]  vshifted_writedata;
-wire          [ {NUMLANES}*{CONTROLWIDTH}-1 : 0 ]  vshifted_address;
+wire           [         4-1 : 0 ]  vshifted_mask;
+wire           [         4-1 : 0 ]  vshifted_masksave;
+wire          [ 4*32-1 : 0 ]  vshifted_writedata;
+wire          [ 4*32-1 : 0 ]  vshifted_address;
 
 
 reg                           dmem_valid;
@@ -214,14 +201,14 @@ reg                           cachedata_stillvalid;
 reg [2:0] munit_state;
 reg [2:0] issue_state;
 
-reg  [ {LOG2NUMLANES}-1 : 0 ] vpid;
-reg  [ {NUMLANES}-1 : 0 ] done;
+reg  [ 2-1 : 0 ] vpid;
+reg  [ 4-1 : 0 ] done;
 wire doneall;
 
-wire  [         {NUMLANES}-1 : 0 ]  _vreaddata_we;
-reg   [ {NUMPARALLELLANES}-1 : 0 ]  _parhits;
-wire  [ {NUMPARALLELLANES}-1 : 0 ]  parhits;
-reg   [ {NUMPARALLELLANES}-1 : 0 ]  parhits_done;
+wire  [         4-1 : 0 ]  _vreaddata_we;
+reg   [ 2-1 : 0 ]  _parhits;
+wire  [ 2-1 : 0 ]  parhits;
+reg   [ 2-1 : 0 ]  parhits_done;
 wire  parhits_doneall;
 wire  parhits_all;
 wire  parhits_none;
@@ -240,29 +227,29 @@ wire addr_rewind;
 wire do_quick_load;
 reg quick_loaded;
 
-reg  [ {LOG2NUMLANES}-1 : 0 ] sa_count;
-wire [ {LOG2NUMLANES}-1 : 0 ] next_sa_count;
+reg  [ 2-1 : 0 ] sa_count;
+wire [ 2-1 : 0 ] next_sa_count;
 wire                        next_sa_count_zero;
 wire                        sa_zero;
-reg  [ {NUMLANES}*{VPUWIDTH}-1 : 0 ]  vshiftresult;
+reg  [ 4*32-1 : 0 ]  vshiftresult;
 
-genvar i;
-reg [31:0] j;
-genvar k;
-reg [31:0] l;
-reg [31:0] m;
-reg [31:0] n;
-reg [31:0] p;
+//genvar i;
+reg[31:0] j;
+//genvar k;
+reg[31:0] l;
+reg[31:0] m;
+reg[31:0] n;
+reg[31:0] p;
 
-  assign {CBS}op_memop,op_pattern,op_size,op_signed,op_we{CBE}=op;
+  assign {op_memop,op_pattern,op_size,op_signed,op_we}=op;
 
   assign stall= (munit_state!=MUNIT_IDLE && munit_state!=MUNIT_DONE);
 
 /************************** Pipeline load stage *******************************/
   reg enable_s2;
   reg last_subvector_s2;
-  reg [ {REGIDWIDTH}-1 : 0 ] in_dst_s2;
-  reg [      {LOG2NUMLANES}-1 : 0 ] sa_s2;
+  reg [ 5-1 : 0 ] in_dst_s2;
+  reg [      2-1 : 0 ] sa_s2;
   reg dir_left_s2;
   reg  [1:0]  op_pattern_s2;      // 0-Unit, 1-Strided, 2-Indexed
   reg  [1:0]  op_size_s2;         // 0-byte, 1-16bits, 2-32bits, 3-64bits
@@ -278,11 +265,7 @@ reg [31:0] p;
       in_dst_s2<=0;
       sa_s2<=0;
       dir_left_s2<=0;
-      op_memop_s2<=0;
-      op_pattern_s2<=0;
-      op_size_s2<=0;
-      op_signed_s2<=0;
-      op_we_s2<=0;
+      {op_memop_s2,op_pattern_s2,op_size_s2,op_signed_s2,op_we_s2}<=0;
     end
     else if (!stall)
     begin
@@ -292,12 +275,7 @@ reg [31:0] p;
         in_dst_s2<=in_dst;
       sa_s2<=sa;
       dir_left_s2<=dir_left;
-      //{CBS}op_memop_s2,op_pattern_s2,op_size_s2,op_signed_s2,op_we_s2{CBE}<=op;
-      op_memop_s2<=op[6];
-      op_pattern_s2<=op[5:4];
-      op_size_s2<=op[3:2];
-      op_signed_s2<=op[1];
-      op_we_s2<=op[0];
+      {op_memop_s2,op_pattern_s2,op_size_s2,op_signed_s2,op_we_s2}<=op;
     end
 
 /*************************** Vector op logic *********************************/
@@ -316,24 +294,23 @@ reg [31:0] p;
       sa_count<=next_sa_count;
   end
 
-  wire doublewrite;
   // Detect double write one clock cycle early - also support 1 lane
-  assign doublewrite=(~op_memop_s2) && ({NUMLANES}>1) && ( (dir_left_s2) ? 
-              (|vshifted_mask[({NUMLANES})-2:0]) && //support L=1
-                (vshifted_mask[{NUMLANES}-1]&(|vshifted_masksave)) :
-              (|vshifted_mask[{NUMLANES}-1:1]) && //support L=1
+  assign doublewrite=(~op_memop_s2) && (4>1) && ( (dir_left_s2) ? 
+              (|vshifted_mask[((4>1) ? 4:2)-2:0]) && //support L=1
+                (vshifted_mask[4-1]&(|vshifted_masksave)) :
+              (|vshifted_mask[4-1:(4>1) ? 1 : 0]) && //support L=1
                 (vshifted_mask[0]&(|vshifted_masksave)));
 
-  assign out_dst = {CBS}in_dst_s2[{REGIDWIDTH}-1:{ELMIDWIDTH}],
-                    (munit_state!=MUNIT_XTRAWRITE) ? in_dst_s2[{ELMIDWIDTH}-1:0] :
-                     (dir_left_s2) ? in_dst_s2[{ELMIDWIDTH}-1:0]+1'b1 : 
-                       in_dst_s2[{ELMIDWIDTH}-1:0]-1'b1{CBE};
+  assign out_dst = {in_dst_s2[5-1:2],
+                    (munit_state!=MUNIT_XTRAWRITE) ? in_dst_s2[2-1:0] :
+                     (dir_left_s2) ? in_dst_s2[2-1:0]+1'b1 : 
+                       in_dst_s2[2-1:0]-1'b1};
 
   //Truncate shifted result to VPW's size
   always@*
-    for (p=0; p<{NUMLANES}; p=p+1)
-      vshiftresult[p*{VPUWIDTH} +: {VPUWIDTH}]=
-              vshifted_address[p*{CONTROLWIDTH} +: {VPUWIDTH}];
+    for (p=0; p<4; p=p+1)
+      vshiftresult[p*32 +: 32]=
+              vshifted_address[p*32 +: 32];
 
   assign voutput= (~enable_s2) ? 0 :
                   (op_memop_s2) ? vreaddata : 
@@ -360,13 +337,13 @@ reg [31:0] p;
 
   // Address Generator for each lane, or store vector to be shifted
   always@*
-    for (m=0; m<{NUMLANES}; m=m+1)
-      address[m*{CONTROLWIDTH} +: {CONTROLWIDTH}] = ((op_memop) ? cbase : 0) + 
-            ( (op_pattern[1] || ~op_memop)  ? vindex[m*{VPUWIDTH} +: {VPUWIDTH}] : 
-               (vstrideoffset[m*{CONTROLWIDTH} +: {CONTROLWIDTH}]<<op_size));
+    for (m=0; m<4; m=m+1)
+      address[m*32 +: 32] = ((op_memop) ? cbase : 0) + 
+            ( (op_pattern[1] || ~op_memop)  ? vindex[m*32 +: 32] : 
+               (vstrideoffset[m*32 +: 32]<<op_size));
 
-  wire [{NUMLANES}-1:0] vwritedata_shifter_squash_NC;
-  velmshifter_jump_{VPUWIDTH}_{NUMLANES}_{NUMPARALLELLANES} vwritedatashifter(
+  wire [4-1:0] vwritedata_shifter_squash_NC;
+  velmshifter_jump_4_2_32 vwritedatashifter(
       .clk(clk),
       .resetn(resetn),    //Don't use if not a store
       .load(shifter_load && op_we),
@@ -379,8 +356,8 @@ reg [31:0] p;
       .inpipe(vwritedata),
       .outpipe(vshifted_writedata));
 
-  wire [{NUMLANES}-1:0] vaddress_shifter_squash_NC;
-  velmshifter_jump_{CONTROLWIDTH}_{NUMLANES}_{NUMPARALLELLANES} vaddressshifter(
+  wire [4-1:0] vaddress_shifter_squash_NC;
+  velmshifter_jump_4_2_32 vaddressshifter(
       .clk(clk),
       .resetn(resetn), //consider forcing to 0 if not used
       .load(shifter_load),
@@ -393,7 +370,7 @@ reg [31:0] p;
       .inpipe( address),
       .outpipe(vshifted_address));
 
-  velmshifter_jump_1_{NUMLANES}_{NUMPARALLELLANES} vmaskshifter(
+  velmshifter_jump_4_2_1 vmaskshifter(
       .clk(clk),
       .resetn(resetn),
       .load(shifter_load),
@@ -407,8 +384,8 @@ reg [31:0] p;
       .outpipe(vshifted_mask));
 
   //Save spilled over masks for shifting instructions (can only shift by 1)
-  wire    [{NUMLANES}-1 : 0]  vmasks_save_inpipe_NC;
-  velmshifter_{NUMLANES}_1  vmaskssave(
+  wire    [4-1 : 0]  vmasks_save_inpipe_NC;
+  velmshifter_4_1  vmaskssave(
       .clk(clk),
       .resetn(resetn && ~shifter_load),
       .load(1'b0),
@@ -416,7 +393,7 @@ reg [31:0] p;
       .dir_left(shifter_dirleft),
       .squash(0),
       .shiftin_left( vshifted_mask[0] ),
-      .shiftin_right( vshifted_mask[{NUMLANES}-1] ),
+      .shiftin_right( vshifted_mask[4-1] ),
       .inpipe(vmasks_save_inpipe_NC),
       .outpipe(vshifted_masksave));
 
@@ -426,8 +403,8 @@ reg [31:0] p;
     if (!resetn || last_subvector_s2&~stall&~shifter_load&~quick_loaded )
       stride<=0;
     else if (shifter_load)
-      stride<= (stride_tmp>{DMEM_READWIDTH}/8) ? 
-                      stride_tmp : {DMEM_READWIDTH}/8;
+      stride<= (stride_tmp>128/8) ? 
+                      stride_tmp : 128/8;
 
   wire [15:0] constantprefetch;
   assign constantprefetch=`VECTORPREFETCHES;
@@ -438,18 +415,16 @@ reg [31:0] p;
   //Send stride and vector length to bus.  To do constant prefetching set
   //stride to cache line size and send constant as length
   //******************************************************************
-  wire [15:0] temp_prefetch;
-  assign temp_prefetch = 16'd0+2**({LOG2DMEM_READWIDTH}-3);
   always@(posedge clk)
     if (!resetn || last_subvector_s2&~stall&~shifter_load&~quick_loaded )
       prefetch<=0;
     else if (shifter_load)
       if (`VECTORPREFETCHES >= 65530)
-        prefetch<= {CBS} stride_tmp[15:0], t_cprefetch[15:0] {CBE};
+        prefetch<= { stride_tmp[15:0], t_cprefetch[15:0] };
       else if (`VECTORPREFETCHES == 0)
         prefetch<= 0;
       else
-        prefetch<= {CBS} temp_prefetch,constantprefetch {CBE};
+        prefetch<= { 16'd0+2**(7-3),constantprefetch };
 
   // State machine for issuing addresses - this is really sneaky!!!!!
   // The cache takes 1 cycle to respond to a cache request and is generally
@@ -506,7 +481,7 @@ reg [31:0] p;
     if (!resetn || shifter_load || last_subvector_s2&~stall&~shifter_load )
       vpid<=0;
     else if (shifter_shift)
-      vpid<=vpid + ((shifter_jump) ? {NUMPARALLELLANES} : 1'b1);
+      vpid<=vpid + ((shifter_jump) ? 2 : 1'b1);
 
   // Loads in a new request if it is a memory request. quick_loaded is high 
   // the cycle after the new request has been loaded and instructs the
@@ -521,7 +496,7 @@ reg [31:0] p;
   always@(posedge clk)
     quick_loaded<=shifter_load&do_quick_load;
 
-  assign dmem_en = ((shifter_jump) ? (|vshifted_mask[{NUMPARALLELLANES}-1:0]) : 
+  assign dmem_en = ((shifter_jump) ? (|vshifted_mask[2-1:0]) : 
                                       vshifted_mask[0]) && 
                     (munit_state==MUNIT_ISSUE || quick_loaded);
   assign dmem_we=op_we_s2;
@@ -531,8 +506,8 @@ reg [31:0] p;
   * will propagate through the adder.  We perform the addition/subtraction
   * in parallel with the miss calculation and use the miss as a mux select
   *********************/
-  wire [ {CONTROLWIDTH}-1 : 0 ] dmem_address_next /* synthesis keep */;
-  wire [ {CONTROLWIDTH}-1 : 0 ] dmem_address_prev /* synthesis keep */;
+  wire [ 32-1 : 0 ] dmem_address_next /* synthesis keep */;
+  wire [ 32-1 : 0 ] dmem_address_prev /* synthesis keep */;
   assign dmem_address_next=dmem_address + stride;
   assign dmem_address_prev=dmem_address - stride;
 
@@ -540,28 +515,14 @@ reg [31:0] p;
     if (!resetn)
       dmem_address<=0;
     else if (shifter_load)
-      dmem_address<=address[{CONTROLWIDTH}-1:0];
+      dmem_address<=address[32-1:0];
     else if (shifter_shift)
-'''
-
-        if numlanes<=numparallellanes:
-          string1 += '''
       dmem_address<= (!shifter_jump) ? 
+              vshifted_address[((4>1) ? 1:0)
+                *32 +: 32] :
               vshifted_address[
-                2*{CONTROLWIDTH}-1 : {CONTROLWIDTH} ] :
-              vshifted_address[
-                  {CONTROLWIDTH}-1 : 0 ];
-                  '''
-        else:
-          string1 += '''
-      dmem_address<= (!shifter_jump) ? 
-              vshifted_address[
-                2*{CONTROLWIDTH}-1 : {CONTROLWIDTH}] :
-              vshifted_address[
-                 ({NUMPARALLELLANES})*{CONTROLWIDTH}+{CONTROLWIDTH}-1 : ({NUMPARALLELLANES})*{CONTROLWIDTH}];
-                  '''
-
-        string1 += ''' 
+                ((4<=2) ? 0 : 2)
+                  *32 +: 32];
     //Fetch next cache line if partial match on initial cache access
     //else if (parhits_some && ~cachedata_stillvalid)
     else if (addr_advance)
@@ -574,58 +535,46 @@ reg [31:0] p;
       dmem_prefetch<=0;
     //else if (shifter_load)
     else
-      dmem_prefetch<=prefetch[{CONTROLWIDTH}-1:0];
+      dmem_prefetch<=prefetch[32-1:0];
 
 /*************************** Mem Write LOGIC ********************************/
 
-'''
+// Generate byte/halfword alignment circuitry for each word                  
 
-
-#######################################
-# Exploring genvar statement using 
-# python for loop. the basic string 
-# includes the content of generate loop
-# Here is the genvar code: 
-#
-#  generate
-#  for (i=0; i< NUMPARALLELLANES; i=i+1)
-#  begin : write_gen
-#       <code>
-#   end
-#  endgenerate
-#######################################
-
-
-        string2_basic='''
-
-       vstore_data_translator vstore_data_translator_[i](
+       vstore_data_translator vstore_data_translator_0(
          //Pad vshifted_writedata with zeros incase signal is less than 32-bits
-      .write_data({CBS}32'b0,vshifted_writedata[[i]*{VPUWIDTH}+{VPUWIDTH}-1 : [i]*{VPUWIDTH}]{CBE}),
-      .d_address(vshifted_address[[i]*32+2-1 : [i]*32]),
+      .write_data({32'b0,vshifted_writedata[0*32 +: 32]}),
+      .d_address(vshifted_address[0*32 +: 2]),
       .store_size(op_size_s2), 
-      .d_byteena(_vbyteen[4*[i]+4-1 : 4*[i]]),  
-      .d_writedataout(_vwritedata[[i]*32+32-1 : [i]*32]));
+      .d_byteena(_vbyteen[4*0 +: 4]),  
+      .d_writedataout(_vwritedata[0*32 +: 32]));
 
-        '''
-        string2 ="// Generate byte/halfword alignment circuitry for each word \
-                 "
-        for k in range(0,numparallellanes):
-            temp = string2_basic.replace("[i]",str(k)) + "\n"
-            temp = re.sub(r'_i', "_"+str(k), temp)
-            string2  += temp
+        
 
-        string3 = '''
+
+       vstore_data_translator vstore_data_translator_1(
+         //Pad vshifted_writedata with zeros incase signal is less than 32-bits
+      .write_data({32'b0,vshifted_writedata[1*32 +: 32]}),
+      .d_address(vshifted_address[1*32 +: 2]),
+      .store_size(op_size_s2), 
+      .d_byteena(_vbyteen[4*1 +: 4]),  
+      .d_writedataout(_vwritedata[1*32 +: 32]));
+
+        
+
 
   always@*
   begin
-    for (l=0; l<{NUMPARALLELLANES}; l=l+1)
-      if (dmem_address[31:{LOG2DMEM_WRITEWIDTH}-3] == vshifted_address[32*l+{LOG2DMEM_WRITEWIDTH}-3 +: 32-{LOG2DMEM_WRITEWIDTH}+3])
+    for (l=0; l<2; l=l+1)
+      if (dmem_address[31:7-3] == vshifted_address[32*l+7-3 +: 32-7+3])
       begin
         dmem_writedata=dmem_writedata| (_vwritedata[l*32 +: 32] << 
-            {CBS}vshifted_address[32*l+2 +: {LOG2DMEM_WRITEWIDTH}-5], {CBS}5{CBS}1'b0{CBE}{CBE}{CBE});
+            {vshifted_address[32*l+2 +: 7-5], {5{1'b0}}});
         if (vshifted_mask[l] && (shifter_jump || (l==0)))
           dmem_byteen=dmem_byteen | (_vbyteen[4*l+:4]<<
-            {CBS}vshifted_address[32*l+2 +: {LOG2DMEM_WRITEWIDTH}-5], {CBS}2{CBS}1'b0{CBE}{CBE}{CBE});
+            {vshifted_address[32*l+2 +: 7-5], {2{1'b0}}});
+        else 
+          dmem_byteen=0;
       end
       else begin
         dmem_writedata=0;
@@ -661,123 +610,98 @@ reg [31:0] p;
 
   // Find out which parallel lanes hit in the cache
   always@*
-    for (j=0; j<{NUMPARALLELLANES}; j=j+1)
+    for (j=0; j<2; j=j+1)
       //This signal tells us a cache request succeeded (for either load/store)
       //Each bit corresponds to a parallel lane
       _parhits[j]= vshifted_mask[j] &&
           ((dmem_valid&(dmem_cachematch&~op_we_s2 || op_we_s2&~dmem_wait)) || 
               (cachedata_stillvalid&~op_we_s2)) &&
-            (vshifted_address[j*32+{LOG2DMEM_READWIDTH}-3 +: 
-                             32-{LOG2DMEM_READWIDTH}+3] ==
-               dmem_readdata_address[31:{LOG2DMEM_READWIDTH}-3]);
+            (vshifted_address[j*32+7-3 +: 
+                             32-7+3] ==
+               dmem_readdata_address[31:7-3]);
 
   //For operations that don't jump, just look at first bit of _parhits
-  assign parhits=(shifter_jump) ? _parhits : {CBS}{NUMPARALLELLANES}{CBS}_parhits[0]{CBE}{CBE};
+  assign parhits=(shifter_jump) ? _parhits : {2{_parhits[0]}};
 
   // Detect all parallel lanes hitting
-  assign parhits_all=&(parhits|~vshifted_mask[{NUMPARALLELLANES}-1:0]);
+  assign parhits_all=&(parhits|~vshifted_mask[2-1:0]);
   // Detect cache misses
   assign parhits_none=~|(parhits);
   // Detect some misses - fetch next cache line
   assign parhits_some=~parhits_none && ~parhits_all;
 
-  //If {NUMLANES}<={NUMPARALLELLANES} then we will never do a jump, so we make
+  //If 4<=2 then we will never do a jump, so we make
   //compiler ignore this statement if that's the case
   always@(posedge clk)
     if (!resetn || shifter_load)
-      parhits_done<= (shifter_jump_s1) ?  ~vmask : {CBS}{NUMPARALLELLANES}{CBS}~vmask[0]{CBE}{CBE};
+      parhits_done<= (shifter_jump_s1) ?  ~vmask : {2{~vmask[0]}};
     else if ( parhits_doneall )
-    '''
-
-        if numlanes>numparallellanes:
-          string3 += '''
-      parhits_done<= (shifter_jump && ({NUMLANES}>{NUMPARALLELLANES})) ? 
+      parhits_done<= (shifter_jump && (4>2)) ? 
                     ~vshifted_mask[ 
-                        2*({NUMPARALLELLANES})-1 : {NUMPARALLELLANES}] :
-                    {CBS}{NUMPARALLELLANES}{CBS}({NUMLANES}>1) ? ~vshifted_mask[1] : 1'b0{CBE}{CBE};
-                    '''
-        else:
-          string3 += '''
-      parhits_done<= (shifter_jump && ({NUMLANES}>{NUMPARALLELLANES})) ? 
-                    ~vshifted_mask[ 
-                      {NUMPARALLELLANES}-1:0] :
-                    {CBS}{NUMPARALLELLANES}{CBS}({NUMLANES}>1) ? ~vshifted_mask[1] : 1'b0{CBE}{CBE};
-                    '''
- 
-
-        string3 += '''
+                        ((4>2) ? 2 : 0) 
+                      +: 2] :
+                    {2{(4>1) ? ~vshifted_mask[1] : 1'b0}};
     else           
       parhits_done<= parhits_done|parhits;
 
   assign parhits_doneall=&(parhits|parhits_done);
 
   assign _vreaddata_we= ((shifter_jump) ? _parhits : _parhits[0]) 
-                          << vpid[{LOG2NUMLANES}-1:0];
+                          << vpid[2-1:0];
 
   always@(posedge clk)
     if (!resetn || ~enable_s2)  // Force to zero if unit not used
       vreaddata_we<= 0 ;
     else           // write to regfile if a) is a load, b) we haven't already
-      vreaddata_we<= {CBS}{NUMLANES}{CBS}~op_we_s2{CBE}{CBE} & _vreaddata_we & ~done;
+      vreaddata_we<= {4{~op_we_s2}} & _vreaddata_we & ~done;
 
   //Select signal for crossbar either uses bits from corresponding parallel
   //lane address or all selects are set to the same if we're not jumping
   always@*
-    for (n=0; n<{NUMPARALLELLANES}; n=n+1)
-      crossbar_sel[({LOG2DMEM_READWIDTH}-5)*n +: ({LOG2DMEM_READWIDTH}-5)]=
+    for (n=0; n<2; n=n+1)
+      crossbar_sel[(7-5)*n +: (7-5)]=
             (!shifter_jump) ? 
-              {CBS}{NUMPARALLELLANES}{CBS}vshifted_address[2 +: {LOG2DMEM_READWIDTH}-5]{CBE}{CBE} :
-              vshifted_address[n*{CONTROLWIDTH}+2 +: ({LOG2DMEM_READWIDTH}-5)];
+              {2{vshifted_address[2 +: 7-5]}} :
+              vshifted_address[n*32+2 +: (7-5)];
 
-  vmem_crossbar_{DMEM_READWIDTH}_{LOG2DMEM_READWIDTH}_{NUMPARALLELLANES}_32_5 vmem_crossbar(
-      .clk(clk), .resetn(resetn),
+  vmem_crossbar_128_7_2_32_5 vmem_crossbar(
+      .clk(), .resetn(),
       .sel(crossbar_sel),
       .in(dmem_readdata),
       .out(crossbar));
 
-                '''
+                // Generate byte/halfword alignment circuitry for each word                   
 
-#######################################
-# Exploring genvar statement using 
-# python for loop. the basic string 
-# includes the content of generate loop
-# Here is the genvar code: 
-#
-#  generate
-#  for (k=0; k<{NUMPARALLELLANES}; k=k+1)
-#  begin : load_gen
-#       <code>
-#   end
-#  endgenerate
-#######################################
-
-        string4_basic='''
-
-      vload_data_translator load_data_translator_[k](
-      .d_readdatain(crossbar[32*([k]+1)-1:32*[k]]),
-      .d_address( (shifter_jump) ? vshifted_address[{CONTROLWIDTH}*[k]+2-1 : {CONTROLWIDTH}*[k]] :
+      vload_data_translator load_data_translator_0(
+      .d_readdatain(crossbar[32*(0+1)-1:32*0]),
+      .d_address( (shifter_jump) ? vshifted_address[32*0 +: 2] :
                                    vshifted_address[1:0]),
       .load_size(op_size_s2[1:0]),
       .load_sign_ext(op_signed_s2),
-      .d_loadresult(__vreaddata[{VPUWIDTH}*([k]+1)-1:{VPUWIDTH}*[k]])
+      .d_loadresult(__vreaddata[32*(0+1)-1:32*0])
       );
 
-        '''
+        
 
-        string4 = "// Generate byte/halfword alignment circuitry for each word \
-                  "
 
-        for k in range(0,numparallellanes):
-            string4  = string4 + string4_basic.replace("[k]",str(k)) + "\n"
+      vload_data_translator load_data_translator_1(
+      .d_readdatain(crossbar[32*(1+1)-1:32*1]),
+      .d_address( (shifter_jump) ? vshifted_address[32*1 +: 2] :
+                                   vshifted_address[1:0]),
+      .load_size(op_size_s2[1:0]),
+      .load_sign_ext(op_signed_s2),
+      .d_loadresult(__vreaddata[32*(1+1)-1:32*1])
+      );
 
-        string5='''
+        
+
 
 always@(posedge clk)
     //zero if unit not used
     if (!resetn || ~enable_s2 || (~stall&~enable) || op_we_s2)
       vreaddata<= 0 ;
     else                // Don't write to regfile unless this is a load!
-      vreaddata<= {CBS}{NUMLANES}/{NUMPARALLELLANES}{CBS}__vreaddata{CBE}{CBE};
+      vreaddata<= {4/2{__vreaddata}};
 
 /*************************** DONE LOGIC *********************************/
 
@@ -839,72 +763,7 @@ always@(posedge clk)
 
 endmodule
 
-'''
-        string = string1 + string2 + string3 + string4 + string5
-        fp = open("verilog/velmshifter_jump.v",'a')
-        uut = velmshifter_jump(fp)
-        #only need 1 of these because vpuwidth and controlwidth are the same 
-        #here. 
-        if vpuwidth==controlwidth:
-          uut.write(numlanes,numparallellanes,vpuwidth)
-        else:
-          uut.write(numlanes,numparallellanes,vpuwidth)
-          uut.write(numlanes,numparallellanes,controlwidth)
-        uut.write(numlanes,numparallellanes,1)
-        fp.close()
 
-        fp = open("verilog/velmshifter.v",'a')
-        uut = velmshifter(fp)
-        uut.write(numlanes,vpuwidth)
-        uut.write(numlanes,1)
-        fp.close()
-
-        # fp = open("verilog/vstore_data_translator.v",'a')
-        # uut = vstore_data_translator(fp)
-        # uut.write()
-        # fp.close()
-
-        fp = open("verilog/vmem_crossbar.v",'a')
-        uut = vmem_crossbar(fp)
-        uut.write(dmem_readwidth,log2dmem_readwidth,numparallellanes,32,5)
-        fp.close()
-
-        # fp = open("verilog/vload_data_translator.v",'a')
-        # uut = vload_data_translator(fp)
-        # uut.write()
-        # fp.close()
-
-        fp = open("verilog/pipereg.v",'a')
-        uut = pipereg(fp)
-        uut.write(1)
-        fp.close()
-  
-        return string.format( VPUWIDTH = vpuwidth , \
-                              NUMLANES = numlanes , \
-                              LOG2NUMLANES = log2numlanes, \
-                              NUMPARALLELLANES = numparallellanes, \
-                              LOG2NUMPARALLELLANES = log2numparallellanes, \
-                              CONTROLWIDTH = controlwidth , \
-                              DMEM_WRITEWIDTH = dmem_writewidth, \
-                              LOG2DMEM_WRITEWIDTH = log2dmem_writewidth, \
-                              DMEM_READWIDTH = dmem_readwidth, \
-                              LOG2DMEM_READWIDTH = log2dmem_readwidth, \
-                              ELMIDWIDTH = elmwidth, \
-                              REGIDWIDTH = regidwidth, \
-                              CBS = "{" , \
-                              CBE = "}" \
-                            )
-
-    def write (self, vpuwidth, numlanes, log2numlanes, numparallellanes, log2numparallellanes, controlwidth, dmem_writewidth,log2dmem_writewidth, dmem_readwidth, log2dmem_readwidth, elmwidth, regidwidth):
-        self.fp.write(self.make_str( vpuwidth,numlanes, log2numlanes, numparallellanes, log2numparallellanes, controlwidth, dmem_writewidth,log2dmem_writewidth, dmem_readwidth, log2dmem_readwidth, elmwidth, regidwidth))
-
-
-class vstore_data_translator():
-    def __init__(self, fp):
-        self.fp = fp
-
-    def make_str(self ):
-        string = '''
 
 /****************************************************************************
  *           Load data translator
@@ -959,17 +818,7 @@ end
 
 endmodule
 
-                  '''
-        return string
-    def write (self):
-        self.fp.write(self.make_str())
-
-class vload_data_translator():
-    def __init__(self, fp):
-        self.fp = fp
-
-    def make_str(self):
-        string = ''' 
+                   
 
 /****************************************************************************
  *           Load data translator
@@ -1018,26 +867,541 @@ begin
 end
 endmodule
 
-'''
-        return string
-    def write (self):
-        self.fp.write(self.make_str())
+
+/************************
+ *
+ *************************/
+
+module vmem_crossbar_128_7_2_32_5 (
+    clk,
+    resetn,
+    sel,
+    in,
+    out
+    );
+
+parameter SELWIDTH=7-5;   // LOG2(INWIDTH/OUTWIDTH) = 4
+
+input                             clk;
+input                             resetn;
+input  [(SELWIDTH*2)-1 : 0] sel;
+input  [128-1 : 0]            in;
+output [(32*2)-1 : 0] out;
+vmem_busmux_128_7_32_5 bmux_0(clk,resetn,
+sel[(0+1)*SELWIDTH - 1 : 0*SELWIDTH],
+in,
+out[(0+1)*32 - 1 : 0*32]);
+vmem_busmux_128_7_32_5 bmux_1(clk,resetn,
+sel[(1+1)*SELWIDTH - 1 : 1*SELWIDTH],
+in,
+out[(1+1)*32 - 1 : 1*32]);
+endmodule
 
 
-if __name__ == '__main__':
-    fp = open(args[0], "w")
-    try:
-      options_file = open("../../design/top/options.v", "r")
-      for line in options_file:
-        fp.write(line)
-      options_file.close()
-    except:
-      print("Unable to open file")
-      raise SystemExit(0)
-    uut1 = vmem_unit(fp)
-    #uut2 = vstore_data_translator(fp)
-    #uut3 = vload_data_translator(fp)
-    uut1.write(32,4,2,2,1,32,128,7,128,7,2,5)
-    #uut2.write()
-    #uut3.write()
-    fp.close()
+module velmshifter_laneunit_32 (
+    clk,
+    resetn,
+
+    load,
+    shift,
+    dir_left,
+    squash,
+
+    inpipe,
+    inxlaneleft,    // Cross-lane input from lane i+1
+    inxlaneright,    // Cross-lane input from lane i-1
+    outpipe
+
+    );
+
+
+input clk;
+input resetn;
+
+input  load;
+input  shift;
+input  dir_left;
+input  squash;
+
+input [ 32-1:0 ]  inpipe;
+input [ 32-1:0 ]  inxlaneleft;    // X-lane input lane i-1
+input [ 32-1:0 ]  inxlaneright;    // X-lane input lane i-1
+output [ 32-1:0 ] outpipe;
+
+reg [ 32-1:0 ] outpipe;   // Cross-lane output lane i+1
+
+
+  always@(posedge clk)
+    if (resetn==0 || squash)
+      outpipe<=0;
+    else if (load)
+      outpipe<=inpipe;
+    else if (shift)
+      outpipe<=(dir_left) ? inxlaneright : inxlaneleft;
+
+endmodule
+        
+
+/******************************************************************************/
+/**************************** Shifter w Jump **********************************/
+/******************************************************************************/
+
+module velmshifter_jump_4_2_32 (
+    clk,
+    resetn,
+
+    load,
+    shift,
+    dir_left,     // Sets the direction, 1=left, 0=right
+    jump,
+    squash,
+
+    shiftin_left,
+    shiftin_right,
+
+    inpipe,
+    outpipe
+    );
+
+
+input clk;
+input resetn;
+
+input  load;
+input  shift;
+input  dir_left;
+input  jump;              //0-shift by 1, 1 shift by 2
+input [ 4-1:0 ]  squash;
+
+input [ 4*32-1:0 ]  inpipe;
+output [ 4*32-1:0 ] outpipe;
+
+input [ 32-1:0 ]  shiftin_left;
+input [ 32-1:0 ]  shiftin_right;
+
+
+/***************************************************************************
+  shiftin_left -> bn <-> bn-1 <-> ... <-> b1 <-> b0 <- shiftin_right
+***************************************************************************/
+
+  velmshifter_4_32 velmshift (
+      .clk(clk),
+      .resetn(resetn),      
+      .load(load || (shift&jump)),
+      .shift(shift&~jump),
+      .dir_left(dir_left),
+      .squash(squash),
+      .shiftin_left(shiftin_left),
+      .shiftin_right(shiftin_right),
+      .inpipe( (load) ? inpipe : (dir_left) ? 
+                      outpipe <<(32*2) :
+                      outpipe >>(32*2)),
+      .outpipe(outpipe));
+
+endmodule
+        
+
+
+/******************************************************************************/
+/**************************** Shifter w Jump **********************************/
+/******************************************************************************/
+
+module velmshifter_jump_4_2_1 (
+    clk,
+    resetn,
+
+    load,
+    shift,
+    dir_left,     // Sets the direction, 1=left, 0=right
+    jump,
+    squash,
+
+    shiftin_left,
+    shiftin_right,
+
+    inpipe,
+    outpipe
+    );
+
+
+input clk;
+input resetn;
+
+input  load;
+input  shift;
+input  dir_left;
+input  jump;              //0-shift by 1, 1 shift by 2
+input [ 4-1:0 ]  squash;
+
+input [ 4*1-1:0 ]  inpipe;
+output [ 4*1-1:0 ] outpipe;
+
+input [ 1-1:0 ]  shiftin_left;
+input [ 1-1:0 ]  shiftin_right;
+
+
+/***************************************************************************
+  shiftin_left -> bn <-> bn-1 <-> ... <-> b1 <-> b0 <- shiftin_right
+***************************************************************************/
+
+  velmshifter_4_1 velmshift (
+      .clk(clk),
+      .resetn(resetn),      
+      .load(load || (shift&jump)),
+      .shift(shift&~jump),
+      .dir_left(dir_left),
+      .squash(squash),
+      .shiftin_left(shiftin_left),
+      .shiftin_right(shiftin_right),
+      .inpipe( (load) ? inpipe : (dir_left) ? 
+                      outpipe <<(1*2) :
+                      outpipe >>(1*2)),
+      .outpipe(outpipe));
+
+endmodule
+        
+module velmshifter_laneunit_1 (
+    clk,
+    resetn,
+
+    load,
+    shift,
+    dir_left,
+    squash,
+
+    inpipe,
+    inxlaneleft,    // Cross-lane input from lane i+1
+    inxlaneright,    // Cross-lane input from lane i-1
+    outpipe
+
+    );
+
+
+input clk;
+input resetn;
+
+input  load;
+input  shift;
+input  dir_left;
+input  squash;
+
+input [ 1-1:0 ]  inpipe;
+input [ 1-1:0 ]  inxlaneleft;    // X-lane input lane i-1
+input [ 1-1:0 ]  inxlaneright;    // X-lane input lane i-1
+output [ 1-1:0 ] outpipe;
+
+reg [ 1-1:0 ] outpipe;   // Cross-lane output lane i+1
+
+
+  always@(posedge clk)
+    if (resetn==0 || squash)
+      outpipe<=0;
+    else if (load)
+      outpipe<=inpipe;
+    else if (shift)
+      outpipe<=(dir_left) ? inxlaneright : inxlaneleft;
+
+endmodule
+        
+/****************************************************************************
+          Generic Pipelined Register
+
+          - Special component, components starting with "pipereg" have
+          their enables treated independently of instructrions that use them.
+          - They are enabled whenever the stage is active and not stalled
+****************************************************************************/
+module pipereg_1(d,clk,resetn,en,squashn,q);
+
+input clk;
+input resetn;
+input en;
+input squashn;
+input [1-1:0] d;
+output [1-1:0] q;
+reg [1-1:0] q;
+
+always @(posedge clk)   //synchronous reset
+begin
+  if (resetn==0 || squashn==0)
+    q<=0;
+  else if (en==1)
+    q<=d;
+end
+
+endmodule
+
+
+
+/******************************************************************************/
+/******************************** Shifter *************************************/
+/******************************************************************************/
+
+module velmshifter_4_32 (
+    clk,
+    resetn,
+
+    load,
+    shift,
+    dir_left,     // Sets the direction, 1=left, 0=right
+    squash,
+
+    shiftin_left,
+    shiftin_right,
+
+    inpipe,
+    outpipe
+
+    );
+
+input clk;
+input resetn;
+
+input  load;
+input  shift;
+input  dir_left;
+input [ 4-1:0 ]  squash;
+
+input [ 4*32-1:0 ]  inpipe;
+output [ 4*32-1:0 ] outpipe;
+
+input [ 32-1:0 ]  shiftin_left;
+input [ 32-1:0 ]  shiftin_right;
+
+wire [ (4+1)*32-1:0 ] _outpipe;
+
+
+/***************************************************************************
+  shiftin_left -> bn <-> bn-1 <-> ... <-> b1 <-> b0 <- shiftin_right
+***************************************************************************/
+
+  //HANDLE lane 0 specially
+
+  velmshifter_laneunit_32 velmshifter_laneunit0(clk,resetn,load,shift,dir_left,
+      squash[0],
+      inpipe[31:0],
+      _outpipe[63:32], //Support 1 lane
+      shiftin_right,
+      _outpipe[31:0]);
+ // defparam velmshifter_laneunit0.32=32;
+
+  //Generate everything in between 
+
+
+      velmshifter_laneunit_32 velmshifter_laneunit_1(clk,resetn,load,shift,dir_left,
+          squash[1],
+          inpipe[63:32],
+          _outpipe[95:64],
+          _outpipe[31:0],
+          _outpipe[63:32]);
+     // defparam velmshifter_laneunit.32=32;
+
+
+      velmshifter_laneunit_32 velmshifter_laneunit_2(clk,resetn,load,shift,dir_left,
+          squash[2],
+          inpipe[63:32],
+          _outpipe[95:64],
+          _outpipe[31:0],
+          _outpipe[63:32]);
+     // defparam velmshifter_laneunit.32=32;
+
+
+  //HANDLE lane NUMLANE specially
+
+    velmshifter_laneunit_32 velmshifter_laneunitlast(
+      clk,resetn,load,shift,dir_left,
+      squash[3],
+      inpipe[127:96],
+      shiftin_left,
+      _outpipe[95:64], //L=1
+      _outpipe[127:96]); //L=1
+   // defparam velmshifter_laneunitlast.32=32;
+
+    //Support L=1 - give _outpipe more bits but ignore them
+assign outpipe=_outpipe;
+
+endmodule
+        
+
+
+
+
+/******************************************************************************/
+/******************************** Shifter *************************************/
+/******************************************************************************/
+
+module velmshifter_4_1 (
+    clk,
+    resetn,
+
+    load,
+    shift,
+    dir_left,     // Sets the direction, 1=left, 0=right
+    squash,
+
+    shiftin_left,
+    shiftin_right,
+
+    inpipe,
+    outpipe
+
+    );
+
+input clk;
+input resetn;
+
+input  load;
+input  shift;
+input  dir_left;
+input [ 4-1:0 ]  squash;
+
+input [ 4*1-1:0 ]  inpipe;
+output [ 4*1-1:0 ] outpipe;
+
+input [ 1-1:0 ]  shiftin_left;
+input [ 1-1:0 ]  shiftin_right;
+
+wire [ (4+1)*1-1:0 ] _outpipe;
+
+
+/***************************************************************************
+  shiftin_left -> bn <-> bn-1 <-> ... <-> b1 <-> b0 <- shiftin_right
+***************************************************************************/
+
+  //HANDLE lane 0 specially
+
+  velmshifter_laneunit_1 velmshifter_laneunit0(clk,resetn,load,shift,dir_left,
+      squash[0],
+      inpipe[0],
+      _outpipe[1], //Support 1 lane
+      shiftin_right,
+      _outpipe[0]);
+ // defparam velmshifter_laneunit0.1=1;
+
+  //Generate everything in between 
+
+
+      velmshifter_laneunit_1 velmshifter_laneunit_1(clk,resetn,load,shift,dir_left,
+          squash[1],
+          inpipe[1],
+          _outpipe[2],
+          _outpipe[0],
+          _outpipe[1]);
+     // defparam velmshifter_laneunit.1=1;
+
+
+      velmshifter_laneunit_1 velmshifter_laneunit_2(clk,resetn,load,shift,dir_left,
+          squash[2],
+          inpipe[1],
+          _outpipe[2],
+          _outpipe[0],
+          _outpipe[1]);
+     // defparam velmshifter_laneunit.1=1;
+
+
+  //HANDLE lane NUMLANE specially
+
+    velmshifter_laneunit_1 velmshifter_laneunitlast(
+      clk,resetn,load,shift,dir_left,
+      squash[3],
+      inpipe[3],
+      shiftin_left,
+      _outpipe[2], //L=1
+      _outpipe[3]); //L=1
+   // defparam velmshifter_laneunitlast.1=1;
+
+    //Support L=1 - give _outpipe more bits but ignore them
+assign outpipe=_outpipe;
+
+endmodule
+        
+
+
+/******************************************************************************/
+/******************************** Shifter *************************************/
+/******************************************************************************/
+
+module velmshifter_4_1 (
+    clk,
+    resetn,
+
+    load,
+    shift,
+    dir_left,     // Sets the direction, 1=left, 0=right
+    squash,
+
+    shiftin_left,
+    shiftin_right,
+
+    inpipe,
+    outpipe
+
+    );
+
+input clk;
+input resetn;
+
+input  load;
+input  shift;
+input  dir_left;
+input [ 4-1:0 ]  squash;
+
+input [ 4*1-1:0 ]  inpipe;
+output [ 4*1-1:0 ] outpipe;
+
+input [ 1-1:0 ]  shiftin_left;
+input [ 1-1:0 ]  shiftin_right;
+
+wire [ (4+1)*1-1:0 ] _outpipe;
+
+
+/***************************************************************************
+  shiftin_left -> bn <-> bn-1 <-> ... <-> b1 <-> b0 <- shiftin_right
+***************************************************************************/
+
+  //HANDLE lane 0 specially
+
+  velmshifter_laneunit_1 velmshifter_laneunit0(clk,resetn,load,shift,dir_left,
+      squash[0],
+      inpipe[0],
+      _outpipe[1], //Support 1 lane
+      shiftin_right,
+      _outpipe[0]);
+ // defparam velmshifter_laneunit0.1=1;
+
+  //Generate everything in between 
+
+
+      velmshifter_laneunit_1 velmshifter_laneunit_1(clk,resetn,load,shift,dir_left,
+          squash[1],
+          inpipe[1],
+          _outpipe[2],
+          _outpipe[0],
+          _outpipe[1]);
+     // defparam velmshifter_laneunit.1=1;
+
+
+      velmshifter_laneunit_1 velmshifter_laneunit_2(clk,resetn,load,shift,dir_left,
+          squash[2],
+          inpipe[1],
+          _outpipe[2],
+          _outpipe[0],
+          _outpipe[1]);
+     // defparam velmshifter_laneunit.1=1;
+
+
+  //HANDLE lane NUMLANE specially
+
+    velmshifter_laneunit_1 velmshifter_laneunitlast(
+      clk,resetn,load,shift,dir_left,
+      squash[3],
+      inpipe[3],
+      shiftin_left,
+      _outpipe[2], //L=1
+      _outpipe[3]); //L=1
+   // defparam velmshifter_laneunitlast.1=1;
+
+    //Support L=1 - give _outpipe more bits but ignore them
+assign outpipe=_outpipe;
+
+endmodule
+        

@@ -1,6 +1,10 @@
 from matmul_8x8 import matmul_8x8
-from matmul_8x8 import defines
-import parser
+from matmul_defines import matmul_defines
+from vcomponents import pipe
+from optparse import OptionParser
+
+parser = OptionParser()
+(_,args) = parser.parse_args()
 
 class matmul_unit():
     def __init__(self, fp):
@@ -8,37 +12,6 @@ class matmul_unit():
 
     def make_str(self, regidwidth, pipe_stages_matmul, numlanes):
         string = '''\
-`define DWIDTH 32
-`define AWIDTH 10
-`define MEM_SIZE 1024
-
-///////////////////////////////////////////////////////////
-//MAT_MUL_SIZE refers to the dimension of the matrix
-//multiplication performed by the matmul unit. The value 
-//8 means it will multiply an 8x8 matrix with an 8x8 matrix.
-///////////////////////////////////////////////////////////
-//IMP IMP IMP IMP IMP IMP IMP IMP IMP IMP IMP
-///////////////////////////////////////////////////////////
-//MAT_MUL_SIZE should be equal to number of lanes in the vector processor
-///////////////////////////////////////////////////////////
-//IMP IMP IMP IMP IMP IMP IMP IMP IMP IMP IMP
-///////////////////////////////////////////////////////////
-
-`define MASK_WIDTH 8
-`define LOG2_MAT_MUL_SIZE 3
-
-`define BB_MAT_MUL_SIZE `MAT_MUL_SIZE
-`define NUM_CYCLES_IN_MAC 3
-`define MEM_ACCESS_LATENCY 1
-`define REG_DATAWIDTH 32
-`define REG_ADDRWIDTH 8
-`define ADDR_STRIDE_WIDTH 16
-`define MAX_BITS_POOL 3
-
-`define PIPE_STAGES_MATMUL 29
-
-`include "matmul_8x8.v"
-
 module matmul_unit_{REGIDWIDTH}_{PIPE_STAGES_MATMUL}_{NUMLANES}(
  clk,
  resetn,
@@ -85,7 +58,7 @@ module matmul_unit_{REGIDWIDTH}_{PIPE_STAGES_MATMUL}_{NUMLANES}(
 
 wire [{PIPE_STAGES_MATMUL}:1] ctrl_activate;
 wire [{PIPE_STAGES_MATMUL}:1] squash_activatepipe_NC;
-pipe #(1,{PIPE_STAGES_MATMUL}-1) activatepipe (
+pipe_1_{PIPE_STAGES_MATMUL_MINUS_ONE} activatepipe (
     .d(activate),
     .clk(clk),
     .resetn(resetn),
@@ -116,7 +89,7 @@ matmul_8x8 mat(
 );
 
 wire [{PIPE_STAGES_MATMUL}:1] squash_dstpipe_NC;
-pipe #({REGIDWIDTH},{PIPE_STAGES_MATMUL}-1) dstpipe (
+pipe_{REGIDWIDTH}_{PIPE_STAGES_MATMUL_MINUS_ONE} dstpipe (
     .d(in_dst ),  
     .clk(clk),
     .resetn(resetn),
@@ -124,7 +97,7 @@ pipe #({REGIDWIDTH},{PIPE_STAGES_MATMUL}-1) dstpipe (
     .squash(squash_dstpipe_NC),
     .q(out_dst));
 
-pipe #(1,{PIPE_STAGES_MATMUL}-1) dstwepipe (
+pipe_1_{PIPE_STAGES_MATMUL_MINUS_ONE} dstwepipe (
     .d(in_dst_we ),  
     .clk(clk),
     .resetn(resetn),
@@ -133,7 +106,7 @@ pipe #(1,{PIPE_STAGES_MATMUL}-1) dstwepipe (
     .q(out_dst_we));
 
 wire [{PIPE_STAGES_MATMUL}:1] squash_dstmaskpipe_NC;
-pipe #({NUMLANES},{PIPE_STAGES_MATMUL}-1) dstmaskpipe (
+pipe_{NUMLANES}_{PIPE_STAGES_MATMUL_MINUS_ONE} dstmaskpipe (
     .d(vmask ),  
     .clk(clk),
     .resetn(resetn),
@@ -142,22 +115,32 @@ pipe #({NUMLANES},{PIPE_STAGES_MATMUL}-1) dstmaskpipe (
     .q(out_dst_mask));
 endmodule'''
 
-        return string.format(REGIDWIDTH=regidwidth, PIPE_STAGES_MATMUL=pipe_stages_matmul, NUMLANES=numlanes)
+        fp = open("verilog/matmul_defines.v", 'a')
+        uut = matmul_defines(fp)
+        uut.write()
+        fp.close()
+        fp = open("verilog/vcomponents.v", "a")
+        uut = pipe(fp)
+        uut.write(1, pipe_stages_matmul-1)
+        fp.write("\n\n")
+        uut.write(regidwidth, pipe_stages_matmul-1)
+        if (regidwidth != numlanes):
+            fp.write("\n\n")
+            uut.write(numlanes, pipe_stages_matmul-1)
+        fp.close()
+        fp = open("verilog/matmul_8x8.v", "a")
+        uut = matmul_8x8(fp)
+        uut.write()
+        fp.close()
+
+        return string.format(REGIDWIDTH=regidwidth, PIPE_STAGES_MATMUL=pipe_stages_matmul, NUMLANES=numlanes, PIPE_STAGES_MATMUL_MINUS_ONE = pipe_stages_matmul-1)
 
     def write(self, regidwidth, pipe_stages_matmul, numlanes):
         self.fp.write(self.make_str(regidwidth, pipe_stages_matmul, numlanes))
 
 
 if __name__ == '__main__':
-    fp = open(parser.parse(), "w")
-    defines_obj = defines(fp)
-    defines_obj.write()
-    fp.close()
-    fp = open(parser.parse(), "a")
-    fp.write("\r\r")
+    fp = open(args[0], "w")
     uut = matmul_unit(fp)
     uut.write(8, 29, 8)
-    fp.write("\r\r")
-    matmul = matmul_8x8(fp)
-    matmul.write()
     fp.close()

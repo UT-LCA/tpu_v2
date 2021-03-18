@@ -1,4 +1,6 @@
 from optparse import OptionParser
+from rams import dpram1
+
 parser = OptionParser()
 (_,args) = parser.parse_args()
 
@@ -83,10 +85,10 @@ input                       mem_fillwe;
 output cache_hit;
 output cache_miss;
 
-wire [TAGSIZE-1:0]       cache_tagout;
-wire                     cache_validout;
+//wire [TAGSIZE-1:0]       cache_tagout;
+//wire                     cache_validout;
 wire [32-1:0]            cache_dataout;
-wire [CACHELINESIZE-1:0] cache_lineout;
+//wire [CACHELINESIZE-1:0] cache_lineout;
 
 input  [31:0]                mem_icache_address;
 input  [CACHELINESIZE-1:0]   mem_icache_data;
@@ -94,24 +96,24 @@ output [31:0]                mem_icache_out;
 input  [CACHELINESIZE/8-1:0] mem_icache_byteen;
 input                        mem_icache_wren;
 
-wire                     tagmatch;
+//wire                     tagmatch;
 reg  [32-1:0] bus_address_saved;
 
 parameter [1:0] S_IDLE=2'b00, S_TAGLOOKUP=2'b01, S_RESULT=2'b10;
-reg [1:0] cache_state;
+//reg [1:0] cache_state;
 
 wire  cache_hit;
 
-reg  [{LOG2CACHEDEPTH}-1:0] count;
+//reg  [{LOG2CACHEDEPTH}-1:0] count;
 
-  always@(posedge mem_clk)
-    if (bus_flush)
-      count <= count + 1'b1;
+//  always@(posedge mem_clk)
+//    if (bus_flush)
+//      count <= count + 1'b1;
 
  dpram1_26_67108864_32 data1 (
     .clk(bus_clk),
     .address_a(bus_address[27:2]),
-    .address_b(mem_icache_address),
+    .address_b(mem_icache_address[25:0]),
     .wren_a(1'b0),
     .wren_b(mem_icache_wren),
     .data_a(0),
@@ -119,7 +121,7 @@ reg  [{LOG2CACHEDEPTH}-1:0] count;
     .byteen_a(-1),
     .byteen_b(mem_icache_byteen),
     .out_a(cache_dataout),
-    .out_b(meme_icache_out)
+    .out_b(mem_icache_out)
  );
 
 
@@ -135,9 +137,13 @@ reg  [{LOG2CACHEDEPTH}-1:0] count;
   assign cache_hit = 1'b1;
   assign cache_miss=bus_en && ~cache_hit;
   assign bus_wait=bus_en & ~cache_hit;
-endmodule
+endmodule'''
 
-                 '''
+        fp = open("verilog/dpram1.v", 'a')
+        uut = dpram1(fp)
+        uut.write(26, 67108864, 32)
+        fp.close()
+
         return string.format( \
                              LOG2CACHELINESIZE = log2cachewidthbits , \
                              LOG2CACHEDEPTH = log2cachedepth , \
@@ -151,5 +157,5 @@ endmodule
 if __name__ == '__main__':
     fp = open(args[0], "w")
     uut1 = mem_icache(fp)
-    uut1.write(32,4096)
+    uut1.write(7,6)
     fp.close()

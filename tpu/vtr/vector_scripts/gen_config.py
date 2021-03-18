@@ -5,8 +5,8 @@ class gen_config():
         pass
 
     def write(self, sub_dir, v_file):
-        base_dir = "/home/sangramkate/"
-        config_path = base_dir + "/vtr/vtr_flow/tasks/tpu/config/config.txt"
+        base_dir = "/home/aatman/Desktop/utexas_thesis"
+        config_path = base_dir + "/vtr-verilog-to-routing/vtr_flow/tasks/tpu/config/config.txt"
         fp = open(config_path, "w")
 
         string = '''\

@@ -60,6 +60,10 @@ output [31:0] status;
 input  [31:0] badvaddr_in;
 input         badvaddr_we;
 
+// not connected ports
+wire [31:0] instr_nc;
+assign instr_nc = instr;
+
 wire [31:0] cause_in;
 
 reg [31:0] epc_out;
