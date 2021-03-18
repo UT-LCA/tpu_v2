@@ -134,12 +134,12 @@ class vlanes():
  *
  *****************************************************************************/
 
-`include "vdispatcher.v"
-`include "vlane_alu.v"
-`include "vmul_unit.v"
-`include "vmem_unit.v"
-`include "vlane_flagalu.v"
-`include "matmul_unit.v"
+//`include "vdispatcher.v"
+//`include "vlane_alu.v"
+//`include "vmul_unit.v"
+//`include "vmem_unit.v"
+//`include "vlane_flagalu.v"
+//`include "matmul_unit.v"
 
 `define LO(x,b) ((x)&~({CBS}1024{CBS}1'b1{CBE}{CBE}<<b))
 
@@ -257,7 +257,147 @@ input               dbus_wait;
 output  [ 31 : 0 ]  dbus_prefetch;
 
 
-`include "visa.v"
+//`include "visa.v"
+parameter COP2_VADD           = 'b1000000000;
+parameter COP2_VADD_U         = 'b1000000001;
+parameter COP2_VSUB           = 'b1000000010;
+parameter COP2_VSUB_U         = 'b1000000011;
+parameter COP2_VMULHI         = 'b1000000100;
+parameter COP2_VMULHI_U       = 'b1000000101;
+parameter COP2_VDIV           = 'b1000000110; //Using as matmul
+parameter COP2_VBFADD         = 'b0100000001; //Using BF16 add
+parameter COP2_VBFMULT        = 'b0100000010; //Using BF16 MULT
+parameter COP2_VACT           = 'b0100000011; //Using ACT
+parameter COP2_VTRP           = 'b0100000100; //Using ACT
+parameter COP2_VDIV_U         = 'b1000000111;
+parameter COP2_VMOD           = 'b1000001000;
+parameter COP2_VMOD_U         = 'b1000001001;
+parameter COP2_VCMP_EQ        = 'b1000001010;
+parameter COP2_VCMP_NE        = 'b1000001100;
+parameter COP2_VCMP_LT        = 'b1000001110;
+parameter COP2_VCMP_U_LT      = 'b1000001111;
+parameter COP2_VCMP_LE        = 'b1000010000;
+parameter COP2_VCMP_U_LE      = 'b1000010001;
+parameter COP2_VMIN           = 'b1000010010;
+parameter COP2_VMIN_U         = 'b1000010011;
+parameter COP2_VMAX           = 'b1000010100;
+parameter COP2_VMAX_U         = 'b1000010101;
+parameter COP2_VMULLO         = 'b1000010110;
+parameter COP2_VABS           = 'b1000010111;
+parameter COP2_VAND           = 'b1000011000;
+parameter COP2_VOR            = 'b1000011001;
+parameter COP2_VXOR           = 'b1000011010;
+parameter COP2_VNOR           = 'b1000011011;
+parameter COP2_VSLL           = 'b1000011100;
+parameter COP2_VSRL           = 'b1000011101;
+parameter COP2_VSRA           = 'b1000011110;
+parameter COP2_VSAT_B         = 'b1000011111;
+parameter COP2_VSAT_H         = 'b1001011111;
+parameter COP2_VSAT_W         = 'b1010011111;
+parameter COP2_VSAT_SU_B      = 'b1000100000;
+parameter COP2_VSAT_SU_H      = 'b1001100000;
+parameter COP2_VSAT_SU_W      = 'b1010100000;
+parameter COP2_VSAT_SU_L      = 'b1011100000;
+parameter COP2_VSAT_U_B       = 'b1000100001;
+parameter COP2_VSAT_U_H       = 'b1001100001;
+parameter COP2_VSAT_U_W       = 'b1010100001;
+parameter COP2_VSADD          = 'b1000100010;
+parameter COP2_VSADD_U        = 'b1000100011;
+parameter COP2_VSSUB          = 'b1000100100;
+parameter COP2_VSSUB_U        = 'b1000100101;
+parameter COP2_VSRR           = 'b1000100110;
+parameter COP2_VSRR_U         = 'b1000100111;
+parameter COP2_VSLS           = 'b1000101000;
+parameter COP2_VSLS_U         = 'b1000101001;
+parameter COP2_VXUMUL         = 'b1000101010;
+parameter COP2_VXUMUL_U       = 'b1000101011;
+parameter COP2_VXLMUL         = 'b1000101100;
+parameter COP2_VXLMUL_U       = 'b1000101101;
+parameter COP2_VXUMADD        = 'b1000101110;
+parameter COP2_VXUMADD_U      = 'b1000101111;
+parameter COP2_VXUMSUB        = 'b1000110000;
+parameter COP2_VXUMSUB_U      = 'b1000110001;
+parameter COP2_VXLMADD        = 'b1000110010;
+parameter COP2_VXLMADD_U      = 'b1000110011;
+parameter COP2_VXLMSUB        = 'b1000110100;
+parameter COP2_VXLMSUB_U      = 'b1000110101;
+parameter COP2_VINS_VV        = 'b1100000000;
+parameter COP2_VINS_SV        = 'b1110000001;
+parameter COP2_VEXT_VV        = 'b1100000010;
+parameter COP2_VEXT_SV        = 'b1100000011;
+parameter COP2_VEXT_U_SV      = 'b1100000100;
+parameter COP2_VCOMPRESS      = 'b1100000101;
+parameter COP2_VEXPAND        = 'b1100000110;
+parameter COP2_VMERGE         = 'b1100000111;
+parameter COP2_VFINS          = 'b1110001000;
+parameter COP2_VEXTHALF       = 'b1100001001;
+parameter COP2_VHALF          = 'b1100001010;
+parameter COP2_VHALFUP        = 'b1100001011;
+parameter COP2_VHALFDN        = 'b1100001100;
+parameter COP2_VSATVL         = 'b1100001101;
+parameter COP2_VFAND          = 'b1100001110;
+parameter COP2_VFOR           = 'b1100001111;
+parameter COP2_VFXOR          = 'b1100010000;
+parameter COP2_VFNOR          = 'b1100010001;
+parameter COP2_VFCLR          = 'b1100010010;
+parameter COP2_VFSET          = 'b1100010011;
+parameter COP2_VIOTA          = 'b1100010100;
+parameter COP2_VCIOTA         = 'b1100010101;
+parameter COP2_VFPOP          = 'b1100010110;
+parameter COP2_VFFF1          = 'b1100010111;
+parameter COP2_VFFL1          = 'b1100011000;
+parameter COP2_VFSETBF        = 'b1100011001;
+parameter COP2_VFSETIF        = 'b1100011010;
+parameter COP2_VFSETOF        = 'b1100011011;
+parameter COP2_VFMT8          = 'b1100011100;
+parameter COP2_VFMF8          = 'b1100011101;
+parameter COP2_VFCLR8         = 'b1100011110;
+parameter COP2_VFOR8          = 'b1100011111;
+parameter COP2_VFLD           = 'b1100100000;
+parameter COP2_VLD_B          = 'b1100100001;
+parameter COP2_VLD_H          = 'b1101100001;
+parameter COP2_VLD_W          = 'b1110100001;
+parameter COP2_VLD_L          = 'b1111100001;
+parameter COP2_VLD_U_B        = 'b1100100010;
+parameter COP2_VLD_U_H        = 'b1101100010;
+parameter COP2_VLD_U_W        = 'b1110100010;
+parameter COP2_VLDS_B         = 'b1100100011;
+parameter COP2_VLDS_H         = 'b1101100011;
+parameter COP2_VLDS_W         = 'b1110100011;
+parameter COP2_VLDS_L         = 'b1111100011;
+parameter COP2_VLDS_U_B       = 'b1100100100;
+parameter COP2_VLDS_U_H       = 'b1101100100;
+parameter COP2_VLDS_U_W       = 'b1110100100;
+parameter COP2_VLDX_B         = 'b1100100101;
+parameter COP2_VLDX_H         = 'b1101100101;
+parameter COP2_VLDX_W         = 'b1110100101;
+parameter COP2_VLDX_L         = 'b1111100101;
+parameter COP2_VLDX_U_B       = 'b1100100110;
+parameter COP2_VLDX_U_H       = 'b1101100110;
+parameter COP2_VLDX_U_W       = 'b1110100110;
+parameter COP2_VFST           = 'b1100101000;
+parameter COP2_VST_B          = 'b1100101001;
+parameter COP2_VST_H          = 'b1101101001;
+parameter COP2_VST_W          = 'b1110101001;
+parameter COP2_VST_L          = 'b1111101001;
+parameter COP2_VSTS_B         = 'b1100101010;
+parameter COP2_VSTS_H         = 'b1101101010;
+parameter COP2_VSTS_W         = 'b1110101010;
+parameter COP2_VSTS_L         = 'b1111101010;
+parameter COP2_VSTX_B         = 'b1100101011;
+parameter COP2_VSTX_H         = 'b1101101011;
+parameter COP2_VSTX_W         = 'b1110101011;
+parameter COP2_VSTX_L         = 'b1111101011;
+parameter COP2_VSTXO_B        = 'b1100101100;
+parameter COP2_VSTXO_H        = 'b1101101100;
+parameter COP2_VSTXO_W        = 'b1110101100;
+parameter COP2_VSTXO_L        = 'b1111101100;
+parameter COP2_VMCTS          = 'b1101110000;
+parameter COP2_VMSTC          = 'b1101110001;
+parameter COP2_CFC2           = 'b0000111000;
+parameter COP2_CTC2           = 'b0000111010;
+parameter COP2_MTC2           = 'b0000111011;
+
 
 parameter BIT_VSSRC2=6;
 parameter BIT_VSSRC1=7;
@@ -480,7 +620,8 @@ wire           [ {NUMLANES}-1 : 0 ] flagalu_result_s5[({NUMBANKS}-1)*{ALUPERBANK
 wire [ {LANEWIDTH}*{NUMLANES}-1 : 0 ] mulshift_result_s5;
 
 //Support 1 Lane processor
-wire [(({LOG2NUMLANES}>0) ? {LOG2NUMLANES} : 1)-1:0] elmshamt[`MAX_PIPE_STAGES-1:2];
+// wire [(({LOG2NUMLANES}>0) ? {LOG2NUMLANES} : 1)-1:0] elmshamt[`MAX_PIPE_STAGES-1:2];
+wire [{LOG2NUMLANES}-1:0] elmshamt[`MAX_PIPE_STAGES-1:2];
 
 reg ctrl1_vr_a_en; // SRC1
 reg ctrl1_vr_b_en; // SRC2
@@ -612,22 +753,22 @@ wire ctrl5_mem_en;
 
 wire [`VRELM_RANGE] regid_pad;
 
-integer bd;
-genvar  ba;
-integer bi;
-integer i;
-integer j;
-genvar  bk;
-genvar  k;
-integer m;
-integer n;
-integer b;
-integer b3;
-integer f3;
-integer bn;
-integer fn;
-integer fn2;
-integer bw;
+reg[31:0] bd;
+//genvar  ba;
+reg[31:0] bi;
+reg[31:0] i;
+reg[31:0] j;
+//genvar  bk;
+//genvar  k;
+reg[31:0] m;
+reg[31:0] n;
+reg[31:0] b;
+reg[31:0] b3;
+reg[31:0] f3;
+reg[31:0] bn;
+reg[31:0] fn;
+reg[31:0] fn2;
+reg[31:0] bw;
 
 wire [{NUMBANKS}*{LOG2MVL}-1:0] rdelm;
 wire [{NUMBANKS}*{LOG2MVL}-1:0] wrelm;
@@ -672,51 +813,66 @@ reg   [{NUMBANKS}-1:0] D_last_subvector_done;
 reg   [{NUMBANKS}-1:0] D_wb_instrdone;
 
 // Module instance
+  wire [7:0] debuginstrpipe_q;
+  assign {CBS}D_instr[2],D_instr[1]{CBE} = debuginstrpipe_q;
+
   pipe_8_1  debuginstrpipe (
       .d( {CBS}instr[25:24],instr[5:0]{CBE} ),
       .clk(clk),
       .resetn(resetn),
       .en( pipe_advance[2:1] ),
       .squash( pipe_squash[2:1] ),
-      .q( {CBS}D_instr[2],D_instr[1]{CBE}));
+      .q(debuginstrpipe_q));
 
 '''
         string2_basic ='''
 
 // Module instance
+    wire debugintrfupipereg1_Df_squashn;
+    assign debugintrfupipereg1_Df_squashn = ~pipe_squash[4];
+
     pipereg_8 debugintrfupipereg1_Df (
       .d( D_instr_s4[Df] ),
       .clk(clk),
       .resetn(resetn),
       .en( pipe_advance[4] ),
-      .squashn( ~pipe_squash[4] ),
+      .squashn(debugintrfupipereg1_Df_squashn),
       .q(D_instr_s5[Df]));
 
 // Module instance
+    wire debugintrfupipereg2_Df_squashn;
+    assign debugintrfupipereg2_Df_squashn = ~pipe_squash[4];
+
     pipereg_8 debugintrfupipereg2_Df (
       .d( D_instr_s5[Df] ),
       .clk(clk),
       .resetn(resetn),
       .en( pipe_advance[4] ),
-      .squashn( ~pipe_squash[4] ),
+      .squashn(debugintrfupipereg2_Df_squashn),
       .q(D_instr_s6[Df]));
 
 // Module instance
+    wire debuglastpipereg1_Df_squashn;
+    assign debuglastpipereg1_Df_squashn = ~pipe_squash[4];
+
     pipereg_1 debuglastpipereg1_Df (
       .d( D_last_subvector_s4[Df] ),
       .clk(clk),
       .resetn(resetn),
       .en( pipe_advance[4] ),
-      .squashn( ~pipe_squash[4] ),
+      .squashn(debuglastpipereg1_Df_squashn),
       .q(D_last_subvector_s5[Df]));
 
 // Module instance
+    wire debuglastpipereg2_Df_squashn;
+    assign debuglastpipereg2_Df_squashn = ~pipe_squash[4];
+
     pipereg_1 debuglastpipereg2_Df (
       .d( D_last_subvector_s5[Df] ),
       .clk(clk),
       .resetn(resetn),
       .en( pipe_advance[4] ),
-      .squashn( ~pipe_squash[4] ),
+      .squashn(debuglastpipereg2_Df_squashn),
       .q(D_last_subvector_s6[Df]));
 
 '''
@@ -799,17 +955,20 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
   // Determine which instruction read from which ports
   always@*
   begin
-    ctrl1_vr_a_en=0;
-    ctrl1_vr_b_en=0;
-    ctrl1_vr_c_en=0;
-    ctrl1_vf_a_en=0;
-    ctrl1_vf_b_en=0;
-    ctrl1_vf_a_sel=0;
-    ctrl1_usesvssel=0;
-    casez(ir_op)
+//    ctrl1_vr_a_en=0;
+//    ctrl1_vr_b_en=0;
+//    ctrl1_vr_c_en=0;
+//    ctrl1_vf_a_en=0;
+//    ctrl1_vf_b_en=0;
+//    ctrl1_vf_a_sel=0;
+//    ctrl1_usesvssel=0;
+    case(ir_op)
       COP2_VADD,
       COP2_VADD_U:
         begin
+          ctrl1_vr_c_en=0;
+          ctrl1_vf_b_en=0;
+          ctrl1_vf_a_sel=0;
           ctrl1_vf_a_en=1;
           ctrl1_vr_a_en=~ir_op[BIT_VSSRC1];
           ctrl1_vr_b_en=1;
@@ -818,6 +977,9 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VSUB,
       COP2_VSUB_U:
         begin
+          ctrl1_vr_c_en=0;
+          ctrl1_vf_b_en=0;
+          ctrl1_vf_a_sel=0;
           ctrl1_vf_a_en=1;
           ctrl1_vr_a_en=~ir_op[BIT_VSSRC1];
           ctrl1_vr_b_en=~ir_op[BIT_VSSRC2];
@@ -826,6 +988,9 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VMULHI,
       COP2_VMULHI_U:
         begin
+          ctrl1_vr_c_en=0;
+          ctrl1_vf_b_en=0;
+          ctrl1_vf_a_sel=0;
           ctrl1_vf_a_en=1;
           ctrl1_vr_a_en=~ir_op[BIT_VSSRC1];
           ctrl1_vr_b_en=1;
@@ -840,6 +1005,9 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VCMP_LE,
       COP2_VCMP_U_LE:
         begin
+          ctrl1_vr_c_en=0;
+          ctrl1_vf_b_en=0;
+          ctrl1_vf_a_sel=0;
           ctrl1_vf_a_en=1;
           ctrl1_vr_a_en=~ir_op[BIT_VSSRC1];
           ctrl1_vr_b_en=~ir_op[BIT_VSSRC2];
@@ -853,6 +1021,9 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VMAX_U,
       COP2_VMULLO:
         begin
+          ctrl1_vr_c_en=0;
+          ctrl1_vf_b_en=0;
+          ctrl1_vf_a_sel=0;
           ctrl1_vf_a_en=1;
           ctrl1_vr_a_en=~ir_op[BIT_VSSRC1];
           ctrl1_vr_b_en=1;
@@ -860,6 +1031,11 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
         end
       COP2_VABS:
         begin
+          ctrl1_vr_b_en=0;
+          ctrl1_vr_c_en=0;
+          ctrl1_vf_b_en=0;
+          ctrl1_vf_a_sel=0;
+          ctrl1_usesvssel=0;
           ctrl1_vf_a_en=1;
           ctrl1_vr_a_en=1;
         end
@@ -868,6 +1044,9 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VXOR,
       COP2_VNOR:
         begin
+          ctrl1_vr_c_en=0;
+          ctrl1_vf_b_en=0;
+          ctrl1_vf_a_sel=0;
           ctrl1_vf_a_en=1;
           ctrl1_vr_a_en=~ir_op[BIT_VSSRC1];
           ctrl1_vr_b_en=1;
@@ -877,6 +1056,9 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VSRL,
       COP2_VSRA:
         begin
+          ctrl1_vr_c_en=0;
+          ctrl1_vf_b_en=0;
+          ctrl1_vf_a_sel=0;
           ctrl1_vf_a_en=1;
           ctrl1_vr_a_en=~ir_op[BIT_VSSRC1];
           ctrl1_vr_b_en=~ir_op[BIT_VSSRC2];
@@ -893,12 +1075,20 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VSAT_U_H,
       COP2_VSAT_U_W:
         begin
+          ctrl1_vr_b_en=0;
+          ctrl1_vr_c_en=0;
+          ctrl1_vf_b_en=0;
+          ctrl1_vf_a_sel=0;
+          ctrl1_usesvssel=0;
           ctrl1_vr_a_en=1;
           ctrl1_vf_a_en=1;
         end
       COP2_VSADD,
       COP2_VSADD_U:
         begin
+          ctrl1_vr_c_en=0;
+          ctrl1_vf_b_en=0;
+          ctrl1_vf_a_sel=0;
           ctrl1_vr_a_en=~ir_op[BIT_VSSRC1];
           ctrl1_vr_b_en=1;
           ctrl1_vf_a_en=1;
@@ -907,6 +1097,9 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VSSUB,
       COP2_VSSUB_U:
         begin
+          ctrl1_vr_c_en=0;
+          ctrl1_vf_b_en=0;
+          ctrl1_vf_a_sel=0;
           ctrl1_vr_a_en=~ir_op[BIT_VSSRC1];
           ctrl1_vr_b_en=~ir_op[BIT_VSSRC2];
           ctrl1_vf_a_en=1;
@@ -917,6 +1110,11 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VSLS,
       COP2_VSLS_U:
         begin
+          ctrl1_vr_b_en=0;
+          ctrl1_vr_c_en=0;
+          ctrl1_vf_b_en=0;
+          ctrl1_vf_a_sel=0;
+          ctrl1_usesvssel=0;
           ctrl1_vr_a_en=1;
           ctrl1_vf_a_en=1;
         end
@@ -925,6 +1123,9 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VXLMUL,
       COP2_VXLMUL_U:
         begin
+          ctrl1_vr_c_en=0;
+          ctrl1_vf_b_en=0;
+          ctrl1_vf_a_sel=0;
           ctrl1_vr_a_en=~ir_op[BIT_VSSRC1];
           ctrl1_vr_b_en=1;
           ctrl1_vf_a_en=1;
@@ -939,6 +1140,8 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VXLMSUB,
       COP2_VXLMSUB_U:
         begin
+          ctrl1_vf_b_en=0;
+          ctrl1_vf_a_sel=0;
           ctrl1_vr_a_en=~ir_op[BIT_VSSRC1];
           ctrl1_vr_b_en=1;
           ctrl1_vf_a_en=1;
@@ -947,6 +1150,11 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
         end
       COP2_VINS_VV:
         begin
+          ctrl1_vr_c_en=0;
+          ctrl1_vf_a_en=0;
+          ctrl1_vf_b_en=0;
+          ctrl1_vf_a_sel=0;
+          ctrl1_usesvssel=0;
           ctrl1_vr_a_en=1;
           ctrl1_vr_b_en=1;
         end
@@ -955,16 +1163,30 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VEXT_SV,
       COP2_VEXT_U_SV:
         begin
+          ctrl1_vr_b_en=0;
+          ctrl1_vr_c_en=0;
+          ctrl1_vf_a_en=0;
+          ctrl1_vf_b_en=0;
+          ctrl1_vf_a_sel=0;
+          ctrl1_usesvssel=0;
           ctrl1_vr_a_en=1;
         end
       COP2_VCOMPRESS,
       COP2_VEXPAND:
         begin
+          ctrl1_vr_b_en=0;
+          ctrl1_vr_c_en=0;
+          ctrl1_vf_b_en=0;
+          ctrl1_vf_a_sel=0;
+          ctrl1_usesvssel=0;
           ctrl1_vr_a_en=1;
           ctrl1_vf_a_en=1;
         end
       COP2_VMERGE:
         begin
+          ctrl1_vr_c_en=0;
+          ctrl1_vf_b_en=0;
+          ctrl1_vf_a_sel=0;
           ctrl1_vr_a_en=~ir_op[BIT_VSSRC1];
           ctrl1_vr_b_en=~ir_op[BIT_VSSRC2];
           ctrl1_vf_a_en=1;
@@ -976,6 +1198,12 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VHALFUP,
       COP2_VHALFDN:
         begin
+          ctrl1_vr_b_en=0;
+          ctrl1_vr_c_en=0;
+          ctrl1_vf_a_en=0;
+          ctrl1_vf_b_en=0;
+          ctrl1_vf_a_sel=0;
+          ctrl1_usesvssel=0;
           ctrl1_vr_a_en=1;
         end
       //COP2_VSATVL:
@@ -984,6 +1212,9 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VFXOR,
       COP2_VFNOR:
         begin
+          ctrl1_vr_a_en=0;
+          ctrl1_vr_b_en=0;
+          ctrl1_vr_c_en=0;
           ctrl1_vf_a_en=~ir_op[BIT_VSSRC1];
           ctrl1_vf_b_en=1;
           ctrl1_vf_a_sel=1;
@@ -1000,6 +1231,11 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VFSETIF,
       COP2_VFSETOF:
         begin
+          ctrl1_vr_a_en=0;
+          ctrl1_vr_b_en=0;
+          ctrl1_vr_c_en=0;
+          ctrl1_vf_b_en=0;
+          ctrl1_usesvssel=0;
           ctrl1_vf_a_en=1;
           ctrl1_vf_a_sel=1;
         end
@@ -1023,6 +1259,12 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VLDS_U_H,
       COP2_VLDS_U_W:
         begin
+          ctrl1_vr_a_en=0;
+          ctrl1_vr_b_en=0;
+          ctrl1_vr_c_en=0;
+          ctrl1_vf_b_en=0;
+          ctrl1_vf_a_sel=0;
+          ctrl1_usesvssel=0;
           ctrl1_vf_a_en=1;
         end
       COP2_VLDX_B,
@@ -1033,6 +1275,11 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VLDX_U_H,
       COP2_VLDX_U_W:
         begin
+          ctrl1_vr_a_en=0;
+          ctrl1_vr_b_en=0;
+          ctrl1_vf_b_en=0;
+          ctrl1_vf_a_sel=0;
+          ctrl1_usesvssel=0;
           ctrl1_vf_a_en=1;
           ctrl1_vr_c_en=1;
         end
@@ -1046,6 +1293,11 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VSTS_W,
       COP2_VSTS_L:
         begin
+          ctrl1_vr_a_en=0;
+          ctrl1_vr_c_en=0;
+          ctrl1_vf_b_en=0;
+          ctrl1_vf_a_sel=0;
+          ctrl1_usesvssel=0;
           ctrl1_vf_a_en=1;
           ctrl1_vr_b_en=1;
         end
@@ -1058,6 +1310,10 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VSTXO_W,
       COP2_VSTXO_L:
         begin
+          ctrl1_vr_a_en=0;
+          ctrl1_vf_b_en=0;
+          ctrl1_vf_a_sel=0;
+          ctrl1_usesvssel=0;
           ctrl1_vr_b_en=1;
           ctrl1_vr_c_en=1;
           ctrl1_vf_a_en=1;
@@ -1071,23 +1327,23 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
   // Decode enables 
   always@*
   begin
-    ctrl1_vr_d_we=0;
-    ctrl1_vf_c_we=0;
-    ctrl1_vs_we=0;
-    ctrl1_vrdest_sel=0;
-    ctrl1_elmshamt_sel=0;
-    ctrl1_srcshamt_sel=0;
-    ctrl1_srclimit_sel=0;
-    ctrl1_dstshamt_sel=0;
-    ctrl1_mem_dir_left=0;
-    ctrl1_rshiftnonzero=0;
-    ctrl1_memunit_en=0;
-    ctrl1_mem_en=0;
-    ctrl1_ismasked=0;
-    ctrl1_setvlto1=0;
-    ctrl1_vf_wbsel=0;
-    ctrl1_volatiledest=0;
-    casez(ir_op)
+//    ctrl1_vr_d_we=0;
+//    ctrl1_vf_c_we=0;
+//    ctrl1_vs_we=0;
+//    ctrl1_vrdest_sel=0;
+//    ctrl1_elmshamt_sel=0;
+//    ctrl1_srcshamt_sel=0;
+//    ctrl1_srclimit_sel=0;
+//    ctrl1_dstshamt_sel=0;
+//    ctrl1_mem_dir_left=0;
+//    ctrl1_rshiftnonzero=0;
+//    ctrl1_memunit_en=0;
+//    ctrl1_mem_en=0;
+//    ctrl1_ismasked=0;
+//    ctrl1_setvlto1=0;
+//    ctrl1_vf_wbsel=0;
+//    ctrl1_volatiledest=0;
+    case(ir_op)
       COP2_VADD,
       COP2_VADD_U,
       COP2_VSUB,
@@ -1099,6 +1355,20 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VMOD,
       COP2_VMOD_U:
         begin
+          ctrl1_vf_c_we=0;
+          ctrl1_vs_we=0;
+          ctrl1_vrdest_sel=0;
+          ctrl1_elmshamt_sel=0;
+          ctrl1_srcshamt_sel=0;
+          ctrl1_srclimit_sel=0;
+          ctrl1_dstshamt_sel=0;
+          ctrl1_mem_dir_left=0;
+          ctrl1_rshiftnonzero=0;
+          ctrl1_memunit_en=0;
+          ctrl1_mem_en=0;
+          ctrl1_setvlto1=0;
+          ctrl1_vf_wbsel=0;
+          ctrl1_volatiledest=0;
           ctrl1_vr_d_we=1;
           ctrl1_ismasked=1;
         end
@@ -1109,6 +1379,20 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VCMP_LE,
       COP2_VCMP_U_LE:
         begin
+          ctrl1_vr_d_we=0;
+          ctrl1_vf_c_we=0;
+          ctrl1_vs_we=0;
+          ctrl1_vrdest_sel=0;
+          ctrl1_elmshamt_sel=0;
+          ctrl1_srcshamt_sel=0;
+          ctrl1_srclimit_sel=0;
+          ctrl1_dstshamt_sel=0;
+          ctrl1_mem_dir_left=0;
+          ctrl1_rshiftnonzero=0;
+          ctrl1_memunit_en=0;
+          ctrl1_mem_en=0;
+          ctrl1_setvlto1=0;
+          ctrl1_volatiledest=0;
           ctrl1_vf_c_we=1;
           ctrl1_vf_wbsel=1;
           ctrl1_ismasked=1;
@@ -1145,6 +1429,20 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VSLS,
       COP2_VSLS_U:
         begin
+          ctrl1_vf_c_we=0;
+          ctrl1_vs_we=0;
+          ctrl1_vrdest_sel=0;
+          ctrl1_elmshamt_sel=0;
+          ctrl1_srcshamt_sel=0;
+          ctrl1_srclimit_sel=0;
+          ctrl1_dstshamt_sel=0;
+          ctrl1_mem_dir_left=0;
+          ctrl1_rshiftnonzero=0;
+          ctrl1_memunit_en=0;
+          ctrl1_mem_en=0;
+          ctrl1_setvlto1=0;
+          ctrl1_vf_wbsel=0;
+          ctrl1_volatiledest=0;
           ctrl1_vr_d_we=1;
           ctrl1_ismasked=1;
         end
@@ -1153,6 +1451,19 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VXLMUL,
       COP2_VXLMUL_U:
         begin
+          ctrl1_vf_c_we=0;
+          ctrl1_vs_we=0;
+          ctrl1_vrdest_sel=0;
+          ctrl1_elmshamt_sel=0;
+          ctrl1_srcshamt_sel=0;
+          ctrl1_srclimit_sel=0;
+          ctrl1_dstshamt_sel=0;
+          ctrl1_mem_dir_left=0;
+          ctrl1_memunit_en=0;
+          ctrl1_mem_en=0;
+          ctrl1_setvlto1=0;
+          ctrl1_vf_wbsel=0;
+          ctrl1_volatiledest=0;
           ctrl1_vr_d_we=1;
           ctrl1_rshiftnonzero=1;
           ctrl1_ismasked=1;
@@ -1166,12 +1477,34 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VXLMSUB,
       COP2_VXLMSUB_U:
         begin
+          ctrl1_vf_c_we=0;
+          ctrl1_vs_we=0;
+          ctrl1_vrdest_sel=0;
+          ctrl1_elmshamt_sel=0;
+          ctrl1_srcshamt_sel=0;
+          ctrl1_srclimit_sel=0;
+          ctrl1_dstshamt_sel=0;
+          ctrl1_mem_dir_left=0;
+          ctrl1_memunit_en=0;
+          ctrl1_mem_en=0;
+          ctrl1_setvlto1=0;
+          ctrl1_vf_wbsel=0;
+          ctrl1_volatiledest=0;
           ctrl1_vr_d_we=1;
           ctrl1_rshiftnonzero=1;
           ctrl1_ismasked=1;
         end
       COP2_VINS_VV:
         begin
+          ctrl1_vf_c_we=0;
+          ctrl1_vs_we=0;
+          ctrl1_vrdest_sel=0;
+          ctrl1_srclimit_sel=0;
+          ctrl1_rshiftnonzero=0;
+          ctrl1_mem_en=0;
+          ctrl1_ismasked=0;
+          ctrl1_setvlto1=0;
+          ctrl1_vf_wbsel=0;
           ctrl1_memunit_en=1;
           ctrl1_vr_d_we=1;
           ctrl1_elmshamt_sel=3;
@@ -1182,6 +1515,15 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
         end
       COP2_VINS_SV:
         begin
+          ctrl1_vf_c_we=0;
+          ctrl1_vs_we=0;
+          ctrl1_vrdest_sel=0;
+          ctrl1_srclimit_sel=0;
+          ctrl1_rshiftnonzero=0;
+          ctrl1_mem_en=0;
+          ctrl1_ismasked=0;
+          ctrl1_vf_wbsel=0;
+          ctrl1_volatiledest=0;
           ctrl1_memunit_en=1;
           ctrl1_vr_d_we=1;
           ctrl1_elmshamt_sel=0;
@@ -1192,6 +1534,15 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
         end
       COP2_VEXT_VV:
         begin
+          ctrl1_vf_c_we=0;
+          ctrl1_vs_we=0;
+          ctrl1_vrdest_sel=0;
+          ctrl1_dstshamt_sel=0;
+          ctrl1_rshiftnonzero=0;
+          ctrl1_mem_en=0;
+          ctrl1_ismasked=0;
+          ctrl1_setvlto1=0;
+          ctrl1_vf_wbsel=0;
           ctrl1_memunit_en=1;
           ctrl1_vr_d_we=1;
           ctrl1_elmshamt_sel=3;
@@ -1203,6 +1554,15 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VEXT_SV,
       COP2_VEXT_U_SV:
         begin
+          ctrl1_vr_d_we=0;
+          ctrl1_vf_c_we=0;
+          ctrl1_vrdest_sel=0;
+          ctrl1_dstshamt_sel=0;
+          ctrl1_rshiftnonzero=0;
+          ctrl1_mem_en=0;
+          ctrl1_ismasked=0;
+          ctrl1_vf_wbsel=0;
+          ctrl1_volatiledest=0;
           ctrl1_vs_we=1;
           ctrl1_memunit_en=1;
           ctrl1_elmshamt_sel=3;
@@ -1213,6 +1573,17 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
         end
       COP2_VCOMPRESS:
         begin
+          ctrl1_vf_c_we=0;
+          ctrl1_vs_we=0;
+          ctrl1_vrdest_sel=0;
+          ctrl1_elmshamt_sel=0;
+          ctrl1_srcshamt_sel=0;
+          ctrl1_srclimit_sel=0;
+          ctrl1_dstshamt_sel=0;
+          ctrl1_rshiftnonzero=0;
+          ctrl1_mem_en=0;
+          ctrl1_setvlto1=0;
+          ctrl1_vf_wbsel=0;
           ctrl1_memunit_en=1;
           ctrl1_vr_d_we=1;
           ctrl1_mem_dir_left=0;
@@ -1221,6 +1592,17 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
         end
       COP2_VEXPAND:
         begin
+          ctrl1_vf_c_we=0;
+          ctrl1_vs_we=0;
+          ctrl1_vrdest_sel=0;
+          ctrl1_elmshamt_sel=0;
+          ctrl1_srcshamt_sel=0;
+          ctrl1_srclimit_sel=0;
+          ctrl1_dstshamt_sel=0;
+          ctrl1_rshiftnonzero=0;
+          ctrl1_mem_en=0;
+          ctrl1_setvlto1=0;
+          ctrl1_vf_wbsel=0;
           ctrl1_memunit_en=1;
           ctrl1_vr_d_we=1;
           ctrl1_mem_dir_left=1;
@@ -1229,10 +1611,38 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
         end
       COP2_VMERGE:
         begin
+          ctrl1_vf_c_we=0;
+          ctrl1_vs_we=0;
+          ctrl1_vrdest_sel=0;
+          ctrl1_elmshamt_sel=0;
+          ctrl1_srcshamt_sel=0;
+          ctrl1_srclimit_sel=0;
+          ctrl1_dstshamt_sel=0;
+          ctrl1_mem_dir_left=0;
+          ctrl1_rshiftnonzero=0;
+          ctrl1_memunit_en=0;
+          ctrl1_mem_en=0;
+          ctrl1_ismasked=0;
+          ctrl1_setvlto1=0;
+          ctrl1_vf_wbsel=0;
+          ctrl1_volatiledest=0;
           ctrl1_vr_d_we=1;
         end
       COP2_VFINS:
         begin
+          ctrl1_vr_d_we=0;
+          ctrl1_vf_c_we=0;
+          ctrl1_vs_we=0;
+          ctrl1_vrdest_sel=0;
+          ctrl1_srclimit_sel=0;
+          ctrl1_dstshamt_sel=0;
+          ctrl1_rshiftnonzero=0;
+          ctrl1_memunit_en=0;
+          ctrl1_mem_en=0;
+          ctrl1_ismasked=0;
+          ctrl1_setvlto1=0;
+          ctrl1_vf_wbsel=0;
+          ctrl1_volatiledest=0;
           ctrl1_elmshamt_sel=3;
           ctrl1_srcshamt_sel=0;
           ctrl1_mem_dir_left=1;
@@ -1240,6 +1650,16 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VEXTHALF,
       COP2_VHALF:
         begin
+          ctrl1_vf_c_we=0;
+          ctrl1_vs_we=0;
+          ctrl1_vrdest_sel=0;
+          ctrl1_srclimit_sel=0;
+          ctrl1_dstshamt_sel=0;
+          ctrl1_rshiftnonzero=0;
+          ctrl1_mem_en=0;
+          ctrl1_ismasked=0;
+          ctrl1_setvlto1=0;
+          ctrl1_vf_wbsel=0;
           ctrl1_memunit_en=1;
           ctrl1_elmshamt_sel=1;
           ctrl1_srcshamt_sel=1;
@@ -1249,6 +1669,17 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
         end
       COP2_VHALFUP:
         begin
+          ctrl1_vf_c_we=0;
+          ctrl1_vs_we=0;
+          ctrl1_vrdest_sel=0;
+          ctrl1_srcshamt_sel=0;
+          ctrl1_srclimit_sel=0;
+          ctrl1_dstshamt_sel=0;
+          ctrl1_rshiftnonzero=0;
+          ctrl1_mem_en=0;
+          ctrl1_ismasked=0;
+          ctrl1_setvlto1=0;
+          ctrl1_vf_wbsel=0;
           ctrl1_memunit_en=1;
           ctrl1_elmshamt_sel=2;
           ctrl1_srcshamt_sel=2;
@@ -1258,6 +1689,15 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
         end
       COP2_VHALFDN:
         begin
+          ctrl1_vf_c_we=0;
+          ctrl1_vs_we=0;
+          ctrl1_vrdest_sel=0;
+          ctrl1_srclimit_sel=0;
+          ctrl1_rshiftnonzero=0;
+          ctrl1_mem_en=0;
+          ctrl1_ismasked=0;
+          ctrl1_setvlto1=0;
+          ctrl1_vf_wbsel=0;
           ctrl1_memunit_en=1;
           ctrl1_elmshamt_sel=2;
           ctrl1_srcshamt_sel=0;
@@ -1274,17 +1714,62 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VFCLR,
       COP2_VFSET:
         begin
+          ctrl1_vr_d_we=0;
+          ctrl1_vs_we=0;
+          ctrl1_vrdest_sel=0;
+          ctrl1_elmshamt_sel=0;
+          ctrl1_srcshamt_sel=0;
+          ctrl1_srclimit_sel=0;
+          ctrl1_dstshamt_sel=0;
+          ctrl1_mem_dir_left=0;
+          ctrl1_rshiftnonzero=0;
+          ctrl1_memunit_en=0;
+          ctrl1_mem_en=0;
+          ctrl1_ismasked=0;
+          ctrl1_setvlto1=0;
+          ctrl1_vf_wbsel=0;
+          ctrl1_volatiledest=0;
           ctrl1_vf_c_we=1;
         end
       COP2_VIOTA,
       COP2_VCIOTA:
         begin
+          ctrl1_vf_c_we=0;
+          ctrl1_vs_we=0;
+          ctrl1_vrdest_sel=0;
+          ctrl1_elmshamt_sel=0;
+          ctrl1_srcshamt_sel=0;
+          ctrl1_srclimit_sel=0;
+          ctrl1_dstshamt_sel=0;
+          ctrl1_mem_dir_left=0;
+          ctrl1_rshiftnonzero=0;
+          ctrl1_memunit_en=0;
+          ctrl1_mem_en=0;
+          ctrl1_ismasked=0;
+          ctrl1_setvlto1=0;
+          ctrl1_vf_wbsel=0;
+          ctrl1_volatiledest=0;
           ctrl1_vr_d_we=1;
         end
       COP2_VFPOP,
       COP2_VFFF1,
       COP2_VFFL1:
         begin
+          ctrl1_vr_d_we=0;
+          ctrl1_vf_c_we=0;
+          ctrl1_vrdest_sel=0;
+          ctrl1_elmshamt_sel=0;
+          ctrl1_srcshamt_sel=0;
+          ctrl1_srclimit_sel=0;
+          ctrl1_dstshamt_sel=0;
+          ctrl1_mem_dir_left=0;
+          ctrl1_rshiftnonzero=0;
+          ctrl1_memunit_en=0;
+          ctrl1_mem_en=0;
+          ctrl1_ismasked=0;
+          ctrl1_setvlto1=0;
+          ctrl1_vf_wbsel=0;
+          ctrl1_volatiledest=0;
           ctrl1_vs_we=1;
         end
       COP2_VFSETBF,
@@ -1295,6 +1780,21 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VFCLR8,
       COP2_VFOR8:
         begin
+          ctrl1_vr_d_we=0;
+          ctrl1_vs_we=0;
+          ctrl1_vrdest_sel=0;
+          ctrl1_elmshamt_sel=0;
+          ctrl1_srcshamt_sel=0;
+          ctrl1_srclimit_sel=0;
+          ctrl1_dstshamt_sel=0;
+          ctrl1_mem_dir_left=0;
+          ctrl1_rshiftnonzero=0;
+          ctrl1_memunit_en=0;
+          ctrl1_mem_en=0;
+          ctrl1_ismasked=0;
+          ctrl1_setvlto1=0;
+          ctrl1_vf_wbsel=0;
+          ctrl1_volatiledest=0;
           ctrl1_vf_c_we=1;
         end
       //COP2_VFLD,
@@ -1313,6 +1813,17 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VLDS_U_H,
       COP2_VLDS_U_W:
         begin
+          ctrl1_vf_c_we=0;
+          ctrl1_vs_we=0;
+          ctrl1_elmshamt_sel=0;
+          ctrl1_srcshamt_sel=0;
+          ctrl1_srclimit_sel=0;
+          ctrl1_dstshamt_sel=0;
+          ctrl1_mem_dir_left=0;
+          ctrl1_rshiftnonzero=0;
+          ctrl1_setvlto1=0;
+          ctrl1_vf_wbsel=0;
+          ctrl1_volatiledest=0;
           ctrl1_vr_d_we=1;
           ctrl1_vrdest_sel=1;
           ctrl1_memunit_en=1;
@@ -1327,6 +1838,17 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VLDX_U_H,
       COP2_VLDX_U_W:
         begin
+          ctrl1_vf_c_we=0;
+          ctrl1_vs_we=0;
+          ctrl1_elmshamt_sel=0;
+          ctrl1_srcshamt_sel=0;
+          ctrl1_srclimit_sel=0;
+          ctrl1_dstshamt_sel=0;
+          ctrl1_mem_dir_left=0;
+          ctrl1_rshiftnonzero=0;
+          ctrl1_setvlto1=0;
+          ctrl1_vf_wbsel=0;
+          ctrl1_volatiledest=0;
           ctrl1_vr_d_we=1;
           ctrl1_vrdest_sel=1;
           ctrl1_memunit_en=1;
@@ -1351,6 +1873,19 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       COP2_VSTXO_W,
       COP2_VSTXO_L:
         begin
+          ctrl1_vr_d_we=0;
+          ctrl1_vf_c_we=0;
+          ctrl1_vs_we=0;
+          ctrl1_vrdest_sel=0;
+          ctrl1_elmshamt_sel=0;
+          ctrl1_srcshamt_sel=0;
+          ctrl1_srclimit_sel=0;
+          ctrl1_dstshamt_sel=0;
+          ctrl1_mem_dir_left=0;
+          ctrl1_rshiftnonzero=0;
+          ctrl1_setvlto1=0;
+          ctrl1_vf_wbsel=0;
+          ctrl1_volatiledest=0;
           ctrl1_memunit_en=1;
           ctrl1_mem_en=1;
           ctrl1_ismasked=1;
@@ -1389,7 +1924,7 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
     ctrl1_act_en = 1'b0;
     ctrl1_trp_en = 1'b0;
     ctrl1_flagalu_op=FLAGOP_CLR;
-    casez(ir_op)
+    case(ir_op)
       COP2_VADD:      ctrl1_alu_op=ALUOP_ADD^ALUOP_ZERO;
       COP2_VADD_U:    ctrl1_alu_op=ALUOP_ADDU^ALUOP_ZERO;
       COP2_VSUB:      ctrl1_alu_op=ALUOP_SUB^ALUOP_ZERO;
@@ -1539,6 +2074,14 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
   assign regid_pad=0;
 
 // Module instance
+  wire [7:0] pipe1reg_secondstageonly_q;
+  assign {CBS}
+        ctrl2_elmshamt_sel,
+        ctrl2_srcshamt_sel,
+        ctrl2_srclimit_sel, //used to get squashed, pretend doesn't need to
+        ctrl2_dstshamt_sel,
+        ctrl2_setvlto1
+      {CBE} = pipe1reg_secondstageonly_q;
   pipereg_8  pipe1reg_secondstageonly (
       .d( {CBS}
         ctrl1_elmshamt_sel,
@@ -1549,44 +2092,21 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       {CBE}),
       .clk(clk),
       .resetn(resetn),
-      .en( pipe_advance[1] ),
-      .squashn( 1'b1 ),
-      .q({CBS}
-        ctrl2_elmshamt_sel,
-        ctrl2_srcshamt_sel,
-        ctrl2_srclimit_sel, //used to get squashed, pretend doesn't need to
-        ctrl2_dstshamt_sel,
-        ctrl2_setvlto1
-      {CBE}));
+      .en(pipe_advance[1]),
+      .squashn(1'b1),
+      .q(pipe1reg_secondstageonly_q));
 
   // *********** Pipeline signals that need to be squashed *********
 
 //module instance
-  pipereg_17  pipe1regwsquash (
-      .d( {CBS}
-        ctrl1_vr_d_we,
-        ctrl1_vf_c_we,
-        ctrl1_vs_we,
-        ctrl1_vr_a_en|ctrl1_vr_c_en,
-        ctrl1_vr_b_en,
-        ctrl1_vf_a_en,
-        ctrl1_vf_b_en,
-        ctrl1_vr_a_en|ctrl1_vr_b_en|ctrl1_vr_c_en|ctrl1_vr_d_we|ctrl1_vf_a_en|ctrl1_vf_b_en|ctrl1_vf_c_we,
-        ctrl1_memunit_en,
-        ctrl1_mem_en,
-        |ctrl1_mulshift_op,
-        ctrl1_matmul_en,
-        ctrl1_bfadder_en,
-        ctrl1_bfmult_en,
-        ctrl1_act_en,
-        ctrl1_trp_en,
-        (ctrl1_alu_op!=(ALUOP_ZERO^ALUOP_ZERO)) || ctrl1_vf_c_we
-      {CBE}),
-      .clk(clk),
-      .resetn(resetn),
-      .en( pipe_advance[1] ),
-      .squashn( ~pipe_squash[1] ),
-      .q({CBS}
+  wire [16:0] pipe1regwsquash_q;
+  wire pipe1regwsquash_squashn;
+  wire pipe1regwsquash_d1;
+  wire pipe1regwsquash_d2;
+  wire pipe1regwsquash_d3;
+  wire pipe1regwsquash_d4;
+
+  assign {CBS}
         ctrl2_vr_c_we,
         ctrl2_vf_c_we,
         ctrl2_vs_we,
@@ -1604,36 +2124,51 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
         ctrl2_act_en,
         ctrl2_trp_en,
         ctrl2_alufalu_en
-        {CBE})
-      );
+        {CBE} = pipe1regwsquash_q;
 
-  // *********** Pipeline signals that don't need to be squashed *********
-  pipereg_{PIPE1REGWIDTH}  pipe1reg (
+  assign pipe1regwsquash_squashn = ~pipe_squash[1];
+
+  assign pipe1regwsquash_d1 = ctrl1_vr_a_en|ctrl1_vr_c_en;
+  assign pipe1regwsquash_d2 = ctrl1_vr_a_en|ctrl1_vr_b_en|ctrl1_vr_c_en| ctrl1_vr_d_we|ctrl1_vf_a_en|ctrl1_vf_b_en|ctrl1_vf_c_we;
+  assign pipe1regwsquash_d3 = |ctrl1_mulshift_op;
+  assign pipe1regwsquash_d4 = (ctrl1_alu_op!=(ALUOP_ZERO^ALUOP_ZERO)) || ctrl1_vf_c_we;
+
+  pipereg_17  pipe1regwsquash (
       .d( {CBS}
-        {CBS}(ctrl1_vrdest_sel) ? ir_src2 : ir_dst, regid_pad{CBE},
-        {CBS}(ctrl1_vr_c_en ) ? ir_dst : ir_src1, regid_pad{CBE},
-        {CBS}ir_src2,regid_pad{CBE},
-        ir_op[7] && ctrl1_usesvssel,
-        ir_op[6] && ctrl1_usesvssel,
-        ir_mask,
-        ctrl1_vf_a_sel,
-        ctrl1_rshiftnonzero,
-        ctrl1_mem_dir_left,
-        ctrl1_alu_op,
-        ctrl1_satsum_op,
-        ctrl1_satsize_op,
-        ctrl1_mulshift_op,
-        ctrl1_memunit_op,
-        ctrl1_ismasked,
-        ctrl1_flagalu_op,
-        ctrl1_vf_wbsel,
-        ctrl1_volatiledest
+        ctrl1_vr_d_we,
+        ctrl1_vf_c_we,
+        ctrl1_vs_we,
+        pipe1regwsquash_d1,
+        ctrl1_vr_b_en,
+        ctrl1_vf_a_en,
+        ctrl1_vf_b_en,
+        pipe1regwsquash_d2,
+        ctrl1_memunit_en,
+        ctrl1_mem_en,
+        pipe1regwsquash_d3,
+        ctrl1_matmul_en,
+        ctrl1_bfadder_en,
+        ctrl1_bfmult_en,
+        ctrl1_act_en,
+        ctrl1_trp_en,
+        pipe1regwsquash_d4
       {CBE}),
       .clk(clk),
       .resetn(resetn),
-      .en( pipe_advance[1] ),
-      .squashn( 1'b1 ),
-      .q({CBS}
+      .en(pipe_advance[1]),
+      .squashn(pipe1regwsquash_squashn),
+      .q(pipe1regwsquash_q)
+      );
+
+  // *********** Pipeline signals that don't need to be squashed *********
+  wire [{PIPE1REGWIDTH}-1:0] pipe1reg_q;
+  wire [`VRELM_RANGE+5:0] pipe1reg_d1;
+  wire [`VRELM_RANGE+5:0] pipe1reg_d2;
+  wire [`VRELM_RANGE+5:0] pipe1reg_d3;
+  wire pipe1reg_d4;
+  wire pipe1reg_d5;
+
+  assign {CBS}
         dst_s2,
         src1_s2,
         src2_s2,
@@ -1652,27 +2187,66 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
         ctrl2_flagalu_op,
         ctrl2_vf_wbsel,
         ctrl2_volatiledest
-      {CBE}));
+      {CBE} = pipe1reg_q;
+
+  assign pipe1reg_d1 = {CBS}(ctrl1_vrdest_sel) ? ir_src2 : ir_dst, regid_pad{CBE};
+  assign pipe1reg_d2 = {CBS}(ctrl1_vr_c_en ) ? ir_dst : ir_src1, regid_pad{CBE};
+  assign pipe1reg_d3 = {CBS}ir_src2,regid_pad{CBE};
+  assign pipe1reg_d4 = ir_op[7] & ctrl1_usesvssel;
+  assign pipe1reg_d5 = ir_op[6] & ctrl1_usesvssel;
+
+  pipereg_{PIPE1REGWIDTH}  pipe1reg (
+      .d( {CBS}
+        pipe1reg_d1,
+        pipe1reg_d2,
+        pipe1reg_d3,
+        pipe1reg_d4,
+        pipe1reg_d5,
+        ir_mask,
+        ctrl1_vf_a_sel,
+        ctrl1_rshiftnonzero,
+        ctrl1_mem_dir_left,
+        ctrl1_alu_op,
+        ctrl1_satsum_op,
+        ctrl1_satsize_op,
+        ctrl1_mulshift_op,
+        ctrl1_memunit_op,
+        ctrl1_ismasked,
+        ctrl1_flagalu_op,
+        ctrl1_vf_wbsel,
+        ctrl1_volatiledest
+      {CBE}),
+      .clk(clk),
+      .resetn(resetn),
+      .en(pipe_advance[1]),
+      .squashn( 1'b1 ),
+      .q(pipe1reg_q));
   
   wire [6:1] squash_ctrlmemoppipe_NC;
+  wire [5-1:0] ctrlmemoppipe_en;
+  wire [7*(5+1)-1:0] ctrlmemoppipe_q;
+
+  assign ctrlmemoppipe_en = pipe_advance[6:1] & {CBS}4'b1,ctrl2_memunit_en,1'b1{CBE};
+  assign {CBS}ctrl_memunit_op[6],ctrl_memunit_op[5],ctrl_memunit_op[4],ctrl_memunit_op[3],ctrl_memunit_op[2],ctrl_memunit_op[1]{CBE} = ctrlmemoppipe_q;
 
 //module instance
   pipe_7_5  ctrlmemoppipe (
-      .d( ctrl1_memunit_op ),
+      .d(ctrl1_memunit_op),
       .clk(clk),
       .resetn(resetn),
-      .en( pipe_advance[6:1] & {CBS}4'b1,ctrl2_memunit_en,1'b1{CBE} ),
+      .en(ctrlmemoppipe_en),
       .squash(squash_ctrlmemoppipe_NC),
       //.squash( pipe_squash[6:1] ),
-      .q( {CBS}ctrl_memunit_op[6],ctrl_memunit_op[5],ctrl_memunit_op[4],ctrl_memunit_op[3],ctrl_memunit_op[2],ctrl_memunit_op[1]{CBE} ));
+      .q(ctrlmemoppipe_q));
 
 /******************************************************************************/
 /******************************* 2nd Pipeline Stage ***************************/
 /******************************************************************************/
 
   // if src_start!=0 stall pipeline to calculate it and then do haz check
-
-  onecyclestall shamtstall(ctrl2_srcshamt_sel!=0,clk,resetn,stall_srcstart);
+  wire shamtstall1;
+  assign shamtstall1 = ctrl2_srcshamt_sel!=0;
+  onecyclestall shamtstall(shamtstall1,clk,resetn,stall_srcstart);
 
   always@(posedge clk)
     if (!resetn || pipe_advance[1] )
@@ -1734,14 +2308,22 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
     end
 
   wire [6:2] squash_vcpipe_NC;
+  wire [{VCWIDTH}-1:0] vcpipe_d;
+  wire [{VCWIDTH}*(4+1)-1:0] vcpipe_q;
+  wire [4-1:0] vcpipe_en;
+
+  assign vcpipe_d = (!pipe_advance_s2_r) ? vc_in_saved : vc_in;
+  assign {CBS}vc[6],vc[5],vc[4],vc[3],vc[2]{CBE} = vcpipe_q;
+  assign vcpipe_en = pipe_advance[6:2] & {CBS}4'b1,ctrl2_memunit_en{CBE};
+
 //module instance 
  pipe_{VCWIDTH}_4 vcpipe (
-      .d( (!pipe_advance_s2_r) ? vc_in_saved : vc_in ),
+      .d(vcpipe_d),
       .clk(clk),
       .resetn(resetn),
-      .en( pipe_advance[6:2] & {CBS}4'b1,ctrl2_memunit_en{CBE} ),
+      .en(vcpipe_en),
       .squash(squash_vcpipe_NC),
-      .q( {CBS}vc[6],vc[5],vc[4],vc[3],vc[2]{CBE} ));
+      .q(vcpipe_q));
 
   wire [6:2] squash_vlpipe_NC;
 
