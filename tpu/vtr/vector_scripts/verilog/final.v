@@ -1,4 +1,150 @@
  
+
+/****************************************************************************
+ *           Load data translator
+ *- moves read data to appropriate byte/halfword and zero/sign extends
+ *****************************************************************************/
+module vload_data_translator(
+    d_readdatain,
+    d_address,
+    load_size,
+    load_sign_ext,
+    d_loadresult);
+parameter WIDTH=32;
+
+input [WIDTH-1:0] d_readdatain;
+input [1:0] d_address;
+input [1:0] load_size;
+input load_sign_ext;
+output [WIDTH-1:0] d_loadresult;
+
+reg [WIDTH-1:0] d_loadresult;
+
+always @(d_readdatain or d_address or load_size or load_sign_ext)
+begin
+    case (load_size)
+        2'b00:
+        begin
+            case (d_address[1:0])
+                2'd0: d_loadresult[7:0]=d_readdatain[31:24];
+                2'd1: d_loadresult[7:0]=d_readdatain[23:16];
+                2'd2: d_loadresult[7:0]=d_readdatain[15:8];
+                default: d_loadresult[7:0]=d_readdatain[7:0];
+            endcase
+            d_loadresult[31:8]={24{load_sign_ext&d_loadresult[7]}};
+        end
+        2'b01:
+        begin
+            case (d_address[1])
+                2'd0: d_loadresult[15:0]=d_readdatain[31:16];
+                default: d_loadresult[15:0]=d_readdatain[15:0];
+            endcase
+            d_loadresult[31:16]={16{load_sign_ext&d_loadresult[15]}};
+        end
+        default:
+            d_loadresult=d_readdatain;
+    endcase
+end
+endmodule
+
+
+`ifndef _OPTIONS_V_
+`define _OPTIONS_V_ 1
+
+`define NO_PLI 1
+//`define TEST_BENCH 1
+`define USE_INHOUSE_LOGIC
+`define SIMULATION_MEMORY
+// Replaces altera blocks with local logic files
+
+/************************** ABBREVIEATED NAMES *****************************/
+// Note: LG = Log base 2
+//
+// Default configuration:
+//    8KB Icache (LGID=13) with 16 byte cache line size (LGIW=4)
+//   32KB Dcache (LGDD=15) with 64 byte cache line size (LGDD=6)
+//    Data prefetching off (DP=0, DPV=0)
+//    16 Vector Lanes (LGL=4)
+//    64 Maximum Vector Length (LGMVL=6)
+//    32-bit (4-byte) Vector lane width (LGVPW=2)
+//    32-bit Vector lane datapath width (LGLW=5)
+//    16 Memory Crossbar lanes (LGM=LGL)
+//    16 Multiplier lanes (LGX=LGL)
+//    2 Register Banks (LGB=1)
+//    Disable ALU per Bank (APB=0)
+
+
+// INSTR CACHE
+`define LGID 13
+`define LGIW 4
+
+// DATA CACHE
+`define LGDD 15
+`define LGDW 6
+
+// DATA CACHE PREFETCHER - dcache needs to have 64 byte lines
+`define LGDWB 7
+`define DP 0
+// VECTOR DATA CACHE PREFETCHER 0:off, 65535-N:N*veclength, N:pfch N cache lines
+`define DPV 0
+
+// VECTOR CORE
+//Changing to 3. That is, we now have 8 lanes.
+`define LGL 3
+`define LGB 1
+`define APB 0
+`define LGM `LGL
+`define LGX `LGL
+
+// VECTOR ISA
+`define LGMVL 6
+`define LGVPW 1 //chaging the word size of vector processor to 16: support for bfloat16
+`define LGLW 5
+
+/****************************** FULL NAMES *********************************/
+
+// INSTR CACHE
+`define LOG2ICACHEDEPTHBYTES `LGID
+`define LOG2ICACHEWIDTHBITS (`LGIW+3)
+
+// DATA CACHE
+`define LOG2DCACHEDEPTHBYTES `LGDD
+`define LOG2DCACHEWIDTHBITS (`LGDW+3)
+
+// DATA CACHE PREFETCHER - dcache needs to have 64 byte lines
+`define LOG2DATAWBBUFFERSIZE `LGDWB
+`define DEFAULTDCACHEPREFETCHES `DP
+// VECTOR DATA CACHE PREFETCHER 0:off, 65535:vectorlength, N:pfch N cache lines
+`define VECTORPREFETCHES `DPV
+
+// VECTOR CORE
+`define LOG2NUMLANES `LGL
+`define LOG2MVL `LGMVL
+`define LOG2VPW `LGVPW
+`define LOG2LANEWIDTHBITS `LGLW
+`define LOG2NUMMEMLANES `LGM
+`define LOG2NUMMULLANES `LGX
+`define LOG2NUMBANKS `LGB
+`define ALUPERBANK `APB
+
+/****************************** OTHER PARAMS *********************************/
+
+// DRAM
+`define LOG2DRAMWIDTHBITS 7
+
+/****************** NUM PIPELINE STAGES in VECTOR PROCESSOR ***************/
+//mult consumes 3 cycles
+//`define MAX_PIPE_STAGES 7
+//matmul consumes 29 cycles
+`define MAX_PIPE_STAGES 33
+`define MATMUL_STAGES 29
+
+/****************** SIZE OF THE MATMUL UNIT ***************/
+`define MAT_MUL_SIZE 8
+
+`endif
+
+ 
 // THIS UNIT SHOULD BE REDESIGNED!!!!!
 // It started off simple with low performance and after adding a bunch of hacks
 // to make it perform better it's gotten messy.  A new memory unit should
@@ -49,13 +195,6 @@
  *
  * Quartus 5.0: 919 LEs, 137 MHz (CritPath: vip_r to vreaddata)
  *************************/
-//`include "velmshifter_serial.v"
-//`include "vmem_crossbar.v"
-
-// VECTOR DATA CACHE PREFETCHER 0:off, 65535-N:N*veclength, N:pfch N cache lines
-`define DPV 0
-// VECTOR DATA CACHE PREFETCHER 0:off, 65535:vectorlength, N:pfch N cache lines
-`define VECTORPREFETCHES `DPV
 
 module vmem_unit_32_4_2_2_1_32_128_7_128_7_2_5 (
     clk,
@@ -233,13 +372,13 @@ wire                        next_sa_count_zero;
 wire                        sa_zero;
 reg  [ 4*32-1 : 0 ]  vshiftresult;
 
-//genvar i;
-reg[31:0] j;
-//genvar k;
-reg[31:0] l;
-reg[31:0] m;
-reg[31:0] n;
-reg[31:0] p;
+genvar i;
+reg [31:0] j;
+genvar k;
+reg [31:0] l;
+reg [31:0] m;
+reg [31:0] n;
+reg [31:0] p;
 
   assign {op_memop,op_pattern,op_size,op_signed,op_we}=op;
 
@@ -265,7 +404,11 @@ reg[31:0] p;
       in_dst_s2<=0;
       sa_s2<=0;
       dir_left_s2<=0;
-      {op_memop_s2,op_pattern_s2,op_size_s2,op_signed_s2,op_we_s2}<=0;
+      op_memop_s2<=0;
+      op_pattern_s2<=0;
+      op_size_s2<=0;
+      op_signed_s2<=0;
+      op_we_s2<=0;
     end
     else if (!stall)
     begin
@@ -275,7 +418,12 @@ reg[31:0] p;
         in_dst_s2<=in_dst;
       sa_s2<=sa;
       dir_left_s2<=dir_left;
-      {op_memop_s2,op_pattern_s2,op_size_s2,op_signed_s2,op_we_s2}<=op;
+      //{op_memop_s2,op_pattern_s2,op_size_s2,op_signed_s2,op_we_s2}<=op;
+      op_memop_s2<=op[6];
+      op_pattern_s2<=op[5:4];
+      op_size_s2<=op[3:2];
+      op_signed_s2<=op[1];
+      op_we_s2<=op[0];
     end
 
 /*************************** Vector op logic *********************************/
@@ -294,11 +442,12 @@ reg[31:0] p;
       sa_count<=next_sa_count;
   end
 
+  wire doublewrite;
   // Detect double write one clock cycle early - also support 1 lane
   assign doublewrite=(~op_memop_s2) && (4>1) && ( (dir_left_s2) ? 
-              (|vshifted_mask[((4>1) ? 4:2)-2:0]) && //support L=1
+              (|vshifted_mask[(4)-2:0]) && //support L=1
                 (vshifted_mask[4-1]&(|vshifted_masksave)) :
-              (|vshifted_mask[4-1:(4>1) ? 1 : 0]) && //support L=1
+              (|vshifted_mask[4-1:1]) && //support L=1
                 (vshifted_mask[0]&(|vshifted_masksave)));
 
   assign out_dst = {in_dst_s2[5-1:2],
@@ -343,7 +492,7 @@ reg[31:0] p;
                (vstrideoffset[m*32 +: 32]<<op_size));
 
   wire [4-1:0] vwritedata_shifter_squash_NC;
-  velmshifter_jump_4_2_32 vwritedatashifter(
+  velmshifter_jump_32_4_2 vwritedatashifter(
       .clk(clk),
       .resetn(resetn),    //Don't use if not a store
       .load(shifter_load && op_we),
@@ -357,7 +506,7 @@ reg[31:0] p;
       .outpipe(vshifted_writedata));
 
   wire [4-1:0] vaddress_shifter_squash_NC;
-  velmshifter_jump_4_2_32 vaddressshifter(
+  velmshifter_jump_32_4_2 vaddressshifter(
       .clk(clk),
       .resetn(resetn), //consider forcing to 0 if not used
       .load(shifter_load),
@@ -370,7 +519,7 @@ reg[31:0] p;
       .inpipe( address),
       .outpipe(vshifted_address));
 
-  velmshifter_jump_4_2_1 vmaskshifter(
+  velmshifter_jump_1_4_2 vmaskshifter(
       .clk(clk),
       .resetn(resetn),
       .load(shifter_load),
@@ -415,6 +564,8 @@ reg[31:0] p;
   //Send stride and vector length to bus.  To do constant prefetching set
   //stride to cache line size and send constant as length
   //******************************************************************
+  wire [15:0] temp_prefetch;
+  assign temp_prefetch = 16'd0+2**(7-3);
   always@(posedge clk)
     if (!resetn || last_subvector_s2&~stall&~shifter_load&~quick_loaded )
       prefetch<=0;
@@ -424,7 +575,7 @@ reg[31:0] p;
       else if (`VECTORPREFETCHES == 0)
         prefetch<= 0;
       else
-        prefetch<= { 16'd0+2**(7-3),constantprefetch };
+        prefetch<= { temp_prefetch,constantprefetch };
 
   // State machine for issuing addresses - this is really sneaky!!!!!
   // The cache takes 1 cycle to respond to a cache request and is generally
@@ -517,12 +668,13 @@ reg[31:0] p;
     else if (shifter_load)
       dmem_address<=address[32-1:0];
     else if (shifter_shift)
+
       dmem_address<= (!shifter_jump) ? 
-              vshifted_address[((4>1) ? 1:0)
-                *32 +: 32] :
               vshifted_address[
-                ((4<=2) ? 0 : 2)
-                  *32 +: 32];
+                2*32-1 : 32] :
+              vshifted_address[
+                 (2)*32+32-1 : (2)*32];
+                   
     //Fetch next cache line if partial match on initial cache access
     //else if (parhits_some && ~cachedata_stillvalid)
     else if (addr_advance)
@@ -543,42 +695,40 @@ reg[31:0] p;
 
        vstore_data_translator vstore_data_translator_0(
          //Pad vshifted_writedata with zeros incase signal is less than 32-bits
-      .write_data({32'b0,vshifted_writedata[0*32 +: 32]}),
-      .d_address(vshifted_address[0*32 +: 2]),
+      .write_data({32'b0,vshifted_writedata[0*32+32-1 : 0*32]}),
+      .d_address(vshifted_address[0*32+2-1 : 0*32]),
       .store_size(op_size_s2), 
-      .d_byteena(_vbyteen[4*0 +: 4]),  
-      .d_writedataout(_vwritedata[0*32 +: 32]));
+      .d_byteena(_vbyteen[4*0+4-1 : 4*0]),  
+      .d_writedataout(_vwritedata[0*32+32-1 : 0*32]));
 
         
 
 
        vstore_data_translator vstore_data_translator_1(
          //Pad vshifted_writedata with zeros incase signal is less than 32-bits
-      .write_data({32'b0,vshifted_writedata[1*32 +: 32]}),
-      .d_address(vshifted_address[1*32 +: 2]),
+      .write_data({32'b0,vshifted_writedata[1*32+32-1 : 1*32]}),
+      .d_address(vshifted_address[1*32+2-1 : 1*32]),
       .store_size(op_size_s2), 
-      .d_byteena(_vbyteen[4*1 +: 4]),  
-      .d_writedataout(_vwritedata[1*32 +: 32]));
+      .d_byteena(_vbyteen[4*1+4-1 : 4*1]),  
+      .d_writedataout(_vwritedata[1*32+32-1 : 1*32]));
 
         
 
 
   always@*
   begin
+    dmem_writedata=0;
+    dmem_byteen=0;
     for (l=0; l<2; l=l+1)
-      if (dmem_address[31:7-3] == vshifted_address[32*l+7-3 +: 32-7+3])
+      if (dmem_address[31:7-3] == 
+          vshifted_address[32*l+7-3 +: 
+                            32-7+3])
       begin
         dmem_writedata=dmem_writedata| (_vwritedata[l*32 +: 32] << 
             {vshifted_address[32*l+2 +: 7-5], {5{1'b0}}});
         if (vshifted_mask[l] && (shifter_jump || (l==0)))
           dmem_byteen=dmem_byteen | (_vbyteen[4*l+:4]<<
             {vshifted_address[32*l+2 +: 7-5], {2{1'b0}}});
-        else 
-          dmem_byteen=0;
-      end
-      else begin
-        dmem_writedata=0;
-        dmem_byteen=0;
       end
   end
 
@@ -636,11 +786,12 @@ reg[31:0] p;
     if (!resetn || shifter_load)
       parhits_done<= (shifter_jump_s1) ?  ~vmask : {2{~vmask[0]}};
     else if ( parhits_doneall )
+    
       parhits_done<= (shifter_jump && (4>2)) ? 
                     ~vshifted_mask[ 
-                        ((4>2) ? 2 : 0) 
-                      +: 2] :
+                        2*(2)-1 : 2] :
                     {2{(4>1) ? ~vshifted_mask[1] : 1'b0}};
+                    
     else           
       parhits_done<= parhits_done|parhits;
 
@@ -665,16 +816,16 @@ reg[31:0] p;
               vshifted_address[n*32+2 +: (7-5)];
 
   vmem_crossbar_128_7_2_32_5 vmem_crossbar(
-      .clk(), .resetn(),
+      .clk(clk), .resetn(resetn),
       .sel(crossbar_sel),
       .in(dmem_readdata),
       .out(crossbar));
 
                 // Generate byte/halfword alignment circuitry for each word                   
 
-      vload_data_translator load_data_translator_0(
+      vload_data_translator load_data_translator0(
       .d_readdatain(crossbar[32*(0+1)-1:32*0]),
-      .d_address( (shifter_jump) ? vshifted_address[32*0 +: 2] :
+      .d_address( (shifter_jump) ? vshifted_address[32*0+2-1 : 32*0] :
                                    vshifted_address[1:0]),
       .load_size(op_size_s2[1:0]),
       .load_sign_ext(op_signed_s2),
@@ -684,9 +835,9 @@ reg[31:0] p;
         
 
 
-      vload_data_translator load_data_translator_1(
+      vload_data_translator load_data_translator1(
       .d_readdatain(crossbar[32*(1+1)-1:32*1]),
-      .d_address( (shifter_jump) ? vshifted_address[32*1 +: 2] :
+      .d_address( (shifter_jump) ? vshifted_address[32*1+2-1 : 32*1] :
                                    vshifted_address[1:0]),
       .load_size(op_size_s2[1:0]),
       .load_sign_ext(op_signed_s2),
@@ -765,6 +916,7 @@ endmodule
 
 
 
+
 /****************************************************************************
  *           Load data translator
  *- moves read data to appropriate byte/halfword and zero/sign extends
@@ -818,57 +970,36 @@ end
 
 endmodule
 
-                   
+                  
+module vmem_busmux_128_7_32_5 (
+    clk,
+    resetn,
+    sel,
+    in,
+    out
+    );
 
-/****************************************************************************
- *           Load data translator
- *- moves read data to appropriate byte/halfword and zero/sign extends
- *****************************************************************************/
-module vload_data_translator(
-    d_readdatain,
-    d_address,
-    load_size,
-    load_sign_ext,
-    d_loadresult);
-parameter WIDTH=32;
+parameter SELWIDTH=7-5;   // LOG2(INWIDTH/OUTWIDTH) = 4
 
-input [WIDTH-1:0] d_readdatain;
-input [1:0] d_address;
-input [1:0] load_size;
-input load_sign_ext;
-output [WIDTH-1:0] d_loadresult;
+input clk;
+input resetn;
+input  [SELWIDTH-1 : 0] sel;
+input  [128-1 : 0]  in;
+output [32-1 : 0] out;
 
-reg [WIDTH-1:0] d_loadresult;
+reg    [32-1 : 0] out;
 
-always @(d_readdatain or d_address or load_size or load_sign_ext)
-begin
-    case (load_size)
-        2'b00:
-        begin
-            case (d_address[1:0])
-                2'd0: d_loadresult[7:0]=d_readdatain[31:24];
-                2'd1: d_loadresult[7:0]=d_readdatain[23:16];
-                2'd2: d_loadresult[7:0]=d_readdatain[15:8];
-                default: d_loadresult[7:0]=d_readdatain[7:0];
-            endcase
-            d_loadresult[31:8]={24{load_sign_ext&d_loadresult[7]}};
-        end
-        2'b01:
-        begin
-            case (d_address[1])
-                2'd0: d_loadresult[15:0]=d_readdatain[31:16];
-                default: d_loadresult[15:0]=d_readdatain[15:0];
-            endcase
-            d_loadresult[31:16]={16{load_sign_ext&d_loadresult[15]}};
-        end
-        default:
-            d_loadresult=d_readdatain;
-    endcase
-end
+integer k;
+
+  always@*
+  begin
+    out=0;
+    for (k=0; k<128/32; k=k+1)
+      if (k==sel)
+        out=in[ k*32 +: 32 ];
+  end
 endmodule
-
-
-/************************
+        /************************
  *
  *************************/
 
@@ -887,16 +1018,19 @@ input                             resetn;
 input  [(SELWIDTH*2)-1 : 0] sel;
 input  [128-1 : 0]            in;
 output [(32*2)-1 : 0] out;
-vmem_busmux_128_7_32_5 bmux_0(clk,resetn,
-sel[(0+1)*SELWIDTH - 1 : 0*SELWIDTH],
-in,
-out[(0+1)*32 - 1 : 0*32]);
-vmem_busmux_128_7_32_5 bmux_1(clk,resetn,
-sel[(1+1)*SELWIDTH - 1 : 1*SELWIDTH],
-in,
-out[(1+1)*32 - 1 : 1*32]);
-endmodule
 
+
+     vmem_busmux_128_7_32_5 bmux0(clk,resetn,
+        sel[(0+1)*SELWIDTH - 1 : 0*SELWIDTH],
+        in,
+        out[(0+1)*32 - 1 : 0*32]);
+
+     vmem_busmux_128_7_32_5 bmux1(clk,resetn,
+        sel[(1+1)*SELWIDTH - 1 : 1*SELWIDTH],
+        in,
+        out[(1+1)*32 - 1 : 1*32]);
+
+ endmodule 
 
 module velmshifter_laneunit_32 (
     clk,
@@ -946,7 +1080,7 @@ endmodule
 /**************************** Shifter w Jump **********************************/
 /******************************************************************************/
 
-module velmshifter_jump_4_2_32 (
+module velmshifter_jump_32_4_2 (
     clk,
     resetn,
 
@@ -1000,13 +1134,11 @@ input [ 32-1:0 ]  shiftin_right;
 
 endmodule
         
-
-
 /******************************************************************************/
 /**************************** Shifter w Jump **********************************/
 /******************************************************************************/
 
-module velmshifter_jump_4_2_1 (
+module velmshifter_jump_1_4_2 (
     clk,
     resetn,
 
@@ -1130,8 +1262,6 @@ end
 
 endmodule
 
-
-
 /******************************************************************************/
 /******************************** Shifter *************************************/
 /******************************************************************************/
@@ -1221,101 +1351,6 @@ assign outpipe=_outpipe;
 
 endmodule
         
-
-
-
-
-/******************************************************************************/
-/******************************** Shifter *************************************/
-/******************************************************************************/
-
-module velmshifter_4_1 (
-    clk,
-    resetn,
-
-    load,
-    shift,
-    dir_left,     // Sets the direction, 1=left, 0=right
-    squash,
-
-    shiftin_left,
-    shiftin_right,
-
-    inpipe,
-    outpipe
-
-    );
-
-input clk;
-input resetn;
-
-input  load;
-input  shift;
-input  dir_left;
-input [ 4-1:0 ]  squash;
-
-input [ 4*1-1:0 ]  inpipe;
-output [ 4*1-1:0 ] outpipe;
-
-input [ 1-1:0 ]  shiftin_left;
-input [ 1-1:0 ]  shiftin_right;
-
-wire [ (4+1)*1-1:0 ] _outpipe;
-
-
-/***************************************************************************
-  shiftin_left -> bn <-> bn-1 <-> ... <-> b1 <-> b0 <- shiftin_right
-***************************************************************************/
-
-  //HANDLE lane 0 specially
-
-  velmshifter_laneunit_1 velmshifter_laneunit0(clk,resetn,load,shift,dir_left,
-      squash[0],
-      inpipe[0],
-      _outpipe[1], //Support 1 lane
-      shiftin_right,
-      _outpipe[0]);
- // defparam velmshifter_laneunit0.1=1;
-
-  //Generate everything in between 
-
-
-      velmshifter_laneunit_1 velmshifter_laneunit_1(clk,resetn,load,shift,dir_left,
-          squash[1],
-          inpipe[1],
-          _outpipe[2],
-          _outpipe[0],
-          _outpipe[1]);
-     // defparam velmshifter_laneunit.1=1;
-
-
-      velmshifter_laneunit_1 velmshifter_laneunit_2(clk,resetn,load,shift,dir_left,
-          squash[2],
-          inpipe[1],
-          _outpipe[2],
-          _outpipe[0],
-          _outpipe[1]);
-     // defparam velmshifter_laneunit.1=1;
-
-
-  //HANDLE lane NUMLANE specially
-
-    velmshifter_laneunit_1 velmshifter_laneunitlast(
-      clk,resetn,load,shift,dir_left,
-      squash[3],
-      inpipe[3],
-      shiftin_left,
-      _outpipe[2], //L=1
-      _outpipe[3]); //L=1
-   // defparam velmshifter_laneunitlast.1=1;
-
-    //Support L=1 - give _outpipe more bits but ignore them
-assign outpipe=_outpipe;
-
-endmodule
-        
-
-
 /******************************************************************************/
 /******************************** Shifter *************************************/
 /******************************************************************************/

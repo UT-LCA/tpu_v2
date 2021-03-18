@@ -67,12 +67,15 @@ input                             clk;
 input                             resetn;
 input  [(SELWIDTH*{NUMOUTS})-1 : 0] sel;
 input  [{INWIDTH}-1 : 0]            in;
-output [({OUTWIDTH}*{NUMOUTS})-1 : 0] out;'''
+output [({OUTWIDTH}*{NUMOUTS})-1 : 0] out;
+
+'''
         string2_basic = '''
-vmem_busmux_{INWIDTH}_{LOG2INWIDTH}_{OUTWIDTH}_{LOG2OUTWIDTH} bmux_ii(clk,resetn,
-sel[(ii+1)*SELWIDTH - 1 : ii*SELWIDTH],
-in,
-out[(ii+1)*{OUTWIDTH} - 1 : ii*{OUTWIDTH}]);'''
+     vmem_busmux_{INWIDTH}_{LOG2INWIDTH}_{OUTWIDTH}_{LOG2OUTWIDTH} bmux(clk,resetn,
+        sel[(i+1)*SELWIDTH - 1 : i*SELWIDTH],
+        in,
+        out[(i+1)*{OUTWIDTH} - 1 : i*{OUTWIDTH}]);
+'''
 
         string2 =""
         for i in range (0,numouts):
@@ -81,7 +84,7 @@ out[(ii+1)*{OUTWIDTH} - 1 : ii*{OUTWIDTH}]);'''
             temp = re.sub(r'bmux','bmux'+str(i), temp)
             string2 += temp
 
-        string2 += "\nendmodule\n\n"
+        string2 += "\n endmodule \n"
         string = string1 + string2
 
         uut = vmem_busmux(self.fp)

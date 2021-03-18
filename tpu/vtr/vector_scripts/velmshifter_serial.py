@@ -93,7 +93,7 @@ class velmshifter_jump():
 /**************************** Shifter w Jump **********************************/
 /******************************************************************************/
 
-module velmshifter_jump_{NUMLANES}_{JUMPSIZE}_{WIDTH} (
+module velmshifter_jump_{WIDTH}_{NUMLANES}_{JUMPSIZE} (
     clk,
     resetn,
 
@@ -147,13 +147,6 @@ input [ {WIDTH}-1:0 ]  shiftin_right;
 
 endmodule
         '''
-        fp = open("verilog/velmshifter.v", 'a')
-        uut = velmshifter(fp)
-        fp.write("\n\n")
-        uut.write(numlanes, width)
-        fp.write("\n\n")
-        fp.close()
-
         return string.format(WIDTH=width, NUMLANES=numlanes, JUMPSIZE=jumpsize)
 
     def write (self, numlanes, jumpsize, width):

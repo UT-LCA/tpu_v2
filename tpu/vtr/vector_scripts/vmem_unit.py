@@ -65,11 +65,6 @@ class vmem_unit():
  * Quartus 5.0: 919 LEs, 137 MHz (CritPath: vip_r to vreaddata)
  *************************/
 
-// VECTOR DATA CACHE PREFETCHER 0:off, 65535-N:N*veclength, N:pfch N cache lines
-`define DPV 0
-// VECTOR DATA CACHE PREFETCHER 0:off, 65535:vectorlength, N:pfch N cache lines
-`define VECTORPREFETCHES `DPV
-
 module vmem_unit_{VPUWIDTH}_{NUMLANES}_{LOG2NUMLANES}_{NUMPARALLELLANES}_{LOG2NUMPARALLELLANES}_{CONTROLWIDTH}_{DMEM_WRITEWIDTH}_{LOG2DMEM_WRITEWIDTH}_{DMEM_READWIDTH}_{LOG2DMEM_READWIDTH}_{ELMIDWIDTH}_{REGIDWIDTH} (
     clk,
     resetn,
@@ -598,7 +593,7 @@ reg [31:0] p;
 
         string2_basic='''
 
-       vstore_data_translator vstore_data_translator_[i](
+       vstore_data_translator vstore_data_translator_i(
          //Pad vshifted_writedata with zeros incase signal is less than 32-bits
       .write_data({CBS}32'b0,vshifted_writedata[[i]*{VPUWIDTH}+{VPUWIDTH}-1 : [i]*{VPUWIDTH}]{CBE}),
       .d_address(vshifted_address[[i]*32+2-1 : [i]*32]),
@@ -618,18 +613,18 @@ reg [31:0] p;
 
   always@*
   begin
+    dmem_writedata=0;
+    dmem_byteen=0;
     for (l=0; l<{NUMPARALLELLANES}; l=l+1)
-      if (dmem_address[31:{LOG2DMEM_WRITEWIDTH}-3] == vshifted_address[32*l+{LOG2DMEM_WRITEWIDTH}-3 +: 32-{LOG2DMEM_WRITEWIDTH}+3])
+      if (dmem_address[31:{LOG2DMEM_WRITEWIDTH}-3] == 
+          vshifted_address[32*l+{LOG2DMEM_WRITEWIDTH}-3 +: 
+                            32-{LOG2DMEM_WRITEWIDTH}+3])
       begin
         dmem_writedata=dmem_writedata| (_vwritedata[l*32 +: 32] << 
             {CBS}vshifted_address[32*l+2 +: {LOG2DMEM_WRITEWIDTH}-5], {CBS}5{CBS}1'b0{CBE}{CBE}{CBE});
         if (vshifted_mask[l] && (shifter_jump || (l==0)))
           dmem_byteen=dmem_byteen | (_vbyteen[4*l+:4]<<
             {CBS}vshifted_address[32*l+2 +: {LOG2DMEM_WRITEWIDTH}-5], {CBS}2{CBS}1'b0{CBE}{CBE}{CBE});
-      end
-      else begin
-        dmem_writedata=0;
-        dmem_byteen=0;
       end
   end
 
@@ -753,7 +748,7 @@ reg [31:0] p;
 
         string4_basic='''
 
-      vload_data_translator load_data_translator_[k](
+      vload_data_translator load_data_translator[k](
       .d_readdatain(crossbar[32*([k]+1)-1:32*[k]]),
       .d_address( (shifter_jump) ? vshifted_address[{CONTROLWIDTH}*[k]+2-1 : {CONTROLWIDTH}*[k]] :
                                    vshifted_address[1:0]),
@@ -859,20 +854,20 @@ endmodule
         uut.write(numlanes,1)
         fp.close()
 
-        # fp = open("verilog/vstore_data_translator.v",'a')
-        # uut = vstore_data_translator(fp)
-        # uut.write()
-        # fp.close()
+        fp = open("verilog/vstore_data_translator.v",'a')
+        uut = vstore_data_translator(fp)
+        uut.write()
+        fp.close()
 
         fp = open("verilog/vmem_crossbar.v",'a')
         uut = vmem_crossbar(fp)
         uut.write(dmem_readwidth,log2dmem_readwidth,numparallellanes,32,5)
         fp.close()
 
-        # fp = open("verilog/vload_data_translator.v",'a')
-        # uut = vload_data_translator(fp)
-        # uut.write()
-        # fp.close()
+        fp = open("verilog/vload_data_translator.v",'a')
+        uut = vload_data_translator(fp)
+        uut.write()
+        fp.close()
 
         fp = open("verilog/pipereg.v",'a')
         uut = pipereg(fp)
@@ -895,7 +890,7 @@ endmodule
                               CBE = "}" \
                             )
 
-    def write (self, vpuwidth, numlanes, log2numlanes, numparallellanes, log2numparallellanes, controlwidth, dmem_writewidth,log2dmem_writewidth, dmem_readwidth, log2dmem_readwidth, elmwidth, regidwidth):
+    def write (self, vpuwidth,numlanes, log2numlanes, numparallellanes, log2numparallellanes, controlwidth, dmem_writewidth,log2dmem_writewidth, dmem_readwidth, log2dmem_readwidth, elmwidth, regidwidth):
         self.fp.write(self.make_str( vpuwidth,numlanes, log2numlanes, numparallellanes, log2numparallellanes, controlwidth, dmem_writewidth,log2dmem_writewidth, dmem_readwidth, log2dmem_readwidth, elmwidth, regidwidth))
 
 
