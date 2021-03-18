@@ -7,6 +7,8 @@ from vregfile_stride import vregfile_stride
 from components import pipereg
 from math import log
 from optparse import OptionParser
+import os
+
 parser = OptionParser()
 (_,args) = parser.parse_args()
 
@@ -41,10 +43,10 @@ class vpu():
         numvincregs     = 8
         numvstrideregs  = 8
 
-        log2numnonmemvcregs = log(numnonmemvcregs,2) 
-        log2numvbaseregs    = log(numvbaseregs,2)     
-        log2numvincregs     = log(numvincregs,2)     
-        log2numvstrideregs  = log(numvstrideregs,2)  
+        log2numnonmemvcregs = int(log(numnonmemvcregs,2)) 
+        log2numvbaseregs    = int(log(numvbaseregs,2))     
+        log2numvincregs     = int(log(numvincregs,2))     
+        log2numvstrideregs  = int(log(numvstrideregs,2))  
 
         string = ''' 
 
@@ -61,17 +63,17 @@ class vpu():
 
 ******************************************************************************/
 
-`include "options.v"
+//`include "options.v"
 
-`include "vregfile_base.v"
-`include "vregfile_control.v"
-`include "vregfile_flag.v"
-`include "vregfile_inc.v"
-`include "vregfile_scalar.v"
-`include "vregfile_stride.v"
-`include "vregfile_vector.v"
-`include "vcomponents.v"
-`include "vlanes.v"
+//`include "vregfile_base.v"
+//`include "vregfile_control.v"
+//`include "vregfile_flag.v"
+//`include "vregfile_inc.v"
+//`include "vregfile_scalar.v"
+//`include "vregfile_stride.v"
+//`include "vregfile_vector.v"
+//`include "vcomponents.v"
+//`include "vlanes.v"
 
 module vpu_{LOG2DMEM_WRITEWIDTH}_{LOG2DMEM_READWIDTH} (
     clk,
@@ -144,7 +146,7 @@ parameter LOG2NUMVSREGS=5;
 parameter BIT_VSSRC2=6;
 parameter BIT_VSSRC1=7;
 
-`include "visa.v"
+// `include "visa.v"
 
 input clk;
 input resetn;
@@ -1418,6 +1420,14 @@ endmodule
 
 if __name__ == '__main__':
     fp = open(args[0], "w")
+    try:
+      options_file = open("../../design/top/options.v", "r")
+      for line in options_file:
+        fp.write(line)
+      options_file.close()
+    except:
+      print("Unable to open file")
+      raise SystemExit(0)
     uut1 = vpu(fp)
     uut1.write(7,7)
     fp.close()

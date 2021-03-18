@@ -17,9 +17,9 @@ class processor():
         log2dramwidthbits = 128
         string = ''' 
 
-`include "core.v"
-`include "mem_icache.v"
-`include "mem_dcache_wb.v"
+//`include "core.v"
+//`include "mem_icache.v"
+//`include "mem_dcache_wb.v"
 
 module processor (
     clk,

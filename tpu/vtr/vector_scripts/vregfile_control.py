@@ -1,5 +1,6 @@
 from ram_wrapper import ram_wrapper
 from optparse import OptionParser
+import os
 parser = OptionParser()
 (_,args) = parser.parse_args()
 
