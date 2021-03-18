@@ -160,7 +160,6 @@ class velmshifter():
         all_bit_slices = re.findall(r'\[\d*:\d*\]', string)
         all_bit_slices = list(set(all_bit_slices))
         for slice in all_bit_slices:
-            print("slice is: ", slice)
             m = re.search(r'(\d*):(\d*)', slice)
             if m.group(1) == m.group(2):
                 string = re.sub(re.escape(slice), "["+m.group(1)+"]", string)

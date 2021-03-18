@@ -65,7 +65,7 @@ parameter SELWIDTH={LOG2INWIDTH}-{LOG2OUTWIDTH};   // LOG2(INWIDTH/OUTWIDTH) = 4
 
 input                             clk;
 input                             resetn;
-input  [(SELWIDfTH*{NUMOUTS})-1 : 0] sel;
+input  [(SELWIDTH*{NUMOUTS})-1 : 0] sel;
 input  [{INWIDTH}-1 : 0]            in;
 output [({OUTWIDTH}*{NUMOUTS})-1 : 0] out;
 

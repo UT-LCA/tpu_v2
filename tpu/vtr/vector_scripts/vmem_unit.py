@@ -273,7 +273,11 @@ reg [31:0] p;
       in_dst_s2<=0;
       sa_s2<=0;
       dir_left_s2<=0;
-      {CBS}op_memop_s2,op_pattern_s2,op_size_s2,op_signed_s2,op_we_s2{CBE}<=0;
+      op_memop_s2<=0;
+      op_pattern_s2<=0;
+      op_size_s2<=0;
+      op_signed_s2<=0;
+      op_we_s2<=0;
     end
     else if (!stall)
     begin
@@ -283,7 +287,12 @@ reg [31:0] p;
         in_dst_s2<=in_dst;
       sa_s2<=sa;
       dir_left_s2<=dir_left;
-      {CBS}op_memop_s2,op_pattern_s2,op_size_s2,op_signed_s2,op_we_s2{CBE}<=op;
+      //{CBS}op_memop_s2,op_pattern_s2,op_size_s2,op_signed_s2,op_we_s2{CBE}<=op;
+      op_memop_s2<=op[6];
+      op_pattern_s2<=op[5:4];
+      op_size_s2<=op[3:2];
+      op_signed_s2<=op[1];
+      op_we_s2<=op[0];
     end
 
 /*************************** Vector op logic *********************************/
@@ -302,6 +311,7 @@ reg [31:0] p;
       sa_count<=next_sa_count;
   end
 
+  wire doublewrite;
   // Detect double write one clock cycle early - also support 1 lane
   assign doublewrite=(~op_memop_s2) && ({NUMLANES}>1) && ( (dir_left_s2) ? 
               (|vshifted_mask[({NUMLANES})-2:0]) && //support L=1
@@ -423,6 +433,8 @@ reg [31:0] p;
   //Send stride and vector length to bus.  To do constant prefetching set
   //stride to cache line size and send constant as length
   //******************************************************************
+  wire [15:0] temp_prefetch;
+  assign temp_prefetch = 16'd0+2**({LOG2DMEM_READWIDTH}-3);
   always@(posedge clk)
     if (!resetn || last_subvector_s2&~stall&~shifter_load&~quick_loaded )
       prefetch<=0;
@@ -432,7 +444,7 @@ reg [31:0] p;
       else if (`VECTORPREFETCHES == 0)
         prefetch<= 0;
       else
-        prefetch<= {CBS} 16'd0+2**({LOG2DMEM_READWIDTH}-3),constantprefetch {CBE};
+        prefetch<= {CBS} temp_prefetch,constantprefetch {CBE};
 
   // State machine for issuing addresses - this is really sneaky!!!!!
   // The cache takes 1 cycle to respond to a cache request and is generally
