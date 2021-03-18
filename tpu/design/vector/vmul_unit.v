@@ -192,13 +192,11 @@ output [NUMLANES*WIDTH-1:0] result;
       .result(mul_result[WIDTH*k +: WIDTH])
       );
 
-    wire temp;
-    assign temp = ctrl_vshamt[2*LOG2WIDTH-1 : LOG2WIDTH-1];
     vlane_barrelshifter #(WIDTH,(LOG2WIDTH>0)?LOG2WIDTH:1) vshift(
       .clk(clk),
       .resetn(resetn),
       .opB(mul_result[WIDTH*(k+1)-1:WIDTH*k]),
-      .sa(temp),
+      .sa( ctrl_vshamt[2][((LOG2WIDTH>0) ? LOG2WIDTH-1:0) : 0]),
       .op({~ctrl_op[2][1] ,1'b1}),
       .result(rshift_result[WIDTH*(k+1)-1:WIDTH*k])
       );

@@ -1,4 +1,4 @@
-module velmshifter_laneunit_1 (
+module velmshifter_laneunit_3 (
     clk,
     resetn,
 
@@ -23,12 +23,12 @@ input  shift;
 input  dir_left;
 input  squash;
 
-input [ 1-1:0 ]  inpipe;
-input [ 1-1:0 ]  inxlaneleft;    // X-lane input lane i-1
-input [ 1-1:0 ]  inxlaneright;    // X-lane input lane i-1
-output [ 1-1:0 ] outpipe;
+input [ 3-1:0 ]  inpipe;
+input [ 3-1:0 ]  inxlaneleft;    // X-lane input lane i-1
+input [ 3-1:0 ]  inxlaneright;    // X-lane input lane i-1
+output [ 3-1:0 ] outpipe;
 
-reg [ 1-1:0 ] outpipe;   // Cross-lane output lane i+1
+reg [ 3-1:0 ] outpipe;   // Cross-lane output lane i+1
 
 
   always@(posedge clk)

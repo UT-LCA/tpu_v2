@@ -12,12 +12,12 @@ class vmul_unit():
 
     def make_str(self, log2width,nummullanes,log2numlanes,regidwidth):
         numlanes = pow(2,log2numlanes)
-        shifter_lane = numlanes/nummullanes
+        shifter_lane = int(numlanes/nummullanes)
         width = (pow(2,log2width))
         shifter_width = width * nummullanes
         string1 = '''\ 
-`include "vlane_mulshift.v"
-`include "vlane_barrelshifter.v"
+//`include "vlane_mulshift.v"
+//`include "vlane_barrelshifter.v"
 
 /****************************************************************************
           MUL unit
@@ -65,7 +65,9 @@ input resetn;
 
 input [NUMLANES*WIDTH-1:0] opA;
 input [NUMLANES*WIDTH-1:0] opB;
-input [(({LOG2WIDTH}==0) ? 1 : {LOG2WIDTH})-1:0] vshamt;  // Fixed point rounding
+// input [(({LOG2WIDTH}==0) ? 1 : {LOG2WIDTH})-1:0] vshamt;  // Fixed point rounding
+// The original version is the above declaration. This is not supported by VTR. So I am using the below version ~ Aatman
+input [{LOG2WIDTH}-1:0] vshamt;
 input [NUMLANES-1:0] vmask;
 input [4:0] op;
 input       activate;
@@ -97,7 +99,8 @@ output [NUMLANES*WIDTH-1:0] result;
   wire [3:1] ctrl_activate;                 //3 pipe stages
   //amana: Making modification for VTR
   //wire [(({LOG2WIDTH}==0) ? 1 : {LOG2WIDTH})-1:0] ctrl_vshamt[3:1]; //3 pipe stages
-  wire [(({LOG2WIDTH}==0) ? 1*3 : {LOG2WIDTH}*3)-1:0] ctrl_vshamt; //3 pipe stages
+  // wire [(({LOG2WIDTH}==0) ? 1*3 : {LOG2WIDTH}*3)-1:0] ctrl_vshamt; //3 pipe stages
+  wire [{LOG2WIDTH}*3-1:0] ctrl_vshamt; //3 pipe stages
 
   //Shift Register for all multiplier operands for lanes without multipliers
   wire [WIDTH*{NUMMULLANES}-1:0] opA_elmshifter_shiftin_right_NC;
@@ -133,12 +136,15 @@ output [NUMLANES*WIDTH-1:0] result;
   );
 
   wire [{NUMMULLANES}-1:0] mask_elmshifter_shiftin_right_NC;
+  wire mask_elmshifter_load;
+
+  assign mask_elmshifter_load = done & ctrl_activate[1];
 
   //TODO: Update the parameters 
   velmshifter_{SHIFTER_LANE}_{NUMMULLANES}  mask_elmshifter (
     .clk(clk),
     .resetn(resetn),
-    .load(done & ctrl_activate[1]),
+    .load(mask_elmshifter_load),
     .shift(1'b1),
     .dir_left(1'b0),
     .squash(1'b0),
@@ -168,22 +174,31 @@ output [NUMLANES*WIDTH-1:0] result;
   assign stall=~done && (ctrl_activate[2]);
 
   wire [3:1] oppipe_squash_NC; 
+  wire [5*(2+1)-1:0] oppipe_q;
+
+  assign {CBS}ctrl_op[3],ctrl_op[2],ctrl_op[1]{CBE} = oppipe_q;
+
   pipe_5_2 oppipe (
     .d(op),
     .clk(clk),
     .resetn(resetn),
     .en(en),
     .squash(oppipe_squash_NC),
-    .q({CBS}ctrl_op[3],ctrl_op[2],ctrl_op[1]{CBE}));
+    .q(oppipe_q)
+  );
 
-  wire [3:1] activatepipe_squash_NC; 
+  wire [3:1] activatepipe_squash_NC;
+  wire [(2+1)-1:0]  activatepipe_q;
+
+  assign {CBS}ctrl_activate[3],ctrl_activate[2],ctrl_activate[1]{CBE} = activatepipe_q;
   pipe_1_2  activatepipe (
     .d(activate),
     .clk(clk),
     .resetn(resetn),
     .en(en),
     .squash(activatepipe_squash_NC),
-    .q({CBS}ctrl_activate[3],ctrl_activate[2],ctrl_activate[1]{CBE}));
+    .q(activatepipe_q)
+  );
 
   wire [3:1] vshamtpipe_squash_NC; 
 
@@ -219,19 +234,28 @@ output [NUMLANES*WIDTH-1:0] result;
 
         string2_basic='''\
 
+    wire vmul[k]_en;
+    wire [4:0] vmul[k]_op;
+
+    assign vmul[k]_en = en[1] | ~done;
+    assign vmul[k]_op = (done&en[1]) ? ctrl_op[1] : ctrl_op[2];
+
     vlane_mulshift_{WIDTH}_{LOG2WIDTH}  vmul[k](
       .clk(clk),
       .resetn(resetn),
-      .en(en[1] | ~done),
+      .en(vmul[k]_en),
       .opA(mul_opA[WIDTH*[k] +: WIDTH]),
       .opB(mul_opB[WIDTH*[k] +: WIDTH]),
-      .sa( mul_opB[WIDTH*[k]+(({LOG2WIDTH}>0)?{LOG2WIDTH}-1:0) : WIDTH*[k]] ),
-      .op( (done&en[1]) ? ctrl_op[1] : ctrl_op[2]),
+      .sa( mul_opB[WIDTH*[k]+{LOG2WIDTH}-1 : WIDTH*[k]] ),
+      .op(vmul[k]_op),
       .result(mul_result[WIDTH*[k] +: WIDTH])
       );
 
-    wire temp;
-    assign temp = ctrl_vshamt[2*{LOG2WIDTH}-1 : {LOG2WIDTH}-1];
+    wire [{LOG2WIDTH}-1:0] vshift[k]_sa;
+    wire [2-1:0] vshift[k]_op;
+
+    assign vshift[k]_sa = ctrl_vshamt[3*{LOG2WIDTH}-1:2*{LOG2WIDTH}];
+    assign vshift[k]_op = {CBS}~ctrl_op[2][1] ,1'b1{CBE};
 
 //TO DO: parameters
 
@@ -239,8 +263,8 @@ output [NUMLANES*WIDTH-1:0] result;
       .clk(clk),
       .resetn(resetn),
       .opB(mul_result[WIDTH*([k]+1)-1:WIDTH*[k]]),
-      .sa(temp),
-      .op({CBS}~ctrl_op[2][1] ,1'b1{CBE}),
+      .sa(vshift[k]_sa),
+      .op(vshift[k]_op),
       .result(rshift_result[WIDTH*([k]+1)-1:WIDTH*[k]])
       );
 
@@ -258,11 +282,14 @@ output [NUMLANES*WIDTH-1:0] result;
   //Shift Register for all multiplier results
   wire [{NUMMULLANES}*WIDTH-1:0] shiftin_right_result_elmshifter_NC;
   wire [NUMLANES*WIDTH-1:0] inpipe_result_elmshifter_NC;
+  wire shift_result_elmshifter;
+  assign shift_result_elmshifter = ~done;
+
   velmshifter_{SHIFTER_LANE}_{SHIFTER_WIDTH}  result_elmshifter (
     .clk(clk),
     .resetn(resetn),
     .load(1'b0),
-    .shift(~done),
+    .shift(shift_result_elmshifter),
     .dir_left(1'b0),
     .squash(1'b0),
     //Enable/Disable rshifter for fixed-point multiply support
@@ -281,28 +308,37 @@ output [NUMLANES*WIDTH-1:0] result;
                 (result_buffered>>{NUMMULLANES}*WIDTH);
 
   wire [2:1] dstpipe_squash_NC;
+  wire [2-1:0] dstpipe_en;
+  assign dstpipe_en = en[2:1] & {CBS}1'b1,~stall{CBE};
+
   pipe_{REGIDWIDTH}_2 dstpipe (
-    .d( in_dst ),  
+    .d(in_dst),  
     .clk(clk),
     .resetn(resetn),
-    .en( en[2:1] & {CBS}1'b1,~stall{CBE} ),
+    .en(dstpipe_en),
     .squash(dstpipe_squash_NC),
     .q(out_dst));
 
+  wire [2-1:0] dstwepipe_en;
+  assign dstwepipe_en = en[2:1] & {CBS}1'b1,~stall{CBE};
+
   pipe_1_2 dstwepipe (
-    .d( in_dst_we ),  
+    .d(in_dst_we),  
     .clk(clk),
     .resetn(resetn),
-    .en( en[2:1] & {CBS}1'b1,~stall{CBE} ),
+    .en(dstwepipe_en),
     .squash(squash[2:1]),
     .q(out_dst_we));
 
+  wire [2-1:0] dstmaskpipe_en;
+  assign dstmaskpipe_en = en[2:1] & {CBS}1'b1,~stall{CBE};
+
   wire [2:1] dstmaskpipe_squash_NC;
   pipe_{NUMLANES}_2 dstmaskpipe (
-    .d( vmask ),  
+    .d(vmask),  
     .clk(clk),
     .resetn(resetn),
-    .en( en[2:1] & {CBS}1'b1,~stall{CBE} ),
+    .en(dstmaskpipe_en),
     .squash(dstmaskpipe_squash_NC),
     .q(out_dst_mask));
 
@@ -321,16 +357,19 @@ endmodule
         fp.close()
         fp = open("verilog/vlane_barrelshifter.v",'a')
         uut = vlane_barrelshifter(fp)
-        uut.write(shifter_lane,nummullanes)
+        uut.write(width,log2width)
         fp.close()
         fp = open("verilog/pipe.v",'a')
         uut = pipe(fp)
         uut.write(regidwidth,2)
         uut.write(1,2)
         uut.write(5,2)
-        uut.write(log2width,2)
-        uut.write(regidwidth,2)
-        uut.write(numlanes,2)
+        if (log2width!=1 and log2width!=5):
+          uut.write(log2width,2)
+        # if (regidwidth!=1 and regidwidth!=5 and regidwidth!=log2width):
+        #   uut.write(regidwidth,2)
+        if (numlanes!=1 and numlanes!=5 and numlanes!=log2width and numlanes!= regidwidth):
+          uut.write(numlanes,2)
         fp.close()
 
         return string.format(LOG2WIDTH = log2width, \

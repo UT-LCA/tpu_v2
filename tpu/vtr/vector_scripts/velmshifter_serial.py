@@ -355,12 +355,12 @@ endmodule
 
 if __name__ == '__main__':
     fp = open(args[0], "w")
-    uut1 = velmrotator(fp)
-    uut2 = velmshifter_jump(fp)
+    #uut1 = velmrotator(fp)
+    #uut2 = velmshifter_jump(fp)
     uut3 = velmshifter(fp)
     #uut4 = velmshifter_laneunit(fp)
-    uut1.write(4,32)
-    uut2.write(4,4,32)
+    #uut1.write(4,32)
+    #uut2.write(4,4,32)
     uut3.write(4,32)
     #uut4.write(32)
     fp.close()

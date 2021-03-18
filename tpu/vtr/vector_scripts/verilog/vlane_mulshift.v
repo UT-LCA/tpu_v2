@@ -1,19 +1,3 @@
-from local_mult import local_mult
-import math
-
-from optparse import OptionParser
-parser = OptionParser()
-(_,args) = parser.parse_args()
-
-class vlane_mulshift():
-    def __init__(self, fp):
-        self.fp = fp
-
-    def make_str(self, width, log2width):
-        widtha = width + 1
-        widthb = width + 1
-        widthp = 2*(width + 1) 
-        string = '''\
 /****************************************************************************
           MUL unit
 
@@ -35,14 +19,14 @@ Operation table
 1      0   0   0   1    1    |  ShiftRightLogic
 3      0   0   0   0    1    |  ShiftRightArith
 ****************************************************************************/
-module vlane_mulshift_{WIDTH}_{LOG2WIDTH}(clk, resetn,
+module vlane_mulshift_32_5(clk, resetn,
             opA, opB, sa,
             op,
             en,
             result
             );
-parameter WIDTH={WIDTH};
-parameter LOG2WIDTH={LOG2WIDTH};
+parameter WIDTH=32;
+parameter LOG2WIDTH=5;
 
 input clk;
 input resetn;
@@ -74,14 +58,14 @@ wire [WIDTH-1:0] hi;
 wire [WIDTH-1:0] lo;
 
 assign opA_mux_out = (~half) ? ( opA ) : (WIDTH<2) ? 0 : (dir) ?
-              {{{{WIDTH/2{{is_signed&is_mul&opA[WIDTH-1]}}}},opA[WIDTH-1:WIDTH/2]}} :
-              {{{{WIDTH/2{{is_signed&is_mul&opA[WIDTH/2-1]}}}},opA[WIDTH/2-1:0]}};
+              {{WIDTH/2{is_signed&is_mul&opA[WIDTH-1]}},opA[WIDTH-1:WIDTH/2]} :
+              {{WIDTH/2{is_signed&is_mul&opA[WIDTH/2-1]}},opA[WIDTH/2-1:0]};
 
 assign opB_mul = (~half) ? opB : (WIDTH<2) ? 0 : (dir) ? 
-              {{{{WIDTH/2{{is_signed&is_mul&opB[WIDTH-1]}}}},opB[WIDTH-1:WIDTH/2]}} :
-              {{{{WIDTH/2{{is_signed&is_mul&opB[WIDTH/2-1]}}}},opB[WIDTH/2-1:0]}};
+              {{WIDTH/2{is_signed&is_mul&opB[WIDTH-1]}},opB[WIDTH-1:WIDTH/2]} :
+              {{WIDTH/2{is_signed&is_mul&opB[WIDTH/2-1]}},opB[WIDTH/2-1:0]};
 
-assign opB_mux_out=(is_mul) ? {{is_signed&opB_mul[WIDTH-1],opB_mul}} : decoded_sa;
+assign opB_mux_out=(is_mul) ? {is_signed&opB_mul[WIDTH-1],opB_mul} : decoded_sa;
 
 reg zeroout;
 
@@ -96,13 +80,13 @@ always@(posedge clk)
 `ifdef USE_INHOUSE_LOGIC
 wire [(WIDTH+1)-1:0] dataa;
 wire aclr;
-wire [{WIDTHP}-1:0] local_mult_component_result;
+wire [66-1:0] local_mult_component_result;
 
-assign dataa = {{is_signed&opA_mux_out[WIDTH-1],opA_mux_out}};
+assign dataa = {is_signed&opA_mux_out[WIDTH-1],opA_mux_out};
 assign aclr = ~resetn;
-assign {{dum2,dum,hi,lo}} = local_mult_component_result;
+assign {dum2,dum,hi,lo} = local_mult_component_result;
 
-local_mult_{WIDTHA}_{WIDTHB}_{WIDTHP} local_mult_component (
+local_mult_33_33_66 local_mult_component (
 .dataa(dataa),
 .datab(opB_mux_out),
 .clock(clk),
@@ -112,13 +96,13 @@ local_mult_{WIDTHA}_{WIDTHB}_{WIDTHP} local_mult_component (
 );
 `else 
 lpm_mult  lpm_mult_component (
-  .dataa ({{is_signed&opA_mux_out[WIDTH-1],opA_mux_out}}),
+  .dataa ({is_signed&opA_mux_out[WIDTH-1],opA_mux_out}),
   .datab (opB_mux_out),
   .sum(),
   .clock(clk),
   .clken(en[1]),
   .aclr(~resetn),
-  .result ({{dum2,dum,hi,lo}}));
+  .result ({dum2,dum,hi,lo}));
 defparam
   lpm_mult_component.lpm_widtha = WIDTH+1,
   lpm_mult_component.lpm_widthb = WIDTH+1,
@@ -131,8 +115,8 @@ defparam
 `endif
 // if A is positive/negative make it maximum/minimum positive/negative
 wire [WIDTH-1:0] signedsaturate=
-                    (opA_mux_out[WIDTH-1]) ? {{1'b1,{{WIDTH-1{{1'b0}}}}}} : 
-                                             {{1'b0,{{WIDTH-1{{1'b1}}}}}};
+                    (opA_mux_out[WIDTH-1]) ? {1'b1,{WIDTH-1{1'b0}}} : 
+                                             {1'b0,{WIDTH-1{1'b1}}};
 
 reg [WIDTH-1:0] saturatedval_s2;
 reg saturate_s2;
@@ -146,7 +130,7 @@ always@(posedge clk)
   end
   else if (en[1])
   begin
-    saturatedval_s2<=((~is_signed) ? {{WIDTH{{1'b1}}}} : signedsaturate);
+    saturatedval_s2<=((~is_signed) ? {WIDTH{1'b1}} : signedsaturate);
     saturate_s2<=saturate;
   end
 
@@ -163,32 +147,11 @@ assign result =(zeroout) ? 0 :
                 (sel_hi) ? hi : lo;
 
 
-assign {{dum3, left_sa}}= (dir) ? WIDTH-sa : {{1'b0,sa}};
+assign {dum3, left_sa}= (dir) ? WIDTH-sa : {1'b0,sa};
 
 //Decoder - computes 2^left_sa
 always@*
 begin
     decoded_sa=1<<left_sa;
 end
-endmodule'''
-        
-        fp = open("verilog/local_mult.v",'a')
-        uut = local_mult(fp)
-        uut.write(widtha,widthb,widthp)
-
-        return string.format(WIDTH=width, LOG2WIDTH=log2width, WIDTHA=widtha, WIDTHB=widthb, WIDTHP=widthp)
-
-    def write (self, width, log2width):
-        self.fp.write(self.make_str(width, log2width))
-
-
-if __name__ == '__main__':
-    fp = open(args[0], "w")
-    uut = vlane_mulshift(fp)
-    uut.write(32, 5)
-    fp.close()
-    # fp = open(parser.parse(), "a")
-    # mult = local_mult(fp)
-    # append_str = "\r\r" + mult.make_str(32+1, 32+1, 2*(32+1))
-    # fp.write(append_str)
-    # fp.close()
+endmodule

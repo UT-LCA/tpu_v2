@@ -3,7 +3,7 @@
 /******************************** Shifter *************************************/
 /******************************************************************************/
 
-module velmshifter_4_32 (
+module velmshifter_5_96 (
     clk,
     resetn,
 
@@ -26,15 +26,15 @@ input resetn;
 input  load;
 input  shift;
 input  dir_left;
-input [ 4-1:0 ]  squash;
+input [ 5-1:0 ]  squash;
 
-input [ 4*32-1:0 ]  inpipe;
-output [ 4*32-1:0 ] outpipe;
+input [ 5*96-1:0 ]  inpipe;
+output [ 5*96-1:0 ] outpipe;
 
-input [ 32-1:0 ]  shiftin_left;
-input [ 32-1:0 ]  shiftin_right;
+input [ 96-1:0 ]  shiftin_left;
+input [ 96-1:0 ]  shiftin_right;
 
-wire [ (4+1)*32-1:0 ] _outpipe;
+wire [ (5+1)*96-1:0 ] _outpipe;
 
 
 /***************************************************************************
@@ -43,45 +43,54 @@ wire [ (4+1)*32-1:0 ] _outpipe;
 
   //HANDLE lane 0 specially
 
-  velmshifter_laneunit_32 velmshifter_laneunit0(clk,resetn,load,shift,dir_left,
+  velmshifter_laneunit_96 velmshifter_laneunit0(clk,resetn,load,shift,dir_left,
       squash[0],
-      inpipe[31:0],
-      _outpipe[63:32], //Support 1 lane
+      inpipe[95:0],
+      _outpipe[191:96], //Support 1 lane
       shiftin_right,
-      _outpipe[31:0]);
- // defparam velmshifter_laneunit0.32=32;
+      _outpipe[95:0]);
+ // defparam velmshifter_laneunit0.96=96;
 
   //Generate everything in between 
 
 
-      velmshifter_laneunit_32 velmshifter_laneunit_1(clk,resetn,load,shift,dir_left,
+      velmshifter_laneunit_96 velmshifter_laneunit_1(clk,resetn,load,shift,dir_left,
           squash[1],
-          inpipe[63:32],
-          _outpipe[95:64],
-          _outpipe[31:0],
-          _outpipe[63:32]);
-     // defparam velmshifter_laneunit.32=32;
+          inpipe[191:96],
+          _outpipe[287:192],
+          _outpipe[95:0],
+          _outpipe[191:96]);
+     // defparam velmshifter_laneunit.96=96;
 
 
-      velmshifter_laneunit_32 velmshifter_laneunit_2(clk,resetn,load,shift,dir_left,
+      velmshifter_laneunit_96 velmshifter_laneunit_2(clk,resetn,load,shift,dir_left,
           squash[2],
-          inpipe[63:32],
-          _outpipe[95:64],
-          _outpipe[31:0],
-          _outpipe[63:32]);
-     // defparam velmshifter_laneunit.32=32;
+          inpipe[191:96],
+          _outpipe[287:192],
+          _outpipe[95:0],
+          _outpipe[191:96]);
+     // defparam velmshifter_laneunit.96=96;
+
+
+      velmshifter_laneunit_96 velmshifter_laneunit_3(clk,resetn,load,shift,dir_left,
+          squash[3],
+          inpipe[191:96],
+          _outpipe[287:192],
+          _outpipe[95:0],
+          _outpipe[191:96]);
+     // defparam velmshifter_laneunit.96=96;
 
 
   //HANDLE lane NUMLANE specially
 
-    velmshifter_laneunit_32 velmshifter_laneunitlast(
+    velmshifter_laneunit_96 velmshifter_laneunitlast(
       clk,resetn,load,shift,dir_left,
-      squash[3],
-      inpipe[127:96],
+      squash[4],
+      inpipe[479:384],
       shiftin_left,
-      _outpipe[95:64], //L=1
-      _outpipe[127:96]); //L=1
-   // defparam velmshifter_laneunitlast.32=32;
+      _outpipe[383:288], //L=1
+      _outpipe[479:384]); //L=1
+   // defparam velmshifter_laneunitlast.96=96;
 
     //Support L=1 - give _outpipe more bits but ignore them
 assign outpipe=_outpipe;
@@ -92,7 +101,7 @@ endmodule
 /******************************** Shifter *************************************/
 /******************************************************************************/
 
-module velmshifter_4_1 (
+module velmshifter_5_3 (
     clk,
     resetn,
 
@@ -115,15 +124,15 @@ input resetn;
 input  load;
 input  shift;
 input  dir_left;
-input [ 4-1:0 ]  squash;
+input [ 5-1:0 ]  squash;
 
-input [ 4*1-1:0 ]  inpipe;
-output [ 4*1-1:0 ] outpipe;
+input [ 5*3-1:0 ]  inpipe;
+output [ 5*3-1:0 ] outpipe;
 
-input [ 1-1:0 ]  shiftin_left;
-input [ 1-1:0 ]  shiftin_right;
+input [ 3-1:0 ]  shiftin_left;
+input [ 3-1:0 ]  shiftin_right;
 
-wire [ (4+1)*1-1:0 ] _outpipe;
+wire [ (5+1)*3-1:0 ] _outpipe;
 
 
 /***************************************************************************
@@ -132,45 +141,54 @@ wire [ (4+1)*1-1:0 ] _outpipe;
 
   //HANDLE lane 0 specially
 
-  velmshifter_laneunit_1 velmshifter_laneunit0(clk,resetn,load,shift,dir_left,
+  velmshifter_laneunit_3 velmshifter_laneunit0(clk,resetn,load,shift,dir_left,
       squash[0],
-      inpipe[0],
-      _outpipe[1], //Support 1 lane
+      inpipe[2:0],
+      _outpipe[5:3], //Support 1 lane
       shiftin_right,
-      _outpipe[0]);
- // defparam velmshifter_laneunit0.1=1;
+      _outpipe[2:0]);
+ // defparam velmshifter_laneunit0.3=3;
 
   //Generate everything in between 
 
 
-      velmshifter_laneunit_1 velmshifter_laneunit_1(clk,resetn,load,shift,dir_left,
+      velmshifter_laneunit_3 velmshifter_laneunit_1(clk,resetn,load,shift,dir_left,
           squash[1],
-          inpipe[1],
-          _outpipe[2],
-          _outpipe[0],
-          _outpipe[1]);
-     // defparam velmshifter_laneunit.1=1;
+          inpipe[5:3],
+          _outpipe[8:6],
+          _outpipe[2:0],
+          _outpipe[5:3]);
+     // defparam velmshifter_laneunit.3=3;
 
 
-      velmshifter_laneunit_1 velmshifter_laneunit_2(clk,resetn,load,shift,dir_left,
+      velmshifter_laneunit_3 velmshifter_laneunit_2(clk,resetn,load,shift,dir_left,
           squash[2],
-          inpipe[1],
-          _outpipe[2],
-          _outpipe[0],
-          _outpipe[1]);
-     // defparam velmshifter_laneunit.1=1;
+          inpipe[5:3],
+          _outpipe[8:6],
+          _outpipe[2:0],
+          _outpipe[5:3]);
+     // defparam velmshifter_laneunit.3=3;
+
+
+      velmshifter_laneunit_3 velmshifter_laneunit_3(clk,resetn,load,shift,dir_left,
+          squash[3],
+          inpipe[5:3],
+          _outpipe[8:6],
+          _outpipe[2:0],
+          _outpipe[5:3]);
+     // defparam velmshifter_laneunit.3=3;
 
 
   //HANDLE lane NUMLANE specially
 
-    velmshifter_laneunit_1 velmshifter_laneunitlast(
+    velmshifter_laneunit_3 velmshifter_laneunitlast(
       clk,resetn,load,shift,dir_left,
-      squash[3],
-      inpipe[3],
+      squash[4],
+      inpipe[14:12],
       shiftin_left,
-      _outpipe[2], //L=1
-      _outpipe[3]); //L=1
-   // defparam velmshifter_laneunitlast.1=1;
+      _outpipe[11:9], //L=1
+      _outpipe[14:12]); //L=1
+   // defparam velmshifter_laneunitlast.3=3;
 
     //Support L=1 - give _outpipe more bits but ignore them
 assign outpipe=_outpipe;

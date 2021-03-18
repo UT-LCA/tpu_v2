@@ -215,8 +215,8 @@ endmodule
 
 if __name__ == '__main__':
     fp = open(args[0], "w")
-    #uut1 = pipe(fp)
-    uut2 = hazardchecker(fp)
-   # uut1.write(1,1)
-    uut2.write(10,5,1,1)
+    uut1 = pipe(fp)
+    #uut2 = hazardchecker(fp)
+    uut1.write(1,1)
+    #uut2.write(10,5,1,1)
     fp.close()
