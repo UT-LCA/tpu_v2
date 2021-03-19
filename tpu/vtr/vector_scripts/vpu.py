@@ -8,6 +8,7 @@ from components import pipereg
 from math import log
 from optparse import OptionParser
 import os
+import re
 
 parser = OptionParser()
 (_,args) = parser.parse_args()
@@ -15,6 +16,126 @@ parser = OptionParser()
 class vpu():
     def __init__(self, fp):
         self.fp = fp
+
+
+    ####################################################################
+    # This function handles case statements in vpu.v file.
+    # It is sufficiently generic, but not generic to work for all files.
+    ####################################################################
+    def handle_case_stmt(self, case_init, case_stmt):
+      case_result_string = "case(ir_op)\n"
+      case_contents_ongoing = False
+      dict_for_case_init = {}
+      lines_in_case_init = case_init.split('\n')
+      list_of_case_items = []
+
+      #First iterate over the statements that are outside the actual
+      #cases and that form the default initializations. We create a 
+      #dict out of these.
+      for line in lines_in_case_init:
+        s = re.search(r'\s*(\w*)\s*=\s*(.*)\s*;', line) #line containing initialization
+        b = re.match(r'^\s*$', line) #blank line
+        assert(s is not None or b is not None)
+        if s is not None:
+          dict_for_case_init[s.group(1)] = s.group(2)
+      
+      #Now let's go over each of the actual cases.
+      lines_in_case_stmt = case_stmt.split('\n')
+      for line in lines_in_case_stmt:
+        #Any line can be any of the following lines
+        blank_line = re.match(r'^\s*$', line) 
+        #Ex: COP2_VLD_B:
+        case_item_line = re.search(r'\s*\w*:', line)
+        begin_line = re.search(r'\bbegin\b', line)
+        end_line = re.search(r'\bend\b', line)
+        case_body_line = re.search(r'\s*(\w*)\s*=\s*(.*)\s*;', line)
+        #Ex: COP2_VLD_B,
+        #    COP2_VLD_L:
+        continued_case_item_line = re.match(r'^\s*(\w*)\s*,\s*$', line)
+
+        if blank_line is not None:
+          continue
+
+        #just create a list of case items
+        elif continued_case_item_line is not None:
+          list_of_case_items.append(continued_case_item_line.group(1))
+
+        #if a new case_item started, but there was no 'end' to the previous one
+        #let's write the contents out
+        elif case_item_line is not None and case_contents_ongoing is True:
+          case_result_string += "begin\n"
+          for key in temp_dict:
+            value = temp_dict[key]
+            case_result_string += "{k} = {v};\n".format(k=key, v=value)
+          case_result_string += "end\n"
+
+          #do the same for all case items
+          for citem in list_of_case_items:
+            case_result_string += citem+":\n"
+            case_result_string += "begin\n"
+            for key in temp_dict:
+              value = temp_dict[key]
+              case_result_string += "{k} = {v};\n".format(k=key, v=value)
+            case_result_string += "end\n"
+
+          list_of_case_items = []
+
+          temp_dict = {}
+          case_contents_ongoing = False
+          case_result_string += line+"\n"
+          case_contents_ongoing = True
+          temp_dict = dict_for_case_init.copy()
+
+        #a fresh case item is here
+        elif case_item_line is not None:
+          case_result_string += line+"\n"
+          case_contents_ongoing = True
+          temp_dict = dict_for_case_init.copy()
+        
+        elif begin_line is not None:
+          case_result_string += line+"\n"
+
+        #contents of the body of a case item. let's keep collecting.
+        elif case_body_line is not None and case_contents_ongoing is True:
+          #override the value in dictionary if present, otherwise add new entry
+          temp_dict[case_body_line.group(1)] = case_body_line.group(2)
+
+        #at the end now. let's write it out.
+        elif end_line is not None:
+          for key in temp_dict:
+            value = temp_dict[key]
+            case_result_string += "{k} = {v};\n".format(k=key, v=value)
+          case_result_string += line+"\n"
+
+          #do the same for all case items
+          for citem in list_of_case_items:
+            case_result_string += citem+":\n"
+            case_result_string += "begin\n"
+            for key in temp_dict:
+              value = temp_dict[key]
+              case_result_string += "{k} = {v};\n".format(k=key, v=value)
+            case_result_string += "end\n"
+
+          list_of_case_items = []
+
+          temp_dict = {}
+          case_contents_ongoing = False
+
+        else:
+          print("Shouldn't have come here")
+          raise SystemExit(0)
+
+      #let's write the 'default' section of the case statement
+      case_result_string += "default:\n"
+      case_result_string += "begin\n"
+      temp_dict = dict_for_case_init.copy()
+      for key in temp_dict:
+        value = temp_dict[key]
+        case_result_string += "{k} = {v};\n".format(k=key, v=value)
+      case_result_string += "end\n"
+      case_result_string +=  "endcase\n"
+
+      return case_result_string
 
     def make_str(self,log2dmem_writewidth,log2dmem_readwidth):
         numlanes = 8
@@ -347,11 +468,15 @@ reg is_cop2_s1;
   begin
     ctrl_doesnt_use_lanes=0;
     casez(ir_op)
-      0,
-      COP2_VSATVL,
+      0:
+        ctrl_doesnt_use_lanes=1;
+      COP2_VSATVL:
+        ctrl_doesnt_use_lanes=1;
       //COP2_VMCTS:  //Omit since vlanes modifies scalar
-      COP2_VMSTC,
-      COP2_CFC2,
+      COP2_VMSTC:
+        ctrl_doesnt_use_lanes=1;
+      COP2_CFC2:
+        ctrl_doesnt_use_lanes=1;
       COP2_CTC2:
         ctrl_doesnt_use_lanes=1;
     endcase
@@ -395,13 +520,18 @@ reg is_cop2_s1;
   //  1. Determine what all the sources are
   always@*
   begin
+  '''
+
+        case_init = '''
     ctrl_vc_a_en=0;
     ctrl_vl_a_en=0;
     ctrl_vbase_a_en=0;
     ctrl_vinc_a_en=0;
     ctrl_vstride_a_en=0;
     ctrl_vs_a_en=0;
-    casez(ir_op)
+    '''
+    #casez(ir_op)
+        case_stmt = '''
       COP2_VADD:
         begin
           ctrl_vl_a_en=1;
@@ -950,7 +1080,11 @@ reg is_cop2_s1;
           ctrl_vinc_a_en=1;
           ctrl_vstride_a_en=1;
         end
-    endcase
+'''
+#    endcase
+        string += self.handle_case_stmt(case_init, case_stmt)
+
+        string += '''
   end
 
   //  2. Determine if any of the sources have a RAW hazard
@@ -1075,6 +1209,9 @@ reg is_cop2_s1;
   /*********************** Control control signals ****************************/
   always@*
   begin
+  '''
+
+        case_init = '''
     ctrl_scalarin_en=0;
     ctrl_scalar_out_en=0;
     ctrl__vc_writedatain_sel=0;
@@ -1086,32 +1223,60 @@ reg is_cop2_s1;
     ctrl_vcdest_sel=0;
     ctrl_vsdest_sel=0;
     ctrl_vs_we=0;
-    casez(ir_op)
-      COP2_VSRR:  ctrl_rdvc_sel=2;
-      COP2_VSRR_U:  ctrl_rdvc_sel=2;
-      COP2_VSLS:  ctrl_rdvc_sel=2;
-      COP2_VSLS_U:  ctrl_rdvc_sel=2;
-      COP2_VXUMUL:  ctrl_rdvc_sel=2;
-      COP2_VXUMUL_U:  ctrl_rdvc_sel=2;
-      COP2_VXLMUL:  ctrl_rdvc_sel=2;
-      COP2_VXLMUL_U:  ctrl_rdvc_sel=2;
-      COP2_VXUMADD:  ctrl_rdvc_sel=2;
-      COP2_VXUMADD_U:  ctrl_rdvc_sel=2;
-      COP2_VXUMSUB:  ctrl_rdvc_sel=2;
-      COP2_VXUMSUB_U:  ctrl_rdvc_sel=2;
-      COP2_VXLMADD:  ctrl_rdvc_sel=2;
-      COP2_VXLMADD_U:  ctrl_rdvc_sel=2;
-      COP2_VXLMSUB:  ctrl_rdvc_sel=2;
-      COP2_VXLMSUB_U:  ctrl_rdvc_sel=2;
-      COP2_VINS_VV:  ctrl_rdvc_sel=2;
-      COP2_VINS_VV:  ctrl_rdvc_sel=3;
-      COP2_VINS_SV:  ctrl_rdvc_sel=3;
-      COP2_VEXT_VV:  ctrl_rdvc_sel=3;
-      COP2_VEXT_SV:  ctrl_rdvc_sel=3;
-      COP2_VEXT_U_SV:  ctrl_rdvc_sel=3;
-      COP2_VFINS:  ctrl_rdvc_sel=3;
-      COP2_VHALFUP:  ctrl_rdvc_sel=3;
-      COP2_VHALFDN:  ctrl_rdvc_sel=3;
+    '''
+
+    #casez(ir_op)
+        case_stmt = '''
+      COP2_VSRR:  
+      ctrl_rdvc_sel=2;
+      COP2_VSRR_U:  
+ctrl_rdvc_sel=2;
+      COP2_VSLS:  
+ctrl_rdvc_sel=2;
+      COP2_VSLS_U:  
+ctrl_rdvc_sel=2;
+      COP2_VXUMUL:  
+ctrl_rdvc_sel=2;
+      COP2_VXUMUL_U:  
+ctrl_rdvc_sel=2;
+      COP2_VXLMUL:  
+ctrl_rdvc_sel=2;
+      COP2_VXLMUL_U:  
+ctrl_rdvc_sel=2;
+      COP2_VXUMADD:  
+ctrl_rdvc_sel=2;
+      COP2_VXUMADD_U:  
+ctrl_rdvc_sel=2;
+      COP2_VXUMSUB:  
+ctrl_rdvc_sel=2;
+      COP2_VXUMSUB_U:  
+ctrl_rdvc_sel=2;
+      COP2_VXLMADD:  
+ctrl_rdvc_sel=2;
+      COP2_VXLMADD_U:  
+ctrl_rdvc_sel=2;
+      COP2_VXLMSUB:  
+ctrl_rdvc_sel=2;
+      COP2_VXLMSUB_U:  
+ctrl_rdvc_sel=2;
+      COP2_VINS_VV:  
+ctrl_rdvc_sel=2;
+      COP2_VINS_VV:  
+ctrl_rdvc_sel=3;
+      COP2_VINS_SV:  
+ctrl_rdvc_sel=3;
+      COP2_VEXT_VV:  
+ctrl_rdvc_sel=3;
+      COP2_VEXT_SV:  
+ctrl_rdvc_sel=3;
+      COP2_VEXT_U_SV:  
+ctrl_rdvc_sel=3;
+      COP2_VFINS:  
+ctrl_rdvc_sel=3;
+      COP2_VHALFUP:  
+ctrl_rdvc_sel=3;
+      COP2_VHALFDN:  
+ctrl_rdvc_sel=3;
       COP2_VHALF:
       begin
           ctrl_vc_writedatain_sel=1;
@@ -1182,7 +1347,12 @@ reg is_cop2_s1;
         ctrl_vsdest_sel=1;
         ctrl_vs_we=1;
       end
-    endcase
+      '''
+    #endcase
+
+        string += self.handle_case_stmt(case_init, case_stmt)
+
+        string += '''    
   end
 
 /******************************************************************************/
@@ -1420,6 +1590,7 @@ endmodule
 
 if __name__ == '__main__':
     fp = open(args[0], "w")
+    #fp = open("verilog/vpu.v", "w")
     try:
       options_file = open("../../design/top/options.v", "r")
       for line in options_file:
