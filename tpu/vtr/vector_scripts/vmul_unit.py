@@ -15,7 +15,8 @@ class vmul_unit():
         shifter_lane = int(numlanes/nummullanes)
         width = (pow(2,log2width))
         shifter_width = width * nummullanes
-        string1 = '''\ 
+        string1 = '''
+         
 //`include "vlane_mulshift.v"
 //`include "vlane_barrelshifter.v"
 
@@ -361,13 +362,12 @@ endmodule
         fp.close()
         fp = open("verilog/pipe.v",'a')
         uut = pipe(fp)
-        uut.write(regidwidth,2)
         uut.write(1,2)
         uut.write(5,2)
         if (log2width!=1 and log2width!=5):
           uut.write(log2width,2)
-        # if (regidwidth!=1 and regidwidth!=5 and regidwidth!=log2width):
-        #   uut.write(regidwidth,2)
+        if (regidwidth!=1 and regidwidth!=5 and regidwidth!=log2width):
+          uut.write(regidwidth,2)
         if (numlanes!=1 and numlanes!=5 and numlanes!=log2width and numlanes!= regidwidth):
           uut.write(numlanes,2)
         fp.close()

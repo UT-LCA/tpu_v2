@@ -108,17 +108,20 @@ class vlanes():
                 outfile += "\n"
         return outfile
 
-    def make_str(self, numlanes, log2numlanes, nummemparallellanes, log2nummemparallellanes, nummullanes, mvl, log2mvl, vpw, log2vpw, lanewidth, log2lanewidth, numbanks, log2numbanks, aluperbank, dmem_writewidth,log2dmem_writewidth, dmem_readwidth, log2dmem_readwidth, vcwidth, vswidth, numvsregs, log2numvsregs,):
+    def make_str(self, numlanes, log2numlanes, mvl, log2mvl, vpw, log2vpw, numbanks, log2numbanks, aluperbank, nummemparallellanes, log2nummemparallellanes, dmem_writewidth,log2dmem_writewidth, dmem_readwidth, log2dmem_readwidth, vcwidth, vswidth, numvsregs, log2numvsregs, vridwidth):
+        lanewidth = 8*vpw
+        log2lanewidth = 3+log2vpw
+        nummullanes = numlanes
         pipe1regwidth = 3*(5+log2mvl-log2numlanes) + 42
         dispatcherwidth = 63 + 3*(5+log2mvl-log2numlanes) + vcwidth + vswidth
         log2numlanesp1 = 1+ log2numlanes
         totalalus = 4+(numbanks-1)*aluperbank
         totalflagalus = 1+(numbanks-1)*aluperbank
-        regidwidth =  (5+log2mvl-log2numlanes)
+        regidwidth =  (vridwidth+log2mvl-log2numlanes)
         velmidwidth = log2mvl-log2numlanes
         totalvpw = 8 * vpw * numlanes
-        totalregs = 32 * mvl / numlanes
-        vrminusregwidth = 5-regidwidth
+        totalregs = int(32 * mvl / numlanes)
+        regwidthminusvr = regidwidth-vridwidth
         log2nummullanes = log(nummullanes,2)
         string_dispatchwidth ='''{LOG2MVL}+ \
     1+ \
@@ -237,8 +240,8 @@ parameter BANKREGIDWIDTH=VRIDWIDTH+{LOG2MVL}-{LOG2NUMLANES}-{LOG2NUMBANKS};
 
 // Register identifier = {CBS} vr[0-31], element {CBE}
 
-`define VRID_RANGE REGIDWIDTH-1:REGIDWIDTH-VRIDWIDTH
-`define VRELM_RANGE REGIDWIDTH-VRIDWIDTH-1:0
+`define VRID_RANGE (REGIDWIDTH-1:REGIDWIDTH-VRIDWIDTH)
+`define VRELM_RANGE (REGIDWIDTH-VRIDWIDTH-1:0)
 
 // NUMFUS = ALU*{NUMBANKS} + MUL + MEM + FALU*MEMBANKS + MATMUL(1) + BFLOAT
 // UNITS(2) + ACTIVATION + TRP
@@ -2203,11 +2206,11 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
 
   // *********** Pipeline signals that don't need to be squashed *********
   wire [{PIPE1REGWIDTH}-1:0] pipe1reg_q;
-  wire [`VRELM_RANGE+5:0] pipe1reg_d1;
-  wire [`VRELM_RANGE+5:0] pipe1reg_d2;
-  wire [`VRELM_RANGE+5:0] pipe1reg_d3;
-  wire pipe1reg_d4;
-  wire pipe1reg_d5;
+//  wire [`VRELM_RANGE+5:0] pipe1reg_d1;
+//  wire [`VRELM_RANGE+5:0] pipe1reg_d2;
+//  wire [`VRELM_RANGE+5:0] pipe1reg_d3;
+//  wire pipe1reg_d4;
+//  wire pipe1reg_d5;
 
   assign {CBS}
         dst_s2,
@@ -2230,19 +2233,19 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
         ctrl2_volatiledest
       {CBE} = pipe1reg_q;
 
-  assign pipe1reg_d1 = {CBS}(ctrl1_vrdest_sel) ? ir_src2 : ir_dst, regid_pad{CBE};
-  assign pipe1reg_d2 = {CBS}(ctrl1_vr_c_en ) ? ir_dst : ir_src1, regid_pad{CBE};
-  assign pipe1reg_d3 = {CBS}ir_src2,regid_pad{CBE};
-  assign pipe1reg_d4 = ir_op[7] & ctrl1_usesvssel;
-  assign pipe1reg_d5 = ir_op[6] & ctrl1_usesvssel;
+//  assign pipe1reg_d1 = {CBS}(ctrl1_vrdest_sel) ? ir_src2 : ir_dst, regid_pad{CBE};
+//  assign pipe1reg_d2 = {CBS}(ctrl1_vr_c_en ) ? ir_dst : ir_src1, regid_pad{CBE};
+//  assign pipe1reg_d3 = {CBS}ir_src2,regid_pad{CBE};
+//  assign pipe1reg_d4 = ir_op[7] & ctrl1_usesvssel;
+//  assign pipe1reg_d5 = ir_op[6] & ctrl1_usesvssel;
 
   pipereg_{PIPE1REGWIDTH}  pipe1reg (
       .d( {CBS}
-        pipe1reg_d1,
-        pipe1reg_d2,
-        pipe1reg_d3,
-        pipe1reg_d4,
-        pipe1reg_d5,
+        {CBS}(ctrl1_vrdest_sel) ? ir_src2 : ir_dst, regid_pad{CBE},
+        {CBS}(ctrl1_vr_c_en ) ? ir_dst : ir_src1, regid_pad{CBE},
+        {CBS}ir_src2,regid_pad{CBE},
+        ir_op[7] && ctrl1_usesvssel,
+        ir_op[6] && ctrl1_usesvssel,
         ir_mask,
         ctrl1_vf_a_sel,
         ctrl1_rshiftnonzero,
@@ -3026,7 +3029,7 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
 
 //module instance 
 
-  vmem_unit_{LANEWIDTH}_{NUMLANES}_{LOG2NUMLANES}_{NUMMEMPARALLELLANES}_{LOG2NUMMEMPARALLELLANES}_{VCWIDTH}_{DMEM_WRITEWIDTH}_{LOG2DMEM_WRITEWIDTH}_{DMEM_READWIDTH}_{LOG2DMEM_READWIDTH}_{VRMINUSREGWIDTH}_{REGIDWIDTH} vmem_unit(
+  vmem_unit_{LANEWIDTH}_{NUMLANES}_{LOG2NUMLANES}_{NUMMEMPARALLELLANES}_{LOG2NUMMEMPARALLELLANES}_{VCWIDTH}_{DMEM_WRITEWIDTH}_{LOG2DMEM_WRITEWIDTH}_{DMEM_READWIDTH}_{LOG2DMEM_READWIDTH}_{REGWIDTHMINUSVR}_{REGIDWIDTH} vmem_unit(
     .clk(clk),
     .resetn(resetn),
     .enable(ctrl4_memunit_en && ~stall_mulunit && ~stall_matmul),  //unit on and pipe active
@@ -3106,45 +3109,46 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
 
 //module instance 
 
-    vlane_alu_{LANEWIDTH} valu_k_bk(
+    vlane_alu_{LANEWIDTH} valu_kk_bk(
         .clk(clk), 
         .resetn(resetn),
         .pipe_en(pipe_advance[4]),
         .pipe_squashn(~pipe_squash[4]),
-        .src1(vr_src1[FU_ALU+bk][{LANEWIDTH}*k +: {LANEWIDTH}]),
-        .src2(vr_src2[FU_ALU+bk][{LANEWIDTH}*k +: {LANEWIDTH}]),
-        .mask(vf_src1[FU_ALU+bk][k]),  //Note: MERGE is not masked
+        .src1(vr_src1[FU_ALU+bk][{LANEWIDTH}*kk +: {LANEWIDTH}]),
+        .src2(vr_src2[FU_ALU+bk][{LANEWIDTH}*kk +: {LANEWIDTH}]),
+        .mask(vf_src1[FU_ALU+bk][kk]),  //Note: MERGE is not masked
         .op(ctrl4_alu_op[bk]^ALUOP_ZERO),
         .satsum_op(ctrl4_satsum_op[bk]),
         .satsize_op(ctrl4_satsize_op[bk]),
-        .cmp_result(alu_cmpresult_s4[bk][k]),
-        .result(alu_result_s5[bk][{LANEWIDTH}*k +: {LANEWIDTH}])
+        .cmp_result(alu_cmpresult_s4[bk][kk]),
+        .result(alu_result_s5[bk][{LANEWIDTH}*kk +: {LANEWIDTH}])
         );
 //module instance 
 
-      vlane_flagalu vflagalu_k_bk(
+      vlane_flagalu vflagalu_kk_bk(
         .clk(clk), 
         .resetn(resetn),
-        .src1(vf_src1[FU_FALU+bk][k]),
-        .src2(vf_src2[FU_FALU+bk][k]),
+        .src1(vf_src1[FU_FALU+bk][kk]),
+        .src2(vf_src2[FU_FALU+bk][kk]),
         .op(ctrl4_flagalu_op[bk]),
-        .result(flagalu_result_s4[bk][k])
+        .result(flagalu_result_s4[bk][kk])
         );
 
 //module instance 
-      pipereg_1 flagaluresultreg_k_bk (
-        .d( (ctrl4_vf_wbsel[bk]) ? alu_cmpresult_s4[bk][k] : 
-                                   flagalu_result_s4[bk][k]),
+      pipereg_1 flagaluresultreg_kk_bk (
+        .d( (ctrl4_vf_wbsel[bk]) ? alu_cmpresult_s4[bk][kk] : 
+                                   flagalu_result_s4[bk][kk]),
         .clk(clk),
         .resetn(resetn),
         .en( pipe_advance[4] ), //Advance unless next stage stalled
         .squashn( 1'b1 ),
-        .q(flagalu_result_s5[bk][k])
+        .q(flagalu_result_s5[bk][kk])
         );
 '''
         string6 =""
-        for k in range(0,numlanes):
-            string6 = string6_basic1.replace("k",str(k))
+        for k in range(numlanes):
+            temp = string6_basic1.replace("kk",str(k))
+            string6 += temp
 
         string6_basic2='''
 
@@ -3200,8 +3204,9 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
         string6_basic2 = string6 + string6_basic2
         string6 = "  wire squash_aludstpipe_NC;" + "\n" + "wire squash_faludstpipe_NC;" +"\n" + "wire squash_aludstmaskpipe_NC;" +"\n"
 
-        for bk in range(0,(numbanks-1)*aluperbank):
-            string6 += string6_basic2.replace("bk",str(bk))
+        for bk in range(1+(numbanks-1)*aluperbank):
+            temp = string6_basic2.replace("bk",str(bk))
+            string6 += temp
 
         string7='''
 
@@ -3214,13 +3219,13 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
 '''
         string8_basic ='''
 
-      assign dst[FU_MATMUL][g+4] = dst_matmul[REGIDWIDTH*(g+1)-1:REGIDWIDTH*g];
-      assign dst_mask[FU_MATMUL][g+4] = dst_mask_matmul[{NUMLANES}*(g+1)-1:{NUMLANES}*g];
+      assign dst[FU_MATMUL][gg+4] = dst_matmul[REGIDWIDTH*(gg+1)-1:REGIDWIDTH*gg];
+      assign dst_mask[FU_MATMUL][gg+4] = dst_mask_matmul[{NUMLANES}*(gg+1)-1:{NUMLANES}*gg];
 
 '''
         string8 = ""
         for g in range(0,29):
-            string8 += string8_basic.replace("g",str(g))
+            string8 += string8_basic.replace("gg",str(g))
 
         string9 ='''
 
@@ -3281,8 +3286,8 @@ trp_unit_{REGIDWIDTH} u_trp (
     .resetn(resetn),
     .en(ctrl4_bfadder_en),
     .stall(stall_bf_adder),
-    .a(vr_src1[FU_BFADDER][g_func * LANEWIDTHE +: {LANEWIDTH}]),
-    .b(vr_src2[FU_BFADDER][g_func * LANEWIDTHE +: {LANEWIDTH}]),
+    .a(vr_src1[FU_BFADDER][g_func * {LANEWIDTH} +: {LANEWIDTH}]),
+    .b(vr_src2[FU_BFADDER][g_func * {LANEWIDTH} +: {LANEWIDTH}]),
     .out(bfadder_result_s5[g_func*{LANEWIDTH} +: {LANEWIDTH}])
     );
     
@@ -3292,8 +3297,8 @@ trp_unit_{REGIDWIDTH} u_trp (
     .resetn(resetn),
     .en(ctrl4_bfmult_en),
     .stall(stall_bf_adder),
-    .a(vr_src1[FU_BFMULT][g_func * LANEWIDTHE +: {LANEWIDTH}]),
-    .b(vr_src2[FU_BFMULT][g_func * LANEWIDTHE +: {LANEWIDTH}]),
+    .a(vr_src1[FU_BFMULT][g_func * {LANEWIDTH} +: {LANEWIDTH}]),
+    .b(vr_src2[FU_BFMULT][g_func * {LANEWIDTH} +: {LANEWIDTH}]),
     .out(bfmult_result_s5[g_func*{LANEWIDTH} +: {LANEWIDTH}])
     );
  
@@ -3307,7 +3312,7 @@ trp_unit_{REGIDWIDTH} u_trp (
     .resetn(resetn),
     .en(ctrl4_act_en),
     .stall(stall_bf_adder),
-    .a(vr_src1[FU_ACT][g_func * LANEWIDTHE +: {LANEWIDTH}]),
+    .a(vr_src1[FU_ACT][g_func * {LANEWIDTH} +: {LANEWIDTH}]),
     .out(act_result_s5[g_func*{LANEWIDTH} +: {LANEWIDTH}])
     );
 
@@ -3489,66 +3494,66 @@ endmodule
                   string7 + string8 + string9 + string10 + string11 + string12
         
         output_string = self.process_case_stmt(string)
-        fp = open("verilog/vdispatcher.v",'w')
+        fp = open("verilog/vdispatcher.v",'a')
         uut = vdispatcher(fp)
         uut.write(numbanks,dispatcherwidth,log2mvl,log2mvl,log2numlanesp1)
         fp.close()
-        fp = open("verilog/vregfile_vector.v",'w')
+        fp = open("verilog/vregfile_vector.v",'a')
         uut = vregfile_vector(fp)
         uut.write(numbanks,log2numbanks,totalvpw,totalregs,regidwidth)
         fp.close()
-        fp = open("verilog/vregfile_flag.v",'w')
+        fp = open("verilog/vregfile_flag.v",'a')
         uut = vregfile_flag(fp)
         uut.write(numbanks,log2numbanks,numlanes,totalregs,regidwidth)
         fp.close()
-        fp = open("verilog/vmem_unit.v",'w')
+        fp = open("verilog/vmem_unit.v",'a')
         uut = vmem_unit(fp)
-        uut.write(lanewidth,numlanes,log2numlanes,nummemparallellanes,log2nummemparallellanes,vcwidth,dmem_writewidth,log2dmem_writewidth,dmem_readwidth,log2dmem_readwidth,vrminusregwidth,regidwidth)
+        uut.write(lanewidth,numlanes,log2numlanes,nummemparallellanes,log2nummemparallellanes,vcwidth,dmem_writewidth,log2dmem_writewidth,dmem_readwidth,log2dmem_readwidth,regwidthminusvr,regidwidth)
         fp.close()
-        fp = open("verilog/vmul_unit.v",'w')
+        fp = open("verilog/vmul_unit.v",'a')
         uut = vmul_unit(fp)
         uut.write(log2lanewidth,nummullanes,log2numlanes,regidwidth)
         fp.close()
-        fp = open("verilog/vmul_unit.v",'w')
-        uut = vmul_unit(fp)
-        uut.write(log2lanewidth,nummullanes,log2numlanes,regidwidth)
-        fp.close()
-        fp = open("verilog/vlane_alu.v",'w')
+        # fp = open("verilog/vmul_unit.v",'a')
+        # uut = vmul_unit(fp)
+        # uut.write(log2lanewidth,nummullanes,log2numlanes,regidwidth)
+        # fp.close()
+        fp = open("verilog/vlane_alu.v",'a')
         uut = vlane_alu(fp)
         uut.write(lanewidth)
         fp.close()
-        fp = open("verilog/vlane_flagalu.v",'w')
+        fp = open("verilog/vlane_flagalu.v",'a')
         uut = vlane_flagalu(fp)
         uut.write()
         fp.close()
-        fp = open("verilog/matmul_unit.v",'w')
+        fp = open("verilog/matmul_unit.v",'a')
         uut = matmul_unit(fp)
         uut.write(regidwidth,33,numlanes)
         fp.close()
-        fp = open("verilog/trp_unit.v",'w')
+        fp = open("verilog/trp_unit.v",'a')
         uut = trp_unit(fp)
         uut.write(regidwidth)
         fp.close()
-        fp = open("verilog/bfloat_adder.v",'w')
+        fp = open("verilog/bfloat_adder.v",'a')
         uut = bfloat_adder(fp)
         uut.write(regidwidth)
         fp.close()
-        fp = open("verilog/bfloat_mult.v",'w')
+        fp = open("verilog/bfloat_mult.v",'a')
         uut = bfloat_mult(fp)
         uut.write(regidwidth)
         fp.close()
-        fp = open("verilog/activation.v",'w')
+        fp = open("verilog/activation.v",'a')
         uut = activation(fp)
         uut.write(lanewidth)
         fp.close()
-        fp = open("verilog/pipereg.v",'w')
+        fp = open("verilog/pipereg.v",'a')
         uut = pipereg(fp)
         uut.write(17)
         uut.write(1)
         uut.write(8)
         uut.write(pipe1regwidth)
         fp.close()
-        fp = open("verilog/pipe.v",'w')
+        fp = open("verilog/pipe.v",'a')
         uut = pipe(fp)
         uut.write(7,5)
         uut.write(vcwidth,4)
@@ -3559,10 +3564,6 @@ endmodule
 
         return output_string.format( NUMLANES = numlanes, \
                               LOG2NUMLANES = log2numlanes, \
-                              NUMMEMPARALLELLANES = nummemparallellanes, \
-                              LOG2NUMMEMPARALLELLANES = log2nummemparallellanes, \
-                              NUMMULLANES = nummullanes, \
-                              LOG2NUMMULLANES = log2nummullanes, \
                               MVL = mvl, \
                               LOG2MVL = log2mvl, \
                               VPW = vpw, \
@@ -3572,6 +3573,10 @@ endmodule
                               NUMBANKS = numbanks, \
                               LOG2NUMBANKS = log2numbanks, \
                               ALUPERBANK = aluperbank, \
+                              NUMMEMPARALLELLANES = nummemparallellanes, \
+                              LOG2NUMMEMPARALLELLANES = log2nummemparallellanes, \
+                              NUMMULLANES = nummullanes, \
+                              LOG2NUMMULLANES = log2nummullanes, \
                               DMEM_WRITEWIDTH = dmem_writewidth, \
                               LOG2DMEM_WRITEWIDTH = log2dmem_writewidth, \
                               DMEM_READWIDTH = dmem_readwidth, \
@@ -3580,6 +3585,7 @@ endmodule
                               VSWIDTH = vswidth, \
                               NUMVSREGS  = numvsregs, \
                               LOG2NUMVSREGS = log2numvsregs, \
+                              VRIDWIDTH = vridwidth, \
                               PIPE1REGWIDTH = pipe1regwidth ,\
                               DISPATCHERWIDTH = dispatcherwidth ,\
                               LOG2NUMLANESP1 = log2numlanesp1 ,\
@@ -3589,18 +3595,39 @@ endmodule
                               VELMIDWIDTH = velmidwidth ,\
                               TOTALVPW = totalvpw ,\
                               TOTALREGS = totalregs ,\
-                              VRMINUSREGWIDTH = vrminusregwidth ,\
+                              REGWIDTHMINUSVR = regwidthminusvr ,\
                               CBS = "{" , \
                               CBE = "}" \
                             )
 
-    def write(self, numlanes, log2numlanes, nummemparallellanes, log2nummemparallellanes, nummullanes, mvl, log2mvl, vpw, log2vpw, lanewidth, log2lanewidth, numbanks, log2numbanks, aluperbank, dmem_writewidth,log2dmem_writewidth, dmem_readwidth, log2dmem_readwidth, vcwidth, vswidth, numvsregs, log2numvsregs):
-        self.fp.write(self.make_str(numlanes, log2numlanes, nummemparallellanes, log2nummemparallellanes, nummullanes, mvl, log2mvl, vpw, log2vpw, lanewidth, log2lanewidth, numbanks, log2numbanks, aluperbank, dmem_writewidth,log2dmem_writewidth, dmem_readwidth, log2dmem_readwidth, vcwidth, vswidth, numvsregs, log2numvsregs))
+    def write(self, numlanes, log2numlanes, mvl, log2mvl, vpw, log2vpw, numbanks, log2numbanks, aluperbank, nummemparallellanes, log2nummemparallellanes, dmem_writewidth,log2dmem_writewidth, dmem_readwidth, log2dmem_readwidth, vcwidth, vswidth, numvsregs, log2numvsregs, vridwidth):
+        self.fp.write(self.make_str(numlanes, log2numlanes, mvl, log2mvl, vpw, log2vpw, numbanks, log2numbanks, aluperbank, nummemparallellanes, log2nummemparallellanes, dmem_writewidth,log2dmem_writewidth, dmem_readwidth, log2dmem_readwidth, vcwidth, vswidth, numvsregs, log2numvsregs, vridwidth))
 
 
 
 if __name__ == '__main__':
+    numlanes = 4 
+    log2numlanes = 2
+    mvl = 128
+    log2mvl = 7
+    vpw = 4
+    log2vpw = 2
+    numbanks = 2
+    log2numbanks = 1
+    aluperbank = 1
+    nummemparallellanes = 2
+    log2nummemparallellanes = 1
+    dmem_writewidth = 128
+    log2dmem_writewidth = 7
+    dmem_readwidth = 128
+    log2dmem_readwidth = 7
+    vcwidth = 32
+    vswidth = 32
+    numvsregs = 32
+    log2numvsregs = 5
+    vridwidth = 5
+
     fp = open(args[0], "w")
     uut1 = vlanes(fp)
-    uut1.write(4,2,128,7,4,2,32,5,2,1,1,2,1,4,128,7,128,7,32,32,32,5)
+    uut1.write(numlanes, log2numlanes, mvl, log2mvl, vpw, log2vpw, numbanks, log2numbanks, aluperbank, nummemparallellanes, log2nummemparallellanes, dmem_writewidth,log2dmem_writewidth, dmem_readwidth, log2dmem_readwidth, vcwidth, vswidth, numvsregs, log2numvsregs, vridwidth)
     fp.close()
