@@ -13,6 +13,8 @@ class pipe():
 
   DEPTH - number of actual pipeline registers needed
 ****************************************************************************/
+`ifndef MODULE_PIPE_{WIDTH}_{DEPTH}
+`define MODULE_PIPE_{WIDTH}_{DEPTH}
 module pipe_{WIDTH}_{DEPTH}(
     d,
     clk,
@@ -141,6 +143,7 @@ endmodule
         else:
             string2 = string2d
         string = string1+ string2 
+        string += "`endif"
 
         return string.format(WIDTH=width, DEPTH=depth)
 

@@ -268,7 +268,18 @@ parameter BIT_VSSRC2=6;
 parameter BIT_VSSRC1=7;
 
 // `include "visa.v"
+'''
 
+        try:
+          visa_file = open("../../design/vector/visa.v", "r")
+          for line in visa_file:
+            string += line+"\n"
+          visa_file.close()
+        except:
+          print("Unable to open file")
+          raise SystemExit(0)
+
+        string += ''' 
 input clk;
 input resetn;
 
@@ -467,7 +478,7 @@ reg is_cop2_s1;
   always@*
   begin
     ctrl_doesnt_use_lanes=0;
-    casez(ir_op)
+    case(ir_op)
       0:
         ctrl_doesnt_use_lanes=1;
       COP2_VSATVL:
@@ -486,7 +497,7 @@ reg is_cop2_s1;
   assign stall1=internal_stall[1] | (vlanes_stalled[1]&&~ctrl_doesnt_use_lanes);
   assign squash1 = (stall1&~stall2)|~resetn;
 
-  pipereg IR_reg2(ir,clk,resetn,~stall1,~squash1,ir2);
+  pipereg_32 IR_reg2(ir,clk,resetn,~stall1,~squash1,ir2);
 
   assign ir_cop2=ir[31:26];
   assign ir_op={CBS}ir[25:22],ir[5:0]{CBE}; //10 bits
@@ -1444,46 +1455,46 @@ ctrl_rdvc_sel=3;
 /************************ Instantiate Vector Lanes ****************************/
 /******************************************************************************/
 
-  vlanes_{NUMLANES}_{LOG2NUMLANES}_{NUMMEMPARALLELLANES}_{LOG2NUMMEMPARALLELLANES}_{NUMMULLANES}_{MVL}_{LOG2MVL}_{VPW}_{LOG2VPW}_{LANEWIDTH}_{LOG2LANEWIDTH}_{NUMBANKS}_{LOG2NUMBANKS}_{ALUPERBANK}_{DMEM_WRITEWIDTH}_{LOG2DMEM_WRITEWIDTH}_{DMEM_READWIDTH}_{LOG2DMEM_READWIDTH}_{VCWIDTH}_{VSWIDTH}_{NUMVSREGS}_{LOG2NUMVSREGS} vlanes(
-    .clk(clk),
-    .resetn(resetn),
+  //vlanes_{NUMLANES}_{LOG2NUMLANES}_{NUMMEMPARALLELLANES}_{LOG2NUMMEMPARALLELLANES}_{NUMMULLANES}_{MVL}_{LOG2MVL}_{VPW}_{LOG2VPW}_{LANEWIDTH}_{LOG2LANEWIDTH}_{NUMBANKS}_{LOG2NUMBANKS}_{ALUPERBANK}_{DMEM_WRITEWIDTH}_{LOG2DMEM_WRITEWIDTH}_{DMEM_READWIDTH}_{LOG2DMEM_READWIDTH}_{VCWIDTH}_{VSWIDTH}_{NUMVSREGS}_{LOG2NUMVSREGS} vlanes(
+  //  .clk(clk),
+  //  .resetn(resetn),
 
-    // Instruction interface
-    .instr(ir),
-    .instr_en(is_cop2_s1),    // tells when instr is valid and available
-    .instr_wait(),            // if high says vpu is not ready to receive
+  //  // Instruction interface
+  //  .instr(ir),
+  //  .instr_en(is_cop2_s1),    // tells when instr is valid and available
+  //  .instr_wait(),            // if high says vpu is not ready to receive
 
-    .stall_in({CBS}internal_stall,1'b0{CBE}),
-    .is_stalled(vlanes_stalled),
-    .has_memop(has_memop),
+  //  .stall_in({CBS}internal_stall,1'b0{CBE}),
+  //  .is_stalled(vlanes_stalled),
+  //  .has_memop(has_memop),
 
-    // Control register values - 2nd stage
-    .vc_in(vc_readdataout),
-    .vl_in(vl_readdataout),
-    .vbase_in(vbase_readdataout),
-    .vinc_in(vinc_readdataout),
-    .vstride_in(vstride_readdataout),
-    .vs_in(vs_readdataout),
-    .matmul_masks_in(matmul_masks),
+  //  // Control register values - 2nd stage
+  //  .vc_in(vc_readdataout),
+  //  .vl_in(vl_readdataout),
+  //  .vbase_in(vbase_readdataout),
+  //  .vinc_in(vinc_readdataout),
+  //  .vstride_in(vstride_readdataout),
+  //  .vs_in(vs_readdataout),
+  //  .matmul_masks_in(matmul_masks),
 
-    // vs Writeback
-    .vs_dst(vlanes_vs_dst),
-    .vs_wetrack(vlanes_vs_wetrack),  //1-bit for each pipe-stage
-    .vs_we(vlanes_vs_we),
-    .vs_writedata(vlanes_vs_writedata),
+  //  // vs Writeback
+  //  .vs_dst(vlanes_vs_dst),
+  //  .vs_wetrack(vlanes_vs_wetrack),  //1-bit for each pipe-stage
+  //  .vs_we(vlanes_vs_we),
+  //  .vs_writedata(vlanes_vs_writedata),
 
-    // Data memory interface
-    .dbus_address(dbus_address),
-    .dbus_en(dbus_en),
-    .dbus_we(dbus_we),
-    .dbus_byteen(dbus_byteen),
-    .dbus_writedata(dbus_writedata),
-    .dbus_readdata(dbus_readdata),
-    .dbus_cachematch(dbus_cachematch),
-    .dbus_cachemiss(dbus_cachemiss),
-    .dbus_prefetch(dbus_prefetch),
-    .dbus_wait(dbus_wait)
-    );
+  //  // Data memory interface
+  //  .dbus_address(dbus_address),
+  //  .dbus_en(dbus_en),
+  //  .dbus_we(dbus_we),
+  //  .dbus_byteen(dbus_byteen),
+  //  .dbus_writedata(dbus_writedata),
+  //  .dbus_readdata(dbus_readdata),
+  //  .dbus_cachematch(dbus_cachematch),
+  //  .dbus_cachemiss(dbus_cachemiss),
+  //  .dbus_prefetch(dbus_prefetch),
+  //  .dbus_wait(dbus_wait)
+  //  );
   
 ///////////////////////////////////////////////////
 //    vlanes parameter sequence for reference
@@ -1534,10 +1545,10 @@ endmodule
         uut = vregfile_control(fp)
         uut.write(vcwidth,numnonmemvcregs,log2numnonmemvcregs,8)
         fp.close()
-        fp = open("verilog/vlanes.v",'a')
-        uut = vlanes(fp)
-        uut.write(numlanes,log2numlanes,nummemparallellanes, log2nummemparallellanes,nummullanes,mvl,log2mvl,vpw,log2vpw,lanewidth,log2lanewidth,numbanks,log2numbanks,aluperbank,dmem_writewidth,log2dmem_writewidth,dmem_readwidth,log2dmem_readwidth, vcwidth,vswidth,numvsregs,log2numvsregs)
-        fp.close()
+        #fp = open("verilog/vlanes.v",'a')
+        #uut = vlanes(fp)
+        #uut.write(numlanes, log2numlanes, mvl, log2mvl, vpw, log2vpw, numbanks, log2numbanks, aluperbank, nummemparallellanes, log2nummemparallellanes, dmem_writewidth,log2dmem_writewidth, dmem_readwidth, log2dmem_readwidth, vcwidth, vswidth, numvsregs, log2numvsregs, 5)
+        #fp.close()
         fp = open("verilog/pipereg.v",'a')
         uut = pipereg(fp)
         uut.write(32)
@@ -1546,6 +1557,7 @@ endmodule
         uut.write(vcwidth)
         uut.write(6)
         uut.write(2)
+        uut.write(1)
         fp.close()
 
 
@@ -1591,14 +1603,6 @@ endmodule
 if __name__ == '__main__':
     fp = open(args[0], "w")
     #fp = open("verilog/vpu.v", "w")
-    try:
-      options_file = open("../../design/top/options.v", "r")
-      for line in options_file:
-        fp.write(line)
-      options_file.close()
-    except:
-      print("Unable to open file")
-      raise SystemExit(0)
     uut1 = vpu(fp)
     uut1.write(7,7)
     fp.close()

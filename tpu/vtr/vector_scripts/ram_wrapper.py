@@ -9,6 +9,8 @@ class ram_wrapper():
 
     def make_str(self, awidth, num_words, dwidth):
         string = '''\
+`ifndef MODULE_RAM_WRAPPER_{AWIDTH}_{NUM_WORDS}_{DWIDTH} 
+`define MODULE_RAM_WRAPPER_{AWIDTH}_{NUM_WORDS}_{DWIDTH} 
 module ram_wrapper_{AWIDTH}_{NUM_WORDS}_{DWIDTH} (
 	clk,
         resetn,
@@ -76,6 +78,7 @@ always@(*)begin
 end
 
 endmodule
+`endif
 '''       
         filename = "verilog/dpram_"+str(awidth)+"_"+str(num_words)+"_"+str(dwidth)+".v"
         if(os.path.exists(filename) == False):

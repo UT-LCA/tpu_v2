@@ -80,6 +80,8 @@ class pipereg():
           their enables treated independently of instructrions that use them.
           - They are enabled whenever the stage is active and not stalled
 ****************************************************************************/
+`ifndef MODULE_PIPEREG_{WIDTH}
+`define MODULE_PIPEREG_{WIDTH}
 module pipereg_{WIDTH}(d,clk,resetn,en,squashn,q);
 
 input clk;
@@ -98,7 +100,9 @@ begin
     q<=d;
 end
 
-endmodule'''       
+endmodule
+`endif
+'''       
 
         return string.format(WIDTH=width)
 
