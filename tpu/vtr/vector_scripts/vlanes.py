@@ -2855,8 +2855,7 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
                       <<ctrl_memunit_op[3][3:2])<<{LOG2NUMLANES});
             // Partial Address Gen for each lane - just do multiplication part
             for (m=0; m<{NUMLANES}; m=m+1)
-              vstrideoffset_s4[m*{VCWIDTH} +: {VCWIDTH}] = 
-                                ((ctrl_memunit_op[3][4]) ? vstride[3] : 1)*m;
+              vstrideoffset_s4[m*{VCWIDTH} +: {VCWIDTH}] = ((ctrl_memunit_op[3][4]) ? vstride[3] : 1)*m;
             mem_last_subvector_s4=last_subvector[b3];
           end
           else if (ctrl3_alu_op[b3]!=(ALUOP_ZERO^ALUOP_ZERO)) //is ALU

@@ -7,10 +7,9 @@ class options():
         self.fp = fp
 
     def make_str(self):
-        string = '''
-
-`ifndef _OPTIONS_V_
-`define _OPTIONS_V_ 1
+        string = '''\
+//`ifndef _OPTIONS_V_
+// `define _OPTIONS_V_ 1
 
 `define NO_PLI 1
 //`define TEST_BENCH 1
@@ -103,7 +102,7 @@ class options():
 /****************** SIZE OF THE MATMUL UNIT ***************/
 `define MAT_MUL_SIZE 8
 
-`endif
+//`endif
 
 '''
         return string

@@ -70,7 +70,7 @@ class bit_vector:
             pass
 
         #Now find the new dims
-        bit_vector_ref_min_dim_1 = "("+unpacked_ref_min+"-"+self.unpacked_dim_min+")*"+self.packed_dim_len
+        bit_vector_ref_min_dim_1 = "("+unpacked_ref_min+"-"+self.unpacked_dim_min+")*"+self.packed_dim_len+"+"+packed_ref_min
         bit_vector_ref_max_dim_1 = bit_vector_ref_min_dim_1+"+"+packed_ref_max+"-"+packed_ref_min
         bit_vector_ref_min_dim_2 = "("+unpacked_ref_max+"-"+self.unpacked_dim_min+")*"+self.packed_dim_len
         bit_vector_ref_max_dim_2 = bit_vector_ref_min_dim_2+"+"+packed_ref_max+"-"+packed_ref_min
@@ -251,12 +251,12 @@ def process_arrays(infile, outfile):
         #arr[]
         array_line_type1 = re.findall(r'[\w]+\s*\[[\w\-:\* ]*?\]', line)
         #arr[][]
-        array_line_type2 = re.findall(r'[\w]+\s*\[[\w\-:\* ]*?\]\s*\[[\w\-:\* ]*?\]', line)
+        array_line_type2 = re.findall(r'[\w]+\s*\[[\w\-:\*\+ ]*?\]\s*\[[\w\-:\* ]*?\]', line)
         #TODO: What if we have a line that has both arr[] and arr[][].
         #Example: vs[2] & vc[2][VCWIDTH-1]
 
         #arr[][ something +: something]
-        array_line_type3 = re.findall(r'[\w]+\s*\[\s*[\w\-:\* ]*?\s*\]\s*\[\s*[\w\-\* ]*?\s*\+:\s*[\w\-\* ]*?\s*\]', line)
+        array_line_type3 = re.findall(r'[\w]+\s*\[\s*[\w\-:\*\+ ]*?\s*\]\s*\[\s*[\w\-\* ]*?\s*\+:\s*[\w\-\* ]*?\s*\]', line)
 
         #comments
         comment_line = re.search(r'^\s*//', line)
@@ -320,10 +320,11 @@ def process_arrays(infile, outfile):
                                  unpacked_dim_max)
             dict_of_bit_vector[infile.name + ":" + array_identifier] = bvt_obj
 
+
         # Lines with array references of type 3 (arr[][something +: something])
         elif len(array_line_type3) != 0:
             for array_usage in array_line_type3:
-                m = re.search(r'([\w]+)\s*\[(\s*[\w\-:\* ]*?)\s*\]\s*\[(\s*[\w\-\* ]*?\s*\+:\s*[\w\-\* ]*?)\s*\]', array_usage)
+                m = re.search(r'([\w]+)\s*\[(\s*[\w\-:\*\+ ]*?)\s*\]\s*\[(\s*[\w\-\* ]*?\s*\+:\s*[\w\-\* ]*?)\s*\]', array_usage)
                 #If we are here, this search should return something because we just used the same regex
                 assert (m is not None)
 
@@ -363,7 +364,7 @@ def process_arrays(infile, outfile):
         # Lines with array references of type 2 (arr[][])
         elif len(array_line_type2) != 0:
             for array_usage in array_line_type2:
-                m = re.search(r'([\w]+)\s*\[([\w\-:\* ]*?)\]\s*\[([\w\-:\* ]*?)\]', array_usage)
+                m = re.search(r'([\w]+)\s*\[([\w\-:\*\+ ]*?)\]\s*\[([\w\-:\* ]*?)\]', array_usage)
                 #If we are here, this search should return something because we just used the same regex
                 assert (m is not None)
                 name = m.group(1)

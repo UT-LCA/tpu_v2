@@ -241,9 +241,9 @@ wire                        next_sa_count_zero;
 wire                        sa_zero;
 reg  [ {NUMLANES}*{VPUWIDTH}-1 : 0 ]  vshiftresult;
 
-genvar i;
+// genvar i;
 reg [31:0] j;
-genvar k;
+// genvar k;
 reg [31:0] l;
 reg [31:0] m;
 reg [31:0] n;
