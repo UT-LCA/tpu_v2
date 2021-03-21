@@ -100,7 +100,6 @@ class options():
 /****************** SIZE OF THE MATMUL UNIT ***************/
 `define MAT_MUL_SIZE 8
 
-`endif
 
 '''
         return string
