@@ -843,11 +843,11 @@ wire stall_mulunit;
 wire stall_matmul;
 
 // DEBUG signals for Modelsim
-wire  [7:0] D_instr[2:1];
-reg   [7:0] D_instr_s3[{NUMBANKS}-1:0];
-reg   [7:0] D_instr_s4[NUMFUS-1:0];
-wire  [7:0] D_instr_s5[NUMFUS-1:0];
-wire  [7:0] D_instr_s6[NUMFUS-1:0];
+wire  [7:0] d_instr[2:1];
+reg   [7:0] d_instr_s3[{NUMBANKS}-1:0];
+reg   [7:0] d_instr_s4[NUMFUS-1:0];
+wire  [7:0] d_instr_s5[NUMFUS-1:0];
+wire  [7:0] d_instr_s6[NUMFUS-1:0];
 reg   [NUMFUS-1:0] D_last_subvector_s4;
 wire  [NUMFUS-1:0] D_last_subvector_s5;
 wire  [NUMFUS-1:0] D_last_subvector_s6;
@@ -858,7 +858,7 @@ reg   [{NUMBANKS}-1:0] D_wb_instrdone;
 
 // Module instance
   wire [7:0] debuginstrpipe_q;
-  assign {CBS}D_instr[2],D_instr[1]{CBE} = debuginstrpipe_q;
+  assign {CBS}d_instr[2],d_instr[1]{CBE} = debuginstrpipe_q;
 
   pipe_8_1  debuginstrpipe (
       .d( {CBS}instr[25:24],instr[5:0]{CBE} ),
@@ -876,24 +876,24 @@ reg   [{NUMBANKS}-1:0] D_wb_instrdone;
     assign debugintrfupipereg1_Df_squashn = ~pipe_squash[4];
 
     pipereg_8 debugintrfupipereg1_Df (
-      .d( D_instr_s4[Df] ),
+      .d( d_instr_s4[Df] ),
       .clk(clk),
       .resetn(resetn),
       .en( pipe_advance[4] ),
       .squashn(debugintrfupipereg1_Df_squashn),
-      .q(D_instr_s5[Df]));
+      .q(d_instr_s5[Df]));
 
 // Module instance
     wire debugintrfupipereg2_Df_squashn;
     assign debugintrfupipereg2_Df_squashn = ~pipe_squash[4];
 
     pipereg_8 debugintrfupipereg2_Df (
-      .d( D_instr_s5[Df] ),
+      .d( d_instr_s5[Df] ),
       .clk(clk),
       .resetn(resetn),
       .en( pipe_advance[4] ),
       .squashn(debugintrfupipereg2_Df_squashn),
-      .q(D_instr_s6[Df]));
+      .q(d_instr_s6[Df]));
 
 // Module instance
     wire debuglastpipereg1_Df_squashn;
@@ -2488,7 +2488,7 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
           ctrl2_volatiledest,
           (!pipe_advance_s2_r) ? vc_in_saved : vc_in,
           (!pipe_advance_s2_r) ? vs_in_saved : vs_in,
-          (pipe_squash[2]) ? 8'b0 : D_instr[2]
+          (pipe_squash[2]) ? 8'b0 : d_instr[2]
           {CBE}),
       .inshift_first(ctrl2_useslanes),
       .inshift_rdelm(src_start),
@@ -2638,7 +2638,7 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
         ctrl3_volatiledest[bi],
         vc_s3[bi],
         vs_s3[bi],
-        D_instr_s3[bi]
+        d_instr_s3[bi]
       {CBE} = dispatcher_instr>>(bi*(`DISPATCHWIDTH));
 
       last_subvector[bi]=~|count[bi*({LOG2MVL}-{LOG2NUMLANES}+1)+:{LOG2MVL}-{LOG2NUMLANES}];
@@ -2711,7 +2711,7 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
 
       for (f3=0; f3<NUMFUS; f3=f3+1)
       begin
-        D_instr_s4[f3]=0;
+        d_instr_s4[f3]=0;
         D_last_subvector_s4[f3]=0;
         dst_s4[f3]=0;
       end
@@ -2724,7 +2724,7 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
             ~pipe_squash[3])
           if (ctrl3_mulshift_en[b3])    //is multiply
           begin
-            D_instr_s4[FU_MUL]=D_instr_s3[b3];
+            d_instr_s4[FU_MUL]=d_instr_s3[b3];
             D_last_subvector_s4[FU_MUL]=last_subvector[b3];
             ctrl4_mulshift_en=ctrl3_mulshift_en[b3];
             banksel_s4[FU_MUL]=b3;
@@ -2741,7 +2741,7 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
           end
           else if (ctrl3_matmul_en[b3])    //is matmul
           begin
-            D_instr_s4[FU_MATMUL]=D_instr_s3[b3];
+            d_instr_s4[FU_MATMUL]=d_instr_s3[b3];
             D_last_subvector_s4[FU_MATMUL]=last_subvector[b3];
             ctrl4_matmul_en=ctrl3_matmul_en[b3];
             banksel_s4[FU_MATMUL]=b3;
@@ -2756,7 +2756,7 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
           end
           else if (ctrl3_bfadder_en[b3])    //is bfloat addition
           begin
-            D_instr_s4[FU_BFADDER]=D_instr_s3[b3];
+            d_instr_s4[FU_BFADDER]=d_instr_s3[b3];
             D_last_subvector_s4[FU_BFADDER]=last_subvector[b3];
             ctrl4_bfadder_en=ctrl3_bfadder_en[b3];
             banksel_s4[FU_BFADDER]=b3;
@@ -2771,7 +2771,7 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
           end
           else if (ctrl3_bfmult_en[b3])    //is bfloat addition
           begin
-            D_instr_s4[FU_BFMULT]=D_instr_s3[b3];
+            d_instr_s4[FU_BFMULT]=d_instr_s3[b3];
             D_last_subvector_s4[FU_BFMULT]=last_subvector[b3];
             ctrl4_bfmult_en = ctrl3_bfmult_en[b3];
             banksel_s4[FU_BFMULT]=b3;
@@ -2786,7 +2786,7 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
           end
           else if (ctrl3_trp_en[b3])    //is bfloat addition
           begin
-            D_instr_s4[FU_BFMULT]=D_instr_s3[b3];
+            d_instr_s4[FU_BFMULT]=d_instr_s3[b3];
             D_last_subvector_s4[FU_BFMULT]=last_subvector[b3];
             ctrl4_act_en = ctrl3_act_en[b3];
             banksel_s4[FU_BFMULT]=b3;
@@ -2801,7 +2801,7 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
           end
           else if (ctrl3_act_en[b3])    //is bfloat addition
           begin
-            D_instr_s4[FU_TRP]=D_instr_s3[b3];
+            d_instr_s4[FU_TRP]=d_instr_s3[b3];
             D_last_subvector_s4[FU_TRP]=last_subvector[b3];
             ctrl4_act_en = ctrl3_act_en[b3];
             banksel_s4[FU_TRP]=b3;
@@ -2816,7 +2816,7 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
           end
           else if (ctrl3_memunit_en[b3] && !ctrl3_mem_en[b3]) //is memunit shift
           begin
-            D_instr_s4[FU_MEM]=D_instr_s3[b3];
+            d_instr_s4[FU_MEM]=d_instr_s3[b3];
             D_last_subvector_s4[FU_MEM]=last_subvector[b3];
             ctrl4_memunit_en=ctrl3_memunit_en[b3];
             banksel_s4[FU_MEM]=b3;
@@ -2834,7 +2834,7 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
           end
           else if (ctrl3_memunit_en[b3] &&  ctrl3_mem_en[b3]) //is mem operation
           begin
-            D_instr_s4[FU_MEM]=D_instr_s3[b3];
+            d_instr_s4[FU_MEM]=d_instr_s3[b3];
             D_last_subvector_s4[FU_MEM]=last_subvector[b3];
             ctrl4_memunit_en=ctrl3_memunit_en[b3];
             banksel_s4[FU_MEM]=b3;
@@ -2861,7 +2861,7 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
           end
           else if (ctrl3_alu_op[b3]!=(ALUOP_ZERO^ALUOP_ZERO)) //is ALU
           begin
-            D_instr_s4[FU_ALU+b3*{ALUPERBANK}]=D_instr_s3[b3];
+            d_instr_s4[FU_ALU+b3*{ALUPERBANK}]=d_instr_s3[b3];
             D_last_subvector_s4[FU_ALU+b3*{ALUPERBANK}]=last_subvector[b3];
             banksel_s4[FU_ALU+b3*{ALUPERBANK}]=b3;
             vs_s4[FU_ALU+b3*{ALUPERBANK}]=vs_s3[b3];
@@ -2880,7 +2880,7 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
           end
           else if (ctrl3_vf_c_we[b3])
           begin                                    //is FALU
-            D_instr_s4[FU_FALU+b3*{ALUPERBANK}]=D_instr_s3[b3];
+            d_instr_s4[FU_FALU+b3*{ALUPERBANK}]=d_instr_s3[b3];
             D_last_subvector_s4[FU_FALU+b3*{ALUPERBANK}]=last_subvector[b3];
             banksel_s4[FU_FALU+b3*{ALUPERBANK}]=b3;
             vs_s4[FU_FALU+b3*{ALUPERBANK}]=|vs_s3[b3];

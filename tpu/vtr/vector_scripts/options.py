@@ -9,9 +9,6 @@ class options():
     def make_str(self):
         string = '''
 
-`ifndef _OPTIONS_V_
-`define _OPTIONS_V_ 1
-
 `define NO_PLI 1
 //`define TEST_BENCH 1
 `define USE_INHOUSE_LOGIC

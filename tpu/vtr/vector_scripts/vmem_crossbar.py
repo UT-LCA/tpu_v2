@@ -27,8 +27,6 @@ output [{OUTWIDTH}-1 : 0] out;
 
 reg    [{OUTWIDTH}-1 : 0] out;
 
-integer k;
-
   always@*
   begin
     out=0;
