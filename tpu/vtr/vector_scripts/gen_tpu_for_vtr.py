@@ -241,11 +241,11 @@ def process_arrays(infile, outfile):
 
         #declaration of an array
         #eg:wire  [ VCWIDTH-1 : 0 ]   vc[`MAX_PIPE_STAGES-1:2];
-        array_decl_line = re.search(r'((wire)|(reg))\s*\[(.*):(.*)\]\s+(.*)\[(.*):(.*)\];', line)
+        array_decl_line = re.search(r'((wire)|(reg))\s*\[(.*):(.*)\]\s+(.*)\s*\[(.*):(.*)\]\s*;', line)
 
         #declaration of a bitvector
         #reg       [ NUMBANKS*BANKREGIDWIDTH-1 : 0 ]   vf_a_reg;
-        bitvector_decl_line = re.search(r'((wire)|(reg))\s*\[(.*):(.*)\]\s+([\w]*);', line)
+        bitvector_decl_line = re.search(r'((wire)|(reg))\s*\[(.*):(.*)\]\s+([\w]*)\s*;', line)
 
         #lines using an array
         #arr[]

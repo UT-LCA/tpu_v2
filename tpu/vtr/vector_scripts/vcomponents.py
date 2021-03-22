@@ -38,9 +38,9 @@ reg[31:0] i;
   always@(posedge clk)
   begin
     // 1st register
-    if (!resetn || squash[0] )
+    if (!resetn || squash )
       tq <= 0;
-    else if (en[0])
+    else if (en)
       tq <=d;
   end
 
@@ -93,9 +93,9 @@ reg[31:0] i;
   always@(posedge clk)
   begin
     // 1st register
-    if (!resetn || squash[0] )
+    if (!resetn || squash )
       tq[ {WIDTH}-1:0 ]<= 0;
-    else if (en[0])
+    else if (en)
       tq[ {WIDTH}-1:0 ]<=d;
   end
 
@@ -143,7 +143,7 @@ endmodule
         else:
             string2 = string2d
         string = string1+ string2 
-        string += "`endif"
+        string += "`endif\n"
 
         return string.format(WIDTH=width, DEPTH=depth)
 

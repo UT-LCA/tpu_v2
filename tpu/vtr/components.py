@@ -140,7 +140,8 @@ output stalled;
     else    
       T<=Tnext;
   assign stalled=(request&~T);
-endmodule'''       
+endmodule
+'''       
 
         return string
 
