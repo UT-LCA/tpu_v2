@@ -12,7 +12,7 @@ class options():
 `define NO_PLI 1
 //`define TEST_BENCH 1
 `define USE_INHOUSE_LOGIC
-`define SIMULATION_MEMORY
+//`define SIMULATION_MEMORY
 // Replaces altera blocks with local logic files
 
 /************************** ABBREVIEATED NAMES *****************************/

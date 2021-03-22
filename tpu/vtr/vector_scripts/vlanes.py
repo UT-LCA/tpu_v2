@@ -10,8 +10,8 @@ from trp_unit import trp_unit
 from bfloat_adder import bfloat_adder
 from bfloat_mult import bfloat_mult
 from activation import activation
-from vcomponents import pipe
-from components import pipereg
+from vcomponents import pipe,hazardchecker
+from components import pipereg,onecyclestall
 
 from math import log
 import re
@@ -240,8 +240,8 @@ parameter BANKREGIDWIDTH=VRIDWIDTH+{LOG2MVL}-{LOG2NUMLANES}-{LOG2NUMBANKS};
 
 // Register identifier = {CBS} vr[0-31], element {CBE}
 
-`define VRID_RANGE (REGIDWIDTH-1:REGIDWIDTH-VRIDWIDTH)
-`define VRELM_RANGE (REGIDWIDTH-VRIDWIDTH-1:0)
+//`define VRID_RANGE (REGIDWIDTH-1:REGIDWIDTH-VRIDWIDTH)
+//`define VRELM_RANGE (REGIDWIDTH-VRIDWIDTH-1:0)
 
 // NUMFUS = ALU*{NUMBANKS} + MUL + MEM + FALU*MEMBANKS + MATMUL(1) + BFLOAT
 // UNITS(2) + ACTIVATION + TRP
@@ -703,7 +703,7 @@ reg ctrl1_vrdest_sel;  //0-dest, 1-src2
 reg ctrl1_vf_a_sel; //0-0/1 from instr, 1-src1
 
 wire [5:4] ctrl_vs_we;
-wire [6:0] ctrl_memunit_op[`MAX_PIPE_STAGES-1:1] ;
+wire [6:0] ctrl_memunit_op[33-1:1];
 
 wire ctrl2_vr_a_en; // SRC1
 wire ctrl2_vr_b_en; // SRC2
@@ -795,7 +795,7 @@ reg ctrl4_act_en;
 
 wire ctrl5_mem_en;
 
-wire [`VRELM_RANGE] regid_pad;
+wire [REGIDWIDTH-VRIDWIDTH-1:0] regid_pad;
 
 reg[31:0] bd;
 //genvar  ba;
@@ -857,15 +857,17 @@ reg   [{NUMBANKS}-1:0] D_last_subvector_done;
 reg   [{NUMBANKS}-1:0] D_wb_instrdone;
 
 // Module instance
-  wire [7:0] debuginstrpipe_q;
-  assign {CBS}d_instr[2],d_instr[1]{CBE} = debuginstrpipe_q;
+  wire [15:0] debuginstrpipe_q;
+  //assign {CBS}d_instr[2],d_instr[1]{CBE} = debuginstrpipe_q;
+  assign d_instr[2] = debuginstrpipe_q[15:8];
+  assign d_instr[1] = debuginstrpipe_q[7:0];
 
   pipe_8_1  debuginstrpipe (
       .d( {CBS}instr[25:24],instr[5:0]{CBE} ),
       .clk(clk),
       .resetn(resetn),
-      .en( pipe_advance[2:1] ),
-      .squash( pipe_squash[2:1] ),
+      .en( pipe_advance[1] ),
+      .squash( pipe_squash[1] ),
       .q(debuginstrpipe_q));
 
 '''
@@ -978,7 +980,7 @@ assign pipe_squash[5]=pipe_advance[6]&~pipe_advance[5];
 
 '''
         string4 = ""
-        for pipe_stage in range(0,33):
+        for pipe_stage in range(6,32):
             string4 += string4_basic.replace("pipe_stage",str(pipe_stage))  
 
         string5='''
@@ -2206,9 +2208,9 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
 
   // *********** Pipeline signals that don't need to be squashed *********
   wire [{PIPE1REGWIDTH}-1:0] pipe1reg_q;
-//  wire [`VRELM_RANGE+5:0] pipe1reg_d1;
-//  wire [`VRELM_RANGE+5:0] pipe1reg_d2;
-//  wire [`VRELM_RANGE+5:0] pipe1reg_d3;
+//  wire [(REGIDWIDTH-VRIDWIDTH-1:0)+5:0] pipe1reg_d1;
+//  wire [(REGIDWIDTH-VRIDWIDTH-1:0)+5:0] pipe1reg_d2;
+//  wire [(REGIDWIDTH-VRIDWIDTH-1:0)+5:0] pipe1reg_d3;
 //  wire pipe1reg_d4;
 //  wire pipe1reg_d5;
 
@@ -2370,7 +2372,9 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       .q(vcpipe_q));
 
   wire [5:2] squash_vlpipe_NC;
-
+  
+  wire [5*{VCWIDTH}-1:0] vlpipe_q;
+  assign {CBS}vl[6],vl[5],vl[4],vl[3],vl[2]{CBE} = vlpipe_q;
 //module instance 
   pipe_{VCWIDTH}_4 vlpipe (
       .d( (!pipe_advance_s2_r) ? vl_in_saved : vl_in ),
@@ -2378,7 +2382,7 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       .resetn(resetn),
       .en( pipe_advance[5:2] & {CBS}3'b1,ctrl2_memunit_en{CBE} ),
       .squash(squash_vlpipe_NC),
-      .q( {CBS}vl[6],vl[5],vl[4],vl[3],vl[2]{CBE} ));
+      .q(vlpipe_q));
 
   wire [5:2] squash_vbasepipe_NC;
 
@@ -2408,8 +2412,8 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
 //module instance 
   pipe_{VCWIDTH}_4 vstridepipe (
       .d( (ctrl2_memunit_en&~ctrl2_mem_en) ? 
-            (({LOG2NUMLANES}>0) ?
-                  total_shamt[(({LOG2NUMLANES}>0) ? {LOG2NUMLANES} : 1)-1:0] : 0) :
+            ( 
+                  total_shamt[{LOG2NUMLANES}-1:0] ) :
           (!pipe_advance_s2_r) ? vstride_in_saved : vstride_in ),
       .clk(clk),
       .resetn(resetn),
@@ -2444,7 +2448,7 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
 wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
 
 //module instance
-  vdispatcher_{NUMBANKS}_{DISPATCHERWIDTH}_{LOG2MVL}_{LOG2MVL}__{LOG2NUMLANESP1} vdispatcher(
+  vdispatcher_{NUMBANKS}_{DISPATCHERWIDTH}_{LOG2MVL}_{LOG2MVL}_{LOG2NUMLANESP1} vdispatcher(
       .clk(clk),
       .resetn(resetn),
       .shift(dispatcher_shift),
@@ -2515,10 +2519,14 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
   always@*
     for (bd=0; bd<1+({NUMBANKS}-1)*{ALUPERBANK}; bd=bd+1)
     begin
-      alu_dst[4][bd*REGIDWIDTH +: REGIDWIDTH]=dst[FU_ALU+bd][4];
-      alu_dst_we[4][bd]=dst_we[FU_ALU+bd][4];
-      falu_dst[4][bd*REGIDWIDTH +: REGIDWIDTH]=dst[FU_FALU+bd][4];
-      falu_dst_we[4][bd]=dst_we[FU_FALU+bd][4];
+      alu_dst[4][bd*REGIDWIDTH +: REGIDWIDTH]
+          =  dst[FU_ALU+bd][4];
+      alu_dst_we[4][bd]
+          =  dst_we[FU_ALU+bd][4];
+      falu_dst[4][bd*REGIDWIDTH +: REGIDWIDTH]
+          =  dst[FU_FALU+bd][4];
+      falu_dst_we[4][bd]
+          =  dst_we[FU_FALU+bd][4];
     end
 
 //module instance 
@@ -2674,8 +2682,8 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
       vr_b_en[b]=ctrl3_vr_b_en[b] && pipe_advance[3];
 
       vf_a_reg[b*BANKREGIDWIDTH +: BANKREGIDWIDTH]= 
-        {CBS}(ctrl3_vf_a_sel[b]) ? _src1_s3[b][`VRID_RANGE] : imask_s3[b],
-        src1_s3[b][`VRELM_RANGE]{CBE}>>{LOG2NUMBANKS};
+        {CBS}(ctrl3_vf_a_sel[b]) ? _src1_s3[b][REGIDWIDTH-1:REGIDWIDTH-VRIDWIDTH] : imask_s3[b],
+        src1_s3[b][REGIDWIDTH-VRIDWIDTH-1:0]{CBE}>>{LOG2NUMBANKS};
       vf_b_reg[b*BANKREGIDWIDTH +: BANKREGIDWIDTH]=src2_s3[b]>>{LOG2NUMBANKS};
       vf_a_en[b]=ctrl3_vf_a_en[b] && pipe_advance[3];
       vf_b_en[b]=ctrl3_vf_b_en[b] && pipe_advance[3];
@@ -3483,7 +3491,7 @@ trp_unit_{REGIDWIDTH} u_trp (
   //********** Scalar writeback ***********
   assign vs_wetrack={CBS}ctrl_vs_we[5:4],|ctrl3_vs_we,ctrl2_vs_we{CBE};
   assign vs_we=ctrl_vs_we[5] & load_result_mask_s5[0];
-  assign vs_dst=wb_dst[FU_MEM][`VRID_RANGE];
+  assign vs_dst=wb_dst[FU_MEM][REGIDWIDTH-1:REGIDWIDTH-VRIDWIDTH];
   assign vs_writedata=load_result_s5[{LANEWIDTH}-1:0];
 
 endmodule
@@ -3559,6 +3567,15 @@ endmodule
         uut.write(regidwidth,1)
         uut.write(1,3)
         uut.write(8,1)
+        fp.close()
+        fp = open("verilog/onecyclestall.v",'a')
+        uut = onecyclestall(fp)
+        uut.write()
+        fp.close()
+        fp = open("verilog/hazardchecker.v",'a')
+        uut = hazardchecker(fp)
+        uut.write(regidwidth,velmidwidth,totalflagalus,numbanks)
+        uut.write(regidwidth,velmidwidth,totalalus,numbanks)
         fp.close()
 
         return output_string.format( NUMLANES = numlanes, \
