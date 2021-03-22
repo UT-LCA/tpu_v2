@@ -27,6 +27,10 @@ output [{OUTWIDTH}-1 : 0] out;
 
 reg    [{OUTWIDTH}-1 : 0] out;
 
+wire clk_nc, resetn_nc;
+assign clk_nc = clk;
+assign resetn_nc = resetn;
+
   always@*
   begin
     out=0;

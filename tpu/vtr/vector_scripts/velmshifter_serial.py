@@ -245,12 +245,12 @@ wire [ ({NUMLANES}+1)*{WIDTH}-1:0 ] _outpipe;
 '''
         string2 = ""
         for i in range(1,numlanes-1):
-            string2_basic = string2_basic.replace('(_i_+1)*{WIDTH}-1',str( ((i+1)*width)-1))
-            string2_basic = string2_basic.replace('(_i_+1)*{WIDTH}',str( (i+1) * width))
-            string2_basic = string2_basic.replace('(_i_+2)*{WIDTH}-1',str(((i+2) * width)-1))
-            string2_basic = string2_basic.replace('(_i_-1)*{WIDTH}',str((i-1)*width))
-            string2_basic = string2_basic.replace('(_i_)*{WIDTH}-1',str((i)*width-1))
-            string2_basic = string2_basic.replace('(_i_)*{WIDTH}',str((i)*width))
+            # string2_basic = string2_basic.replace('(_i_+1)*{WIDTH}-1',str( ((i+1)*width)-1))
+            # string2_basic = string2_basic.replace('(_i_+1)*{WIDTH}',str( (i+1) * width))
+            # string2_basic = string2_basic.replace('(_i_+2)*{WIDTH}-1',str(((i+2) * width)-1))
+            # string2_basic = string2_basic.replace('(_i_-1)*{WIDTH}',str((i-1)*width))
+            # string2_basic = string2_basic.replace('(_i_)*{WIDTH}-1',str((i)*width-1))
+            # string2_basic = string2_basic.replace('(_i_)*{WIDTH}',str((i)*width))
             string2 = string2 + string2_basic.replace('(_i_)',str((i)))
 
         string2 = self.collapse_bit_slices(string2)

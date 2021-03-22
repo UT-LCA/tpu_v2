@@ -73,7 +73,7 @@ class bit_vector:
         bit_vector_ref_min_dim_1 = "("+unpacked_ref_min+"-"+self.unpacked_dim_min+")*"+self.packed_dim_len+"+"+packed_ref_min
         bit_vector_ref_max_dim_1 = bit_vector_ref_min_dim_1+"+"+packed_ref_max+"-"+packed_ref_min
         bit_vector_ref_min_dim_2 = "("+unpacked_ref_max+"-"+self.unpacked_dim_min+")*"+self.packed_dim_len
-        bit_vector_ref_max_dim_2 = bit_vector_ref_min_dim_2+"+"+packed_ref_max+"-"+packed_ref_min
+        bit_vector_ref_max_dim_2 = bit_vector_ref_min_dim_2+"+"+packed_ref_max #+"-"+packed_ref_min
 
         #bit_vector_ref_max_dim_2:bit_vector_ref_min_dim_1
         return (bit_vector_ref_max_dim_2,bit_vector_ref_min_dim_1)

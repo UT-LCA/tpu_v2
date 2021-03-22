@@ -215,26 +215,20 @@ input [ {WIDTH}-1:0 ] inshift_data;
 input [ {NUMENTRIES}*{WIDTH}-1:0 ]  inparallel_data;
 output [ {NUMENTRIES}*{WIDTH}-1:0 ] outparallel_data;
 
-wire [ {WIDTH}-1:0 ]  shiftin_left;
-wire [ {WIDTH}-1:0 ]  shiftin_right;
+wire [ {NUMENTRIES}-1:0 ] squash_nc;
+assign squash_nc = squash;
 
-
-  assign shiftin_right = (!rotate) ? inshift_data : 
-                      outparallel_data[{NUMENTRIES}*{WIDTH}-1:({NUMENTRIES}-1)*{WIDTH}];
-
-  assign shiftin_left = (!rotate) ? 0 : outparallel_data[{WIDTH}-1:0];
-
-  velmshifter_{NUMENTRIES}_{WIDTH} velmshift (
-      .clk(clk),
-      .resetn(resetn),      
-      .load(load),
-      .shift(shift),
-      .dir_left(1),
-      .squash(squash),
-      .shiftin_left(shiftin_left),
-      .shiftin_right(shiftin_right),
-      .inpipe(inparallel_data),
-      .outpipe(outparallel_data));
+velmshifter_{NUMENTRIES}_{WIDTH} velmshift (
+    .clk(clk),
+    .resetn(resetn),      
+    .load(load),
+    .shift(shift),
+    .dir_left(1),
+    .squash(squash),
+    .shiftin_left((!rotate) ? 0 : outparallel_data[{WIDTH}-1:0];),
+    .shiftin_right((!rotate) ? inshift_data : outparallel_data[{NUMENTRIES}*{WIDTH}-1:({NUMENTRIES}-1)*{WIDTH}]),
+    .inpipe(inparallel_data),
+    .outpipe(outparallel_data));
 
 
 endmodule
