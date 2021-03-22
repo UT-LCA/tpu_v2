@@ -2653,15 +2653,11 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
       alive_s3[bi]=~count[(bi+1)*({LOG2MVL}-{LOG2NUMLANES}+1)-1];
 
       for (i=0; i<{NUMLANES}; i=i+1)
-        lane_en[bi][i]= ({LOG2NUMLANES}==0);
-        //amana: Removed support for 1 lane. This is not a usecase for us. 
-        //The code was just causing errors with the parser to convert code 
-        //to VTR compatible code.
-        // || //Support 1 lane
-        //  ~((first_subvector[bi]) && 
-        //      i<`LO(rdelm[bi*{LOG2MVL} +: {LOG2MVL}],{LOG2NUMLANES}) ||
-        //    (last_subvector[bi]) && 
-        //      i>src_limit_s3[bi][(({LOG2NUMLANES}>0) ? {LOG2NUMLANES} : 1)-1:0] );
+        lane_en[bi][i]= ({LOG2NUMLANES}==0) || //Support 1 lane
+          ~((first_subvector[bi]) && 
+              i<`LO(rdelm[bi*{LOG2MVL} +: {LOG2MVL}],{LOG2NUMLANES}) ||
+            (last_subvector[bi]) && 
+              i>src_limit_s3[bi][(({LOG2NUMLANES}>0) ? {LOG2NUMLANES} : 1)-1:0] );
     end
 
 
