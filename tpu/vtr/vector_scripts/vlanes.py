@@ -2679,7 +2679,7 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
       vf_b_en[b]=ctrl3_vf_b_en[b] & pipe_advance[3];
     end
 
-  // ************* Map from issuer/banks to Functional Units *************
+  /************* Map from issuer/banks to Functional Units *************/
   always@(posedge clk)
     if (!resetn)
     begin
@@ -3009,6 +3009,9 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
 
 //module instance 
 
+  wire vmem_unit_out_dst_we;
+  assign dst_we[FU_MEM][5] = vmem_unit_out_dst_we;
+
   vmem_unit_{LANEWIDTH}_{NUMLANES}_{LOG2NUMLANES}_{NUMMEMPARALLELLANES}_{LOG2NUMMEMPARALLELLANES}_{VCWIDTH}_{DMEM_WRITEWIDTH}_{LOG2DMEM_WRITEWIDTH}_{DMEM_READWIDTH}_{LOG2DMEM_READWIDTH}_{REGWIDTHMINUSVR}_{REGIDWIDTH} vmem_unit(
     .clk(clk),
     .resetn(resetn),
@@ -3034,8 +3037,7 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
     .in_dst_we(dst_we_s4[FU_MEM]),
 //    .out_dst(dst[FU_MEM][5]),
     .out_dst(),
-//    .out_dst_we(dst_we[FU_MEM][5]),
-    .out_dst_we(),
+    .out_dst_we(vmem_unit_out_dst_we),
     .in_vs_dst_we(ctrl_vs_we[4]),
     .out_vs_dst_we(ctrl_vs_we[5]),
     // Vector operations ports
@@ -3062,6 +3064,9 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
 
 //module instance 
 
+  wire [2:0] vmul_unit_out_dst_we;
+  assign dst_we[FU_MUL][6:4] = vmul_unit_out_dst_we;
+
   vmul_unit_{LOG2LANEWIDTH}_{NUMMULLANES}_{LOG2NUMLANES}_{REGIDWIDTH} vmul_unit(
     .clk(clk),
     .resetn(resetn),
@@ -3078,8 +3083,7 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
     .in_dst_we(dst_we_s4[FU_MUL]),
 //    .out_dst({CBS}dst[FU_MUL][6],dst[FU_MUL][5],dst[FU_MUL][4]{CBE}),
     .out_dst(),
-//    .out_dst_we(dst_we[FU_MUL][6:4]),
-    .out_dst_we(),
+    .out_dst_we(vmul_unit_out_dst_we),
 //    .out_dst_mask({CBS}dst_mask[FU_MUL][6],dst_mask[FU_MUL][5],dst_mask[FU_MUL][4]{CBE}),
     .out_dst_mask(),
     .result(mulshift_result_s5)
