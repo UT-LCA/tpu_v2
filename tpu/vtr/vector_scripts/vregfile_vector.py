@@ -41,11 +41,11 @@ input [{NUMBANKS}-1:0] c_we;
 
 '''
         string2_basic ='''
-          ram_wrapper_{LOG2NUMREGSPERBANK}_{NUMREGSPERBANK}_{WIDTH} reg_file1__k_(
+        ram_wrapper_{LOG2NUMREGSPERBANK}_{NUMREGSPERBANK}_{WIDTH} reg_file1__k_(
   	    .clk(clk),
-            .resetn(resetn),
-            .rden_a(1'b0),
-            .rden_b(a_en),
+        .resetn(resetn),
+        .rden_a(1'b0),
+        .rden_b(a_en[_k_]),
   	    .address_a(c_reg[_k_*{LOG2NUMREGSPERBANK} +: {LOG2NUMREGSPERBANK}]),
   	    .address_b(a_reg[_k_*{LOG2NUMREGSPERBANK} +: {LOG2NUMREGSPERBANK}]),
   	    .wren_a(c_we[_k_] &  c_byteen[_k_]),
@@ -56,11 +56,11 @@ input [{NUMBANKS}-1:0] c_we;
   	    .out_b(a_readdataout[_k_*{WIDTH} +: {WIDTH}])
           );
   
-          ram_wrapper_{LOG2NUMREGSPERBANK}_{NUMREGSPERBANK}_{WIDTH} reg_file2__k_(
+        ram_wrapper_{LOG2NUMREGSPERBANK}_{NUMREGSPERBANK}_{WIDTH} reg_file2__k_(
   	    .clk(clk),
-            .resetn(resetn),
-            .rden_a(1'b0),
-            .rden_b(b_en),
+        .resetn(resetn),
+        .rden_a(1'b0),
+        .rden_b(b_en[_k_]),
   	    .address_a(c_reg[_k_*{LOG2NUMREGSPERBANK} +: {LOG2NUMREGSPERBANK}]),
   	    .address_b(b_reg[_k_*{LOG2NUMREGSPERBANK} +: {LOG2NUMREGSPERBANK}]),
   	    .wren_a(c_we[_k_] &  c_byteen[_k_]),
@@ -73,8 +73,8 @@ input [{NUMBANKS}-1:0] c_we;
 '''
         string2=""
         for k in range(0,numbanks):
-            string2_basic = string2_basic.replace("_k_*{LOG2NUMREGSPERBANK} +: {LOG2NUMREGSPERBANK}",str((((k+1)*log2numregsperbank)-1))+":"+str(k* log2numregsperbank))
-            string2_basic = string2_basic.replace("_k_*{WIDTH}+:{WIDTH}",str(((k+1)*width)-1)+":"+str(k*width))
+            # string2_basic = string2_basic.replace("_k_*{LOG2NUMREGSPERBANK} +: {LOG2NUMREGSPERBANK}",str((((k+1)*log2numregsperbank)-1))+":"+str(k* log2numregsperbank))
+            # string2_basic = string2_basic.replace("_k_*{WIDTH}+:{WIDTH}",str(((k+1)*width)-1)+":"+str(k*width))
             string2 += string2_basic.replace("_k_",str(k))
         string3='''
 endmodule
@@ -95,5 +95,5 @@ endmodule
 if __name__ == '__main__':
     fp = open(args[0], "w")
     uut1 = vregfile_vector(fp)
-    uut1.write(2,1,32,16,4)
-    fp.close();
+    uut1.write(2,1,128,1024,10)
+    fp.close()

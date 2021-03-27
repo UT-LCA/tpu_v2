@@ -121,9 +121,7 @@ endmodule'''
         uut.write(1, pipe_stages_matmul-1)
         fp.write("\n\n")
         uut.write(regidwidth, pipe_stages_matmul-1)
-        if (regidwidth != numlanes):
-            fp.write("\n\n")
-            uut.write(numlanes, pipe_stages_matmul-1)
+        uut.write(numlanes, pipe_stages_matmul-1)
         fp.close()
         fp = open("verilog/matmul_8x8.v", "a")
         uut = matmul_8x8(fp)
@@ -139,5 +137,5 @@ endmodule'''
 if __name__ == '__main__':
     fp = open(args[0], "w")
     uut = matmul_unit(fp)
-    uut.write(8, 29, 8)
+    uut.write(10, 29, 4)
     fp.close()

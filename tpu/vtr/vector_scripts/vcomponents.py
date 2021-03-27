@@ -63,9 +63,9 @@ reg[31:0] i;
   begin
     // 1st register
     if (!resetn || squash[0] )
-      tq <= 0;
+      tq[0] <= 0;
     else if (en[0])
-      tq <=d;
+      tq[0] <=d;
 
     // All the rest registers
     for (i=1; i<{DEPTH}; i=i+1)
@@ -134,14 +134,14 @@ reg[31:0] i;
   assign q[{WIDTH}*({DEPTH}+1)-1:{WIDTH}]=tq;
 endmodule
         '''
-        if(width ==1 & depth==1 ):
+        if(width ==1 and depth==1 ):
             string2 = string2a
-        elif(width == 1):
-            string2 = string2b
+        # elif(width == 1):
+        #     string2 = string2b
         elif (depth==1 ):
             string2 = string2c
         else:
-            string2 = string2d
+          string2 = string2d
         string = string1+ string2 
         string += "`endif\n"
 
@@ -220,6 +220,6 @@ if __name__ == '__main__':
     fp = open(args[0], "w")
     uut1 = pipe(fp)
     #uut2 = hazardchecker(fp)
-    uut1.write(1,1)
+    uut1.write(1,3)
     #uut2.write(10,5,1,1)
     fp.close()

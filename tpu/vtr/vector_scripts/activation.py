@@ -39,5 +39,5 @@ endmodule
 if __name__ == '__main__':
     fp = open(args[0], "w")
     uut1 = activation(fp)
-    uut1.write(32)
+    uut1.write(10)
     fp.close()

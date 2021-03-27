@@ -251,7 +251,8 @@ def process_arrays(infile, outfile):
         #arr[]
         array_line_type1 = re.findall(r'[\w]+\s*\[[\w\-:\* ]*?\]', line)
         #arr[][]
-        array_line_type2 = re.findall(r'[\w]+\s*\[[\w\-:\*\+ ]*?\]\s*\[[\w\-:\* ]*?\]', line)
+        array_line_type2 = re.findall(r'[\w]+\s*\[[\w\-:\*\+ ]*?\]\s*\[[\w\-:\*\+ ]*?\]', line)
+        
         #TODO: What if we have a line that has both arr[] and arr[][].
         #Example: vs[2] & vc[2][VCWIDTH-1]
 
@@ -364,7 +365,7 @@ def process_arrays(infile, outfile):
         # Lines with array references of type 2 (arr[][])
         elif len(array_line_type2) != 0:
             for array_usage in array_line_type2:
-                m = re.search(r'([\w]+)\s*\[([\w\-:\*\+ ]*?)\]\s*\[([\w\-:\* ]*?)\]', array_usage)
+                m = re.search(r'([\w]+)\s*\[([\w\-:\*\+ ]*?)\]\s*\[([\w\-:\*\+ ]*?)\]', array_usage)
                 #If we are here, this search should return something because we just used the same regex
                 assert (m is not None)
                 name = m.group(1)
@@ -417,6 +418,7 @@ def process_arrays(infile, outfile):
         elif len(array_line_type1) != 0:
             for array_usage in array_line_type1:
                 m = re.search(r'([\w]+)\s*\[([\w\-:\* ]*?)\]', array_usage)
+                
                 #If we are here, this search should return something because we just used the same regex
                 assert (m is not None)
                 name = m.group(1)
@@ -455,6 +457,29 @@ def process_arrays(infile, outfile):
         else:
             outfile.write(line) 
 
+def process_LO(infile, outfile):
+    line_num = 0
+
+    # Go over each line
+    for line in infile:
+        line_num = line_num + 1
+
+        LO_line = re.findall(r'`LO\([^,]+,[^\)]\)', line)
+ 
+        if len(LO_line) != 0:
+            for LO_line_usage in LO_line:
+                m = re.search(r'`LO\(([^,]+),([^\)])\)', LO_line_usage)
+                assert (m is not None)
+
+                x = m.group(1)
+                b = m.group(2)
+
+                expression = "(({x})&~({{64{{1'b1}}}}<<{b}))".format(x=x, b=b)
+
+                line = re.sub(re.escape(LO_line_usage), expression, line)
+            outfile.write(line)
+        else:
+            outfile.write(line)
 
 ##################################################
 # Parse command line arguments

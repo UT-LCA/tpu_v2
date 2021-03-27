@@ -225,7 +225,7 @@ velmshifter_{NUMENTRIES}_{WIDTH} velmshift (
     .shift(shift),
     .dir_left(1),
     .squash(squash),
-    .shiftin_left((!rotate) ? 0 : outparallel_data[{WIDTH}-1:0];),
+    .shiftin_left((!rotate) ? 0 : outparallel_data[{WIDTH}-1:0]),
     .shiftin_right((!rotate) ? inshift_data : outparallel_data[{NUMENTRIES}*{WIDTH}-1:({NUMENTRIES}-1)*{WIDTH}]),
     .inpipe(inparallel_data),
     .outpipe(outparallel_data));
@@ -297,6 +297,8 @@ wire [ {WIDTH}-1:0 ]  shiftin_right;
 reg [ {NUMENTRIES}*{WIDTH}-1:0 ] outparallel_data;
 reg [ {NUMENTRIES}*{WIDTH}-1:0 ] outparallel_added;
 
+wire [ {NUMENTRIES}-1:0 ] squash_nc;
+assign squash_nc = squash;
 
   assign shiftin_right = (!rotate) ? inshift_data : 
                     outparallel_added[{NUMENTRIES}*{WIDTH}-1:({NUMENTRIES}-1)*{WIDTH}];

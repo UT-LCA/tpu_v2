@@ -363,6 +363,6 @@ endmodule'''
 
 if __name__ == '__main__':
     fp = open(parser.parse(), "w")
-    uut = pipedelayreg(fp)
-    uut.write(32)
+    uut = pipereg(fp)
+    uut.write(1)
     fp.close()

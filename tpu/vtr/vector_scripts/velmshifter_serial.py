@@ -234,12 +234,25 @@ wire [ ({NUMLANES}+1)*{WIDTH}-1:0 ] _outpipe;
         string2_basic1 = self.collapse_bit_slices(string2_basic1)
      
         string2_basic = '''
-      velmshifter_laneunit_{WIDTH} velmshifter_laneunit_(_i_)(clk,resetn,load,shift,dir_left,
+        wire [ {WIDTH}-1:0 ] velmshifter_laneunit_i_inpipe;
+        wire [ {WIDTH}-1:0 ] velmshifter_laneunit_i_outpipe1;
+        wire [ {WIDTH}-1:0 ] velmshifter_laneunit_i_outpipe2;
+        wire [ {WIDTH}-1:0 ] velmshifter_laneunit_i_outpipe3;
+
+        assign velmshifter_laneunit_i_inpipe = inpipe[(_i_+1)*{WIDTH}-1:(_i_)*{WIDTH}];
+
+        assign velmshifter_laneunit_i_outpipe1 = _outpipe[(_i_+2)*{WIDTH}-1:(_i_+1)*{WIDTH}];
+
+        assign velmshifter_laneunit_i_outpipe2 = _outpipe[(_i_)*{WIDTH}-1:(_i_-1)*{WIDTH}];
+
+        assign _outpipe[(_i_+1)*{WIDTH}-1:(_i_)*{WIDTH}] = velmshifter_laneunit_i_outpipe3;
+
+      velmshifter_laneunit_{WIDTH} velmshifter_laneunit_i_(clk,resetn,load,shift,dir_left,
           squash[(_i_)],
-          inpipe[(_i_+1)*{WIDTH}-1:(_i_)*{WIDTH}],
-          _outpipe[(_i_+2)*{WIDTH}-1:(_i_+1)*{WIDTH}],
-          _outpipe[(_i_)*{WIDTH}-1:(_i_-1)*{WIDTH}],
-          _outpipe[(_i_+1)*{WIDTH}-1:(_i_)*{WIDTH}]);
+          velmshifter_laneunit_i_inpipe,
+          velmshifter_laneunit_i_outpipe1,
+          velmshifter_laneunit_i_outpipe2,
+          velmshifter_laneunit_i_outpipe3);
      // defparam velmshifter_laneunit.{WIDTH}={WIDTH};
 
 '''
@@ -251,7 +264,7 @@ wire [ ({NUMLANES}+1)*{WIDTH}-1:0 ] _outpipe;
             # string2_basic = string2_basic.replace('(_i_-1)*{WIDTH}',str((i-1)*width))
             # string2_basic = string2_basic.replace('(_i_)*{WIDTH}-1',str((i)*width-1))
             # string2_basic = string2_basic.replace('(_i_)*{WIDTH}',str((i)*width))
-            string2 = string2 + string2_basic.replace('(_i_)',str((i)))
+            string2 = string2 + string2_basic.replace('_i_',str((i)))
 
         string2 = self.collapse_bit_slices(string2)
 
@@ -353,6 +366,157 @@ endmodule
     def write (self, width):
         self.fp.write(self.make_str(width))
 
+
+
+
+class velmshifter1():
+    def __init__(self, fp):
+        self.fp = fp
+
+    def collapse_bit_slices(self, string):
+        all_bit_slices = re.findall(r'\[\d*:\d*\]', string)
+        all_bit_slices = list(set(all_bit_slices))
+        for slice in all_bit_slices:
+            m = re.search(r'(\d*):(\d*)', slice)
+            if m.group(1) == m.group(2):
+                string = re.sub(re.escape(slice), "["+m.group(1)+"]", string)
+        return string
+
+    def make_str(self, numlanes, width):
+        string1 = '''\
+
+/******************************************************************************/
+/******************************** Shifter *************************************/
+/******************************************************************************/
+
+module velmshifter_{NUMLANES}_{WIDTH} (
+    clk,
+    resetn,
+
+    load,
+    shift,
+    dir_left,     // Sets the direction, 1=left, 0=right
+    squash,
+
+    shiftin_left,
+    shiftin_right,
+
+    inpipe,
+    outpipe
+
+    );
+
+input clk;
+input resetn;
+
+input  load;
+input  shift;
+input  dir_left;
+input [ {NUMLANES}-1:0 ]  squash;
+
+input [ {NUMLANES}*{WIDTH}-1:0 ]  inpipe;
+output [ {NUMLANES}*{WIDTH}-1:0 ] outpipe;
+
+input [ {WIDTH}-1:0 ]  shiftin_left;
+input [ {WIDTH}-1:0 ]  shiftin_right;
+
+wire [ ({NUMLANES}+1)*{WIDTH}-1:0 ] _outpipe;
+
+
+/***************************************************************************
+  shiftin_left -> bn <-> bn-1 <-> ... <-> b1 <-> b0 <- shiftin_right
+***************************************************************************/
+
+  //HANDLE lane 0 specially
+'''
+        string2_basic1 = '''
+  velmshifter_laneunit_{WIDTH} velmshifter_laneunit0(clk,resetn,load,shift,dir_left,
+      squash[0],
+      inpipe[{WIDTH}-1:0],
+      _outpipe[{WIDTH}+:{WIDTH}], //Support 1 lane
+      shiftin_right,
+      _outpipe[{WIDTH}-1:0]);
+ // defparam velmshifter_laneunit0.{WIDTH}={WIDTH};
+
+  //Generate everything in between 
+
+'''
+        if width == 1:
+            string2_basic1 = string2_basic1.replace("{WIDTH}-1:0","0")
+            string2_basic1 = string2_basic1.replace("{WIDTH}+:{WIDTH}","1")
+        else:
+            string2_basic1 = string2_basic1.replace("{WIDTH}-1:0",str(width-1)+":0")
+            string2_basic1 = string2_basic1.replace("{WIDTH}+:{WIDTH}",str(2*width-1)+":"+str(width))
+
+        string2_basic1 = self.collapse_bit_slices(string2_basic1)
+     
+        string2_basic = '''
+
+      velmshifter_laneunit_{WIDTH} velmshifter_laneunit_i_(clk,resetn,load,shift,dir_left,
+          squash[(_i_)],
+          inpipe[(_i_+1)*{WIDTH}-1:(_i_)*{WIDTH}],
+          _outpipe[(_i_+2)*{WIDTH}-1:(_i_+1)*{WIDTH}],
+          _outpipe[(_i_)*{WIDTH}-1:(_i_-1)*{WIDTH}],
+          _outpipe[(_i_+1)*{WIDTH}-1:(_i_)*{WIDTH}]);
+     // defparam velmshifter_laneunit.{WIDTH}={WIDTH};
+
+'''
+        string2 = ""
+        for i in range(1,numlanes-1):
+            # string2_basic = string2_basic.replace('(_i_+1)*{WIDTH}-1',str( ((i+1)*width)-1))
+            # string2_basic = string2_basic.replace('(_i_+1)*{WIDTH}',str( (i+1) * width))
+            # string2_basic = string2_basic.replace('(_i_+2)*{WIDTH}-1',str(((i+2) * width)-1))
+            # string2_basic = string2_basic.replace('(_i_-1)*{WIDTH}',str((i-1)*width))
+            # string2_basic = string2_basic.replace('(_i_)*{WIDTH}-1',str((i)*width-1))
+            # string2_basic = string2_basic.replace('(_i_)*{WIDTH}',str((i)*width))
+            string2 = string2 + string2_basic.replace('_i_',str((i)))
+
+        string2 = self.collapse_bit_slices(string2)
+
+        string3 = '''
+  //HANDLE lane NUMLANE specially
+
+    velmshifter_laneunit_{WIDTH} velmshifter_laneunitlast(
+      clk,resetn,load,shift,dir_left,
+      squash[{NUMLANES}-1],
+      inpipe[{NUMLANES}*{WIDTH}-1:({NUMLANES}-1)*{WIDTH}],
+      shiftin_left,
+      _outpipe[({NUMLANES}-2)*{WIDTH} +: {WIDTH}], //L=1
+      _outpipe[({NUMLANES}-1)*{WIDTH} +: {WIDTH}]); //L=1
+   // defparam velmshifter_laneunitlast.{WIDTH}={WIDTH};
+
+    //Support L=1 - give _outpipe more bits but ignore them
+assign outpipe=_outpipe;
+
+endmodule
+        '''
+        if width==1:
+            string3 = string3.replace("({NUMLANES}-2)*{WIDTH} +: {WIDTH}",str((numlanes-2)*width))
+            string3 = string3.replace("({NUMLANES}-1)*{WIDTH} +: {WIDTH}",str((numlanes-1)*width))
+        else:
+            string3 = string3.replace("({NUMLANES}-2)*{WIDTH} +: {WIDTH}", str(((numlanes-2)*width) + width-1) + ":" + str((numlanes-2)*width) )
+            string3 = string3.replace("({NUMLANES}-1)*{WIDTH} +: {WIDTH}", str(((numlanes-1)*width) + width-1) + ":" + str((numlanes-1)*width) )
+        string3 = string3.replace("({NUMLANES}-1)*{WIDTH}",str((numlanes-1)*width))
+        string3 = string3.replace("({NUMLANES}-2)*{WIDTH}",str((numlanes-2)*width))
+        string3 = string3.replace("{NUMLANES}*{WIDTH}-1",str(numlanes*width-1))
+        string3 = string3.replace("{NUMLANES}-1",str(numlanes-1))
+
+        string3 = self.collapse_bit_slices(string3)
+
+        string = string1 + string2_basic1 + string2 + string3
+
+ 
+        filename = "verilog/velmshifter_laneunit_"+str(width)
+        if(os.path.exists(filename) == False):
+            fp = open(filename,'w')
+            uut = velmshifter_laneunit(fp)
+            uut.write(width)
+
+        return string.format(NUMLANES=numlanes, WIDTH=width)
+
+    def write (self, numlanes, width):
+        self.fp.write(self.make_str(numlanes,width))
+
 if __name__ == '__main__':
     fp = open(args[0], "w")
     #uut1 = velmrotator(fp)
@@ -361,6 +525,6 @@ if __name__ == '__main__':
     #uut4 = velmshifter_laneunit(fp)
     #uut1.write(4,32)
     #uut2.write(4,4,32)
-    uut3.write(4,32)
+    uut3.write(4,1)
     #uut4.write(32)
     fp.close()
