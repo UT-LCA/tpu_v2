@@ -196,7 +196,8 @@ output [NUMLANES*WIDTH-1:0] result;
       .clk(clk),
       .resetn(resetn),
       .opB(mul_result[WIDTH*(k+1)-1:WIDTH*k]),
-      .sa( ctrl_vshamt[2][((LOG2WIDTH>0) ? LOG2WIDTH-1:0) : 0]),
+     // .sa(ctrl_vshamt[2][((LOG2WIDTH>0) ? LOG2WIDTH-1:0) : 0]),
+      .sa(ctrl_vshamt[((LOG2WIDTH>0) ? 2*LOG2WIDTH-1:LOG2WIDTH) : 2]),
       .op({~ctrl_op[2][1] ,1'b1}),
       .result(rshift_result[WIDTH*(k+1)-1:WIDTH*k])
       );
