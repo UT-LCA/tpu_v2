@@ -21,7 +21,7 @@ reg [NUMSTAGES * WIDTH - 1:0] data5;
 reg [NUMSTAGES * WIDTH - 1:0] data6;
 reg [NUMSTAGES * WIDTH - 1:0] data7;
 reg [LOGNUMSTAGE:0] count;
-integer i;
+reg[31:0] i;
 
 always@(posedge clk)begin
   if(!resetn)
