@@ -397,7 +397,98 @@ module de3 (
     .mem_icache_data(0),
     .mem_icache_out(),
     .mem_icache_byteen(0),
-    .mem_icache_wren(0)
+    .mem_icache_wren(0),
+
+    // Read desciptor interface 
+    .s_axis_read_desc_addr(0),
+    .s_axis_read_desc_len(0),
+    .s_axis_read_desc_tag(0),
+    .s_axis_read_desc_id(0),
+    .s_axis_read_desc_dest(0),
+    .s_axis_read_desc_user(0),
+    .s_axis_read_desc_valid(0),
+    .s_axis_read_desc_ready(),
+  
+    // AXI read descriptor status output
+    .m_axis_read_desc_status_tag(),
+    .m_axis_read_desc_status_valid(),
+
+    // AXI stream read data output  
+    .m_axis_read_data_tdata(),
+    .m_axis_read_data_tkeep(),
+    .m_axis_read_data_tvalid(),
+    .m_axis_read_data_tready(0),
+    .m_axis_read_data_tlast(),
+    .m_axis_read_data_tid(),
+    .m_axis_read_data_tdest(),
+    .m_axis_read_data_tuser(),
+
+    // AXI write descriptor input
+    .s_axis_write_desc_addr(0),
+    .s_axis_write_desc_len(0),
+    .s_axis_write_desc_tag(0),
+    .s_axis_write_desc_valid(0),
+    .s_axis_write_desc_ready(),
+    
+    // AXI write descriptor status output
+    .m_axis_write_desc_status_len(),
+    .m_axis_write_desc_status_tag(),
+    .m_axis_write_desc_status_id(),
+    .m_axis_write_desc_status_dest(),
+    .m_axis_write_desc_status_user(),
+    .m_axis_write_desc_status_valid(),
+    
+    // AXI stream write data input
+    .s_axis_write_data_tdata(0),
+    .s_axis_write_data_tkeep(0),
+    .s_axis_write_data_tvalid(0),
+    .s_axis_write_data_tready(),
+    .s_axis_write_data_tlast(0),
+    .s_axis_write_data_tid(0),
+    .s_axis_write_data_tdest(0),
+    .s_axis_write_data_tuser(0),
+
+    //AXI master interface 
+    .m_axi_awid(),
+    .m_axi_awaddr(),
+    .m_axi_awlen(),
+    .m_axi_awsize(),
+    .m_axi_awburst(),
+    .m_axi_awlock(),
+    .m_axi_awcache(),
+    .m_axi_awprot(),
+    .m_axi_awvalid(),
+    .m_axi_awready(0),
+    .m_axi_wdata(),
+    .m_axi_wstrb(),
+    .m_axi_wlast(),
+    .m_axi_wvalid(),
+    .m_axi_wready(0),
+    .m_axi_bid(0),
+    .m_axi_bresp(0),
+    .m_axi_bvalid0(),
+    .m_axi_bready(),
+    .m_axi_arid(),
+    .m_axi_araddr(),
+    .m_axi_arlen(),
+    .m_axi_arsize(),
+    .m_axi_arburst(),
+    .m_axi_arlock(),
+    .m_axi_arcache(),
+    .m_axi_arprot(),
+    .m_axi_arvalid(),
+    .m_axi_arready(),
+    .m_axi_rid(0),
+    .m_axi_rdata(0),
+    .m_axi_rresp(0),
+    .m_axi_rlast(0),
+    .m_axi_rvalid(0),
+    .m_axi_rready(),
+   
+    // AXI configuration 
+    .read_enable(0),
+    .write_enable(0),
+    .write_abort(0)
     );
 
   /*********** Trace circuit ************
