@@ -41,7 +41,7 @@
 // VECTOR CORE
 //Changing to 3. That is, we now have 8 lanes.
 `define LGL 3
-`define LGB 1
+`define LGB 0
 `define APB 0
 `define LGM `LGL
 `define LGX `LGL
@@ -49,7 +49,7 @@
 // VECTOR ISA
 `define LGMVL 6
 `define LGVPW 1 //chaging the word size of vector processor to 16: support for bfloat16
-`define LGLW 5
+`define LGLW 4
 
 /****************************** FULL NAMES *********************************/
 
