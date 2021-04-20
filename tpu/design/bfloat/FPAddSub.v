@@ -44,10 +44,12 @@
 module FPAddSub(
 		clk,
 		rst,
+                en,
 		a,
 		b,
 		operation,			// 0 add, 1 sub
 		result,
+                valid,
 		flags
 	);
 	
@@ -56,11 +58,13 @@ module FPAddSub(
 	input rst ;										// Reset (active high, resets pipeline registers)
 	
 	// Input ports
+	input en ;
 	input [`DWIDTH-1:0] a ;								// Input A, a 32-bit floating point number
 	input [`DWIDTH-1:0] b ;								// Input B, a 32-bit floating point number
 	input operation ;								// Operation select signal
 	
 	// Output ports
+	output valid;
 	output [`DWIDTH-1:0] result ;						// Result of the operation
 	output [4:0] flags ;							// Flags indicating exceptions according to IEEE754
 	
@@ -129,7 +133,11 @@ module FPAddSub(
 	wire FG_8 ;										// Final sticky bit
 	wire [`DWIDTH-1:0] P_int ;
 	wire EOF ;
-	
+        reg q1_valid;
+        reg q2_valid;
+        reg q3_valid;
+        
+	assign valid = q3_valid;
 	// Prepare the operands for alignment and check for exceptions
 	FPAddSub_PrealignModule PrealignModule
 	(	// Inputs
@@ -222,6 +230,9 @@ module FPAddSub(
 			//pipe_7 = 0;
 			//pipe_8 = 0;
 			pipe_9 = 0;
+                        q1_valid = 0;
+                        q2_valid = 0;
+                        q3_valid = 0;
 		end 
 		else begin
 		
@@ -249,6 +260,7 @@ module FPAddSub(
 				[28:24] InputExc_0
 				[23:0] MminS_1
 			*/
+                        q1_valid = en;
 			pipe_3 = {stage_1_2[`MANTISSA*2+`EXPONENT+13:`MANTISSA], MminS_2[`MANTISSA:0]} ;	
 			/* PIPE_4 :
 				[68] operation
@@ -286,6 +298,7 @@ module FPAddSub(
 				[37:33] InputExc_0
 				[32:0] Sum_4
 			*/					
+                        q2_valid = q1_valid;
 			pipe_6 = {stage_4_5[`EXPONENT+`EXPONENT+11], Shift_5[4:0], stage_4_5[`DWIDTH+`EXPONENT+10:`DWIDTH+1], SumS_5[`DWIDTH:0]} ;	
 			/* pipe_7 :
 				[56] operation
@@ -325,6 +338,7 @@ module FPAddSub(
 				[5:1] InputExc_8
 				[0] EOF
 			*/				
+                        q3_valid = q2_valid;
 			pipe_9 = {P_int[`DWIDTH-1:0], stage_6_7[2], stage_6_7[1], stage_6_7[0], stage_6_7[`EXPONENT+`MANTISSA+9:`EXPONENT+`MANTISSA+5], EOF} ;	
 		end
 	end		

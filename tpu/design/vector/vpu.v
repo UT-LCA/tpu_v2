@@ -739,11 +739,11 @@ reg is_cop2_s1;
           ctrl_vbase_a_en=1;
           ctrl_vinc_a_en=1;
         end
-      COP2_VLD_W:
-        begin
-          ctrl_vbase_a_en=1;
-          ctrl_vinc_a_en=1;
-        end
+     // COP2_VLD_W:
+     //   begin
+     //     ctrl_vbase_a_en=1;
+     //     ctrl_vinc_a_en=1;
+     //   end
       COP2_VLD_L:
         begin
           ctrl_vbase_a_en=1;
@@ -776,12 +776,12 @@ reg is_cop2_s1;
           ctrl_vinc_a_en=1;
           ctrl_vstride_a_en=1;
         end
-      COP2_VLDS_W:
-        begin
-          ctrl_vbase_a_en=1;
-          ctrl_vinc_a_en=1;
-          ctrl_vstride_a_en=1;
-        end
+      //COP2_VLDS_W:
+      //  begin
+      //    ctrl_vbase_a_en=1;
+      //    ctrl_vinc_a_en=1;
+      //    ctrl_vstride_a_en=1;
+      //  end
       COP2_VLDS_L:
         begin
           ctrl_vbase_a_en=1;
@@ -800,26 +800,26 @@ reg is_cop2_s1;
           ctrl_vinc_a_en=1;
           ctrl_vstride_a_en=1;
         end
-      COP2_VLDS_U_W:
-        begin
-          ctrl_vbase_a_en=1;
-          ctrl_vinc_a_en=1;
-          ctrl_vstride_a_en=1;
-        end
+      //COP2_VLDS_U_W:
+      //  begin
+      //    ctrl_vbase_a_en=1;
+      //    ctrl_vinc_a_en=1;
+      //    ctrl_vstride_a_en=1;
+      //  end
       COP2_VLDX_B:
           ctrl_vbase_a_en=1;
       COP2_VLDX_H:
           ctrl_vbase_a_en=1;
-      COP2_VLDX_W:
-          ctrl_vbase_a_en=1;
+      //COP2_VLDX_W:
+      //    ctrl_vbase_a_en=1;
       COP2_VLDX_L:
           ctrl_vbase_a_en=1;
       COP2_VLDX_U_B:
           ctrl_vbase_a_en=1;
       COP2_VLDX_U_H:
           ctrl_vbase_a_en=1;
-      COP2_VLDX_U_W:
-          ctrl_vbase_a_en=1;
+      //COP2_VLDX_U_W:
+      //    ctrl_vbase_a_en=1;
       COP2_VFST:
         begin
           ctrl_vbase_a_en=1;
@@ -835,11 +835,11 @@ reg is_cop2_s1;
           ctrl_vbase_a_en=1;
           ctrl_vinc_a_en=1;
         end
-      COP2_VST_W:
-        begin
-          ctrl_vbase_a_en=1;
-          ctrl_vinc_a_en=1;
-        end
+      //COP2_VST_W:
+      //  begin
+      //    ctrl_vbase_a_en=1;
+      //    ctrl_vinc_a_en=1;
+      //  end
       COP2_VST_L:
         begin
           ctrl_vbase_a_en=1;
@@ -857,12 +857,12 @@ reg is_cop2_s1;
           ctrl_vinc_a_en=1;
           ctrl_vstride_a_en=1;
         end
-      COP2_VSTS_W:
-        begin
-          ctrl_vbase_a_en=1;
-          ctrl_vinc_a_en=1;
-          ctrl_vstride_a_en=1;
-        end
+      //COP2_VSTS_W:
+      //  begin
+      //    ctrl_vbase_a_en=1;
+      //    ctrl_vinc_a_en=1;
+      //    ctrl_vstride_a_en=1;
+      //  end
       COP2_VSTS_L:
         begin
           ctrl_vbase_a_en=1;
@@ -1086,26 +1086,26 @@ reg is_cop2_s1;
       COP2_VFLD,
       COP2_VLD_B,
       COP2_VLD_H,
-      COP2_VLD_W,
+     // COP2_VLD_W,
       COP2_VLD_L,
       COP2_VLD_U_B,
       COP2_VLD_U_H,
       COP2_VLD_U_W,
       COP2_VLDS_B,
       COP2_VLDS_H,
-      COP2_VLDS_W,
+    //  COP2_VLDS_W,
       COP2_VLDS_L,
       COP2_VLDS_U_B,
       COP2_VLDS_U_H,
-      COP2_VLDS_U_W,
+    //  COP2_VLDS_U_W,
       COP2_VFST,
       COP2_VST_B,
       COP2_VST_H,
-      COP2_VST_W,
+    //  COP2_VST_W,
       COP2_VST_L,
       COP2_VSTS_B,
       COP2_VSTS_H,
-      COP2_VSTS_W,
+    //  COP2_VSTS_W,
       COP2_VSTS_L:
       begin
           ctrl_vbase_writedatain_sel=1;

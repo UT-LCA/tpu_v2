@@ -412,6 +412,7 @@ reg ctrl1_vf_wbsel;   //0-flag ALU, 1-normal ALU
 reg ctrl1_volatiledest;
 reg ctrl1_vrdest_sel;  //0-dest, 1-src2
 reg ctrl1_vf_a_sel; //0-0/1 from instr, 1-src1
+reg bf_op;
 
 wire [5:4] ctrl_vs_we;
 wire [6:0] ctrl_memunit_op[`MAX_PIPE_STAGES-1:1] ;
@@ -894,28 +895,28 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       //COP2_VFLD:
       COP2_VLD_B,
       COP2_VLD_H,
-      COP2_VLD_W,
+      COP2_VBFADD,
       COP2_VLD_L,
       COP2_VLD_U_B,
       COP2_VLD_U_H,
       COP2_VLD_U_W,
       COP2_VLDS_B,
       COP2_VLDS_H,
-      COP2_VLDS_W,
+      COP2_VBFSUB,
       COP2_VLDS_L,
       COP2_VLDS_U_B,
       COP2_VLDS_U_H,
-      COP2_VLDS_U_W:
+      COP2_VBFMULT:
         begin
           ctrl1_vf_a_en=1;
         end
       COP2_VLDX_B,
       COP2_VLDX_H,
-      COP2_VLDX_W,
+      COP2_VTRP,
       COP2_VLDX_L,
       COP2_VLDX_U_B,
       COP2_VLDX_U_H,
-      COP2_VLDX_U_W:
+      COP2_VACT:
         begin
           ctrl1_vf_a_en=1;
           ctrl1_vr_c_en=1;
@@ -923,11 +924,11 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       //COP2_VFST:
       COP2_VST_B,
       COP2_VST_H,
-      COP2_VST_W,
+      COP2_VRED,
       COP2_VST_L,
       COP2_VSTS_B,
       COP2_VSTS_H,
-      COP2_VSTS_W,
+      COP2_VPER,
       COP2_VSTS_L:
         begin
           ctrl1_vf_a_en=1;
@@ -1184,18 +1185,18 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       //COP2_VFLD,
       COP2_VLD_B,
       COP2_VLD_H,
-      COP2_VLD_W,
+      COP2_VBFADD,
       COP2_VLD_L,
       COP2_VLD_U_B,
       COP2_VLD_U_H,
       COP2_VLD_U_W,
       COP2_VLDS_B,
       COP2_VLDS_H,
-      COP2_VLDS_W,
+      COP2_VBFSUB,
       COP2_VLDS_L,
       COP2_VLDS_U_B,
       COP2_VLDS_U_H,
-      COP2_VLDS_U_W:
+      COP2_VBFMULT:
         begin
           ctrl1_vr_d_we=1;
           ctrl1_vrdest_sel=1;
@@ -1205,11 +1206,11 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
         end
       COP2_VLDX_B,
       COP2_VLDX_H,
-      COP2_VLDX_W,
+      COP2_VTRP,
       COP2_VLDX_L,
       COP2_VLDX_U_B,
       COP2_VLDX_U_H,
-      COP2_VLDX_U_W:
+      COP2_VACT:
         begin
           ctrl1_vr_d_we=1;
           ctrl1_vrdest_sel=1;
@@ -1220,11 +1221,11 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       //COP2_VFST:
       COP2_VST_B,
       COP2_VST_H,
-      COP2_VST_W,
+      COP2_VRED,
       COP2_VST_L,
       COP2_VSTS_B,
       COP2_VSTS_H,
-      COP2_VSTS_W,
+      COP2_VPER,
       COP2_VSTS_L,
       COP2_VSTX_B,
       COP2_VSTX_H,
@@ -1378,33 +1379,33 @@ assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
       //COP2_VFLD:
       COP2_VLD_B: ctrl1_memunit_op=MEMOP_LDB;
       COP2_VLD_H: ctrl1_memunit_op=MEMOP_LDH;
-      COP2_VLD_W: ctrl1_memunit_op=MEMOP_LDW;
+      COP2_VBFADD: ctrl1_memunit_op=MEMOP_LDW;
       //COP2_VLD_L,
       COP2_VLD_U_B: ctrl1_memunit_op=MEMOP_LDUB;
       COP2_VLD_U_H: ctrl1_memunit_op=MEMOP_LDUH;
       COP2_VLD_U_W: ctrl1_memunit_op=MEMOP_LDUW;
       COP2_VLDS_B: ctrl1_memunit_op=MEMOP_LDSB;
       COP2_VLDS_H: ctrl1_memunit_op=MEMOP_LDSH;
-      COP2_VLDS_W: ctrl1_memunit_op=MEMOP_LDSW;
+      COP2_VBFSUB: ctrl1_memunit_op=MEMOP_LDSW;
       //COP2_VLDS_L:
       COP2_VLDS_U_B: ctrl1_memunit_op=MEMOP_LDSUB;
       COP2_VLDS_U_H: ctrl1_memunit_op=MEMOP_LDSUH;
-      COP2_VLDS_U_W: ctrl1_memunit_op=MEMOP_LDSUW;
+      COP2_VBFMULT: ctrl1_memunit_op=MEMOP_LDSUW;
       COP2_VLDX_B: ctrl1_memunit_op=MEMOP_LDXB;
       COP2_VLDX_H: ctrl1_memunit_op=MEMOP_LDXH;
-      COP2_VLDX_W: ctrl1_memunit_op=MEMOP_LDXW;
+      COP2_VTRP: ctrl1_memunit_op=MEMOP_LDXW;
       //COP2_VLDX_L:
       COP2_VLDX_U_B: ctrl1_memunit_op=MEMOP_LDXUB;
       COP2_VLDX_U_H: ctrl1_memunit_op=MEMOP_LDXUH;
-      COP2_VLDX_U_W: ctrl1_memunit_op=MEMOP_LDXUW;
+      COP2_VACT: ctrl1_memunit_op=MEMOP_LDXUW;
       //COP2_VFST:
       COP2_VST_B: ctrl1_memunit_op=MEMOP_STB;
       COP2_VST_H: ctrl1_memunit_op=MEMOP_STH;
-      COP2_VST_W: ctrl1_memunit_op=MEMOP_STW;
+      COP2_VRED: ctrl1_memunit_op=MEMOP_STW;
       //COP2_VST_L:
       COP2_VSTS_B: ctrl1_memunit_op=MEMOP_STSB;
       COP2_VSTS_H: ctrl1_memunit_op=MEMOP_STSH;
-      COP2_VSTS_W: ctrl1_memunit_op=MEMOP_STSW;
+      COP2_VPER: ctrl1_memunit_op=MEMOP_STSW;
       //COP2_VSTS_L:
       COP2_VSTX_B: ctrl1_memunit_op=MEMOP_STXB;
       COP2_VSTX_H: ctrl1_memunit_op=MEMOP_STXH;
@@ -2577,27 +2578,107 @@ trp_unit #(REGIDWIDTH) u_trp (
 // Bfloat unit
 ///////////////////////////
 genvar g_func;
+wire[5*NUMLANES-1:0] bfadd_excp;
+wire[5*NUMLANES-1:0] bfmult_excp;
+wire bfadder_output_valid;
+wire bfmult_output_valid;
+
+wire squash_bfadder_dstmask_NC;
+wire squash_bfadder_dstpipe_NC;
+wire squash_bfmult_dstmask_NC;
+wire squash_bfmult_dstpipe_NC;
+
   generate
   for(g_func =0; g_func <NUMLANES; g_func = g_func+1) begin
-    bfloat_adder #(REGIDWIDTH) bf_add(
-    .clk(clk),
-    .resetn(resetn),
-    .en(ctrl4_bfadder_en),
-    .stall(stall_bf_adder),
-    .a(vr_src1[FU_BFADDER][g_func * LANEWIDTHE +: LANEWIDTH]),
-    .b(vr_src2[FU_BFADDER][g_func * LANEWIDTHE +: LANEWIDTH]),
-    .out(bfadder_result_s5[g_func*LANEWIDTH +: LANEWIDTH])
-    );
-    
-    bfloat_mult #(REGIDWIDTH) bf_mult(
-    .clk(clk),
-    .resetn(resetn),
-    .en(ctrl4_bfmult_en),
-    .stall(stall_bf_adder),
-    .a(vr_src1[FU_BFMULT][g_func * LANEWIDTHE +: LANEWIDTH]),
-    .b(vr_src2[FU_BFMULT][g_func * LANEWIDTHE +: LANEWIDTH]),
-    .out(bfmult_result_s5[g_func*LANEWIDTH +: LANEWIDTH])
-    );
+
+FPAddSub bfloat_add(
+	.clk(clk),
+	.rst(~resetn),
+        .en(ctrl4_bfadder_en),
+	.a(vr_src1[FU_BFADDER][g_func * LANEWIDTHE +: LANEWIDTH]),
+	.b(vr_src2[FU_BFADDER][g_func * LANEWIDTHE +: LANEWIDTH]),
+	.operation(bf_op),
+	.result(bfadder_result_s5[g_func*LANEWIDTH +: LANEWIDTH]),
+        .valid(bfadder_output_valid),
+	.flags(bfadd_excp[5*g_func +: 5]));
+
+FPMult_16 bfloat_mult(
+	.clk(clk),
+	.rst(~resetn),
+        .en(ctrl4_bfmult_en),
+	.a(vr_src1[FU_BFMULT][g_func * LANEWIDTHE +: LANEWIDTH]),
+	.b(vr_src1[FU_BFMULT][g_func * LANEWIDTHE +: LANEWIDTH]),
+	.result(bfmult_result_s5[g_func*LANEWIDTH +: LANEWIDTH]),
+        .valid(bfmult_output_valid),
+	.flags(bfmult_excp[5*g_func +: 5]));
+
+pipe #(REGIDWIDTH,3) bfadddstpipe (
+  .d( dst_s4[FU_BFADDER+g_func] ),  
+  .clk(clk),
+  .resetn(resetn),
+  .en( pipe_advance[6:4] ),
+  .squash(squash_bfadder_dstpipe_NC),
+  .q({dst[FU_BFADDER+g_func][7],dst[FU_BFADDER+g_func][6],dst[FU_BFADDER+g_func][5],dst[FU_BFADDER+g_func][5],dst[FU_BFADDER+g_func][4]}));
+
+pipe #(1,3) bfadddstwepipe (
+  .d( dst_we_s4[FU_BFADDER+g_func] & ~ctrl4_vf_wbsel[g_func] ),  
+  .clk(clk),
+  .resetn(resetn),
+  .en( pipe_advance[6:4] ),
+  .squash( pipe_squash[6:4] ),
+  .q({dst_we[FU_BFADDER+g_func][7],dst_we[FU_BFADDER+g_func][6],dst_we[FU_BFADDER+g_func][5],dst_we[FU_BFADDER+g_func][4]}));
+
+pipe #(NUMLANES,3) bfadddstmaskpipe (
+  .d( vmask[FU_BFADDER+g_func] ),  
+  .clk(clk),
+  .resetn(resetn),
+  .en( pipe_advance[6:4] ),
+  .squash(squash_bfadder_dstmask_NC),
+  .q({dst[FU_BFMULT+g_func][7],dst[FU_BFMULT+g_func][6],dst_mask[FU_BFADDER+g_func][5],dst_mask[FU_BFADDER+g_func][4]}));
+
+pipe #(REGIDWIDTH,3) bfmultdstpipe (
+  .d( dst_s4[FU_BFMULT+g_func] ),  
+  .clk(clk),
+  .resetn(resetn),
+  .en( pipe_advance[6:4] ),
+  .squash(squash_bfmult_dstpipe_NC),
+  .q({dst[FU_BFMULT+g_func][7],dst[FU_BFMULT+g_func][6],dst[FU_BFMULT+g_func][5],dst[FU_BFMULT+g_func][4]}));
+
+pipe #(1,3) bfmultdstwepipe (
+  .d( dst_we_s4[FU_BFMULT+g_func] & ~ctrl4_vf_wbsel[g_func] ),  
+  .clk(clk),
+  .resetn(resetn),
+  .en( pipe_advance[6:4] ),
+  .squash( pipe_squash[6:4] ),
+  .q({dst_we[FU_BFMULT+g_func][7],dst_we[FU_BFMULT+g_func][6],dst_we[FU_BFMULT+g_func][5],dst_we[FU_BFMULT+g_func][4]}));
+
+pipe #(NUMLANES,3) bfmultdstmaskpipe (
+  .d( vmask[FU_BFMULT+g_func] ),  
+  .clk(clk),
+  .resetn(resetn),
+  .en( pipe_advance[4] ),
+  .squash(squash_bfmult_dstmask_NC),
+  .q({dst_mask[FU_BFMULT+g_func][7],dst_mask[FU_BFMULT+g_func][6],dst_mask[FU_BFMULT+g_func][5],dst_mask[FU_BFMULT+g_func][4]}));
+
+//    bfloat_adder #(REGIDWIDTH) bf_add(
+//    .clk(clk),
+//    .resetn(resetn),
+//    .en(ctrl4_bfadder_en),
+//    .stall(stall_bf_adder),
+//    .a(vr_src1[FU_BFADDER][g_func * LANEWIDTHE +: LANEWIDTH]),
+//    .b(vr_src2[FU_BFADDER][g_func * LANEWIDTHE +: LANEWIDTH]),
+//    .out(bfadder_result_s5[g_func*LANEWIDTH +: LANEWIDTH])
+//    );
+//    
+//    bfloat_mult #(REGIDWIDTH) bf_mult(
+//    .clk(clk),
+//    .resetn(resetn),
+//    .en(ctrl4_bfmult_en),
+//    .stall(stall_bf_adder),
+//    .a(vr_src1[FU_BFMULT][g_func * LANEWIDTHE +: LANEWIDTH]),
+//    .b(vr_src2[FU_BFMULT][g_func * LANEWIDTHE +: LANEWIDTH]),
+//    .out(bfmult_result_s5[g_func*LANEWIDTH +: LANEWIDTH])
+//    );
  
 ///////////////////////////
 // activation unit
@@ -2642,14 +2723,14 @@ genvar g_func;
   assign D_wb_last_subvector[FU_MUL]=D_last_subvector_s5[FU_MUL];
 
 
-  assign wb_dst[FU_BFADDER] = dst[FU_BFADDER][5];
-  assign wb_dst_we[FU_BFADDER] = dst_we[FU_BFADDER][5] && ~pipe_squash[5];
-  assign wb_dst_mask[FU_BFADDER] = dst_mask[FU_BFADDER][5];
+  assign wb_dst[FU_BFADDER] = dst[FU_BFADDER][7];
+  assign wb_dst_we[FU_BFADDER] = dst_we[FU_BFADDER][7] && ~pipe_squash[7];
+  assign wb_dst_mask[FU_BFADDER] = dst_mask[FU_BFADDER][7];
   assign D_wb_last_subvector[FU_BFADDER] = D_last_subvector_s5[FU_BFADDER];
 
-  assign wb_dst[FU_BFMULT] = dst[FU_BFMULT][5];
-  assign wb_dst_we[FU_BFMULT] = dst_we[FU_BFMULT][5] && ~pipe_squash[5];
-  assign wb_dst_mask[FU_BFMULT] = dst_mask[FU_BFMULT][5];
+  assign wb_dst[FU_BFMULT] = dst[FU_BFMULT][7];
+  assign wb_dst_we[FU_BFMULT] = dst_we[FU_BFMULT][7] && ~pipe_squash[7];
+  assign wb_dst_mask[FU_BFMULT] = dst_mask[FU_BFMULT][7];
   assign D_wb_last_subvector[FU_BFMULT] = D_last_subvector_s5[FU_BFMULT];
 
   assign wb_dst[FU_ACT] = dst[FU_ACT][5];

@@ -26,19 +26,23 @@
 module FPMult_16(
 		clk,
 		rst,
+                en,
 		a,
 		b,
 		result,
+                valid,
 		flags
     );
 	
 	// Input Ports
 	input clk ;							// Clock
-	input rst ;							// Reset signal
+	input rst ;
+        input en;							// Reset signal
 	input [`DWIDTH-1:0] a;					// Input A, a 32-bit floating point number
 	input [`DWIDTH-1:0] b;					// Input B, a 32-bit floating point number
 	
 	// Output ports
+	output valid;
 	output [`DWIDTH-1:0] result ;					// Product, result of the operation, 32-bit FP number
 	output [4:0] flags ;				// Flags indicating exceptions according to IEEE754
 	
@@ -70,7 +74,9 @@ module FPMult_16(
         wire [3*`MANTISSA+2*`EXPONENT+7:0] stage_1; 
 	//reg [38:0] pipe_2;			// Pipeline register Execute->Normalize
 	reg [`MANTISSA+`EXPONENT+7:0] pipe_2;			// Pipeline register Execute->Normalize
-	
+	reg q1_valid;
+        reg q2_valid;
+        reg q3_valid;
 	//reg [72:0] pipe_3;			// Pipeline register Normalize->Round
 	reg [2*`MANTISSA+2*`EXPONENT+10:0] pipe_3;			// Pipeline register Normalize->Round
 
@@ -81,7 +87,7 @@ module FPMult_16(
 	assign flags = pipe_4[4:0] ;
 	
         assign stage_1 = {a,b};
-
+        assign valid = q3_valid;
 	// Prepare the operands for alignment and check for exceptions
 	FPMult_PrepModule PrepModule(clk, rst, stage_0[2*`DWIDTH-1:`DWIDTH], stage_0[`DWIDTH-1:0], Sa, Sb, Ea[`EXPONENT-1:0], Eb[`EXPONENT-1:0], Mp[2*`MANTISSA+1:0], InputExc[4:0]) ;
       
@@ -104,6 +110,9 @@ module FPMult_16(
 			pipe_2 = 0; 
 			pipe_3 = 0;
 			pipe_4 = 0;
+                        q1_valid = 0;
+                        q2_valid = 0;
+                        q3_valid = 0;
 		end 
 		else begin		
 			/* PIPE 0
@@ -129,7 +138,8 @@ module FPMult_16(
 				[31:23] NormE
 				[22:0] NormM
 			*/
-			pipe_2 = {stage_1[4:0], GRS, Sp, NormE[`EXPONENT:0], NormM[`MANTISSA-1:0]} ;
+                        q1_valid <= en;
+			pipe_2 <= {stage_1[4:0], GRS, Sp, NormE[`EXPONENT:0], NormM[`MANTISSA-1:0]} ;
 			/* PIPE 3
 				[72:68] InputExc
 				[67] GRS
@@ -139,12 +149,14 @@ module FPMult_16(
 				[47:24] RoundM
 				[23:0] RoundMP
 			*/
-			pipe_3 = {pipe_2[`EXPONENT+`MANTISSA+7:`EXPONENT+`MANTISSA+1], RoundE[`EXPONENT:0], RoundEP[`EXPONENT:0], RoundM[`MANTISSA:0], RoundMP[`MANTISSA:0]} ;
+                        q2_valid <= q1_valid;
+			pipe_3 <= {pipe_2[`EXPONENT+`MANTISSA+7:`EXPONENT+`MANTISSA+1], RoundE[`EXPONENT:0], RoundEP[`EXPONENT:0], RoundM[`MANTISSA:0], RoundMP[`MANTISSA:0]} ;
 			/* PIPE 4
 				[36:5] Z
 				[4:0] Flags
 			*/				
-			pipe_4 = {Z_int[`DWIDTH-1:0], Flags_int[4:0]} ;
+                        q3_valid <= q2_valid;
+			pipe_4 <= {Z_int[`DWIDTH-1:0], Flags_int[4:0]} ;
 		end
 	end
 		

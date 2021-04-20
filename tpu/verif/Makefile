@@ -5,8 +5,8 @@ VLOG_ARGS=+define+TEST_BENCH=1
 SPREE_SRC= ../design/scalar/system.v
 VESPA_SRC= ../design/vector/vpu.v
 
-BFLOAT_SRC = ../design/bfloat/bfloat_adder.v \
-             ../design/bfloat/bfloat_mult.v \
+BFLOAT_SRC = ../design/bfloat/FPAddSub.v \
+             ../design/bfloat/FPMult_16.v \
              ../design/bfloat/activation.v \
              ../design/bfloat/reduction_unit.v \
 	     ../design/bfloat/transpose.v \

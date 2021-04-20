@@ -5,10 +5,10 @@ parameter COP2_VSUB_U         = 'b10zz000011;
 parameter COP2_VMULHI         = 'b10z0000100;
 parameter COP2_VMULHI_U       = 'b10z0000101;
 parameter COP2_VDIV           = 'b10zz000110; //Using as matmul
-parameter COP2_VBFADD         = 'b0100000001; //Using BF16 add
-parameter COP2_VBFMULT        = 'b0100000010; //Using BF16 MULT
-parameter COP2_VACT           = 'b0100000011; //Using ACT
-parameter COP2_VTRP           = 'b0100000100; //Using ACT
+// parameter COP2_VBFADD         = 'b0100000001; //Using BF16 add
+// parameter COP2_VBFMULT        = 'b0100000010; //Using BF16 MULT
+//parameter COP2_VACT           = 'b0100000011; //Using ACT
+//parameter COP2_VTRP           = 'b0100000100; //Using ACT
 parameter COP2_VDIV_U         = 'b10zz000111;
 parameter COP2_VMOD           = 'b10zz001000;
 parameter COP2_VMOD_U         = 'b10zz001001;
@@ -96,33 +96,56 @@ parameter COP2_VFOR8          = 'b1100011111;
 parameter COP2_VFLD           = 'b1100100000;
 parameter COP2_VLD_B          = 'b1100100001;
 parameter COP2_VLD_H          = 'b1101100001;
-parameter COP2_VLD_W          = 'b1110100001;
+
+//parameter COP2_VLD_W          = 'b1110100001;
+parameter COP2_VBFADD          = 'b1110100001;  // adding bfadder Instr: vld.u.w
+
 parameter COP2_VLD_L          = 'b1111100001;
 parameter COP2_VLD_U_B        = 'b1100100010;
 parameter COP2_VLD_U_H        = 'b1101100010;
+
 parameter COP2_VLD_U_W        = 'b1110100010;
+
 parameter COP2_VLDS_B         = 'b1100100011;
 parameter COP2_VLDS_H         = 'b1101100011;
-parameter COP2_VLDS_W         = 'b1110100011;
+
+//parameter COP2_VLDS_W         = 'b1110100011;
+parameter COP2_VBFSUB         = 'b1110100011;   // adding bfsub Instr: vlds.w
+
 parameter COP2_VLDS_L         = 'b1111100011;
 parameter COP2_VLDS_U_B       = 'b1100100100;
 parameter COP2_VLDS_U_H       = 'b1101100100;
-parameter COP2_VLDS_U_W       = 'b1110100100;
+
+//parameter COP2_VLDS_U_W       = 'b1110100100;
+parameter COP2_VBFMULT         = 'b1110100100;   // adding bfmult Instr: vlds.u.w
+
 parameter COP2_VLDX_B         = 'b1100100101;
 parameter COP2_VLDX_H         = 'b1101100101;
-parameter COP2_VLDX_W         = 'b1110100101;
+
+//parameter COP2_VLDX_W         = 'b1110100101;
+parameter COP2_VTRP         = 'b1110100101;     // adding transpose instruction: vldx.w
+
 parameter COP2_VLDX_L         = 'b1111100101;
 parameter COP2_VLDX_U_B       = 'b1100100110;
 parameter COP2_VLDX_U_H       = 'b1101100110;
-parameter COP2_VLDX_U_W       = 'b1110100110;
+
+//parameter COP2_VLDX_U_W       = 'b1110100110;
+parameter COP2_VACT       = 'b1110100110;        //adding activation Instr: vldx.u.w 
+
 parameter COP2_VFST           = 'b1100101000;
 parameter COP2_VST_B          = 'b1100101001;
 parameter COP2_VST_H          = 'b1101101001;
-parameter COP2_VST_W          = 'b1110101001;
+
+//parameter COP2_VST_W        = 'b1110101001;  // adding reduction Instr: vst.w
+parameter COP2_VRED           = 'b1110101001;  // adding reduction Instr: vst.w
+
 parameter COP2_VST_L          = 'b1111101001;
 parameter COP2_VSTS_B         = 'b1100101010;
 parameter COP2_VSTS_H         = 'b1101101010;
-parameter COP2_VSTS_W         = 'b1110101010;
+
+//parameter COP2_VSTS_W         = 'b1110101010;
+parameter COP2_VPER           = 'b1110101010;  // adding permute Instr: vsts.w
+
 parameter COP2_VSTS_L         = 'b1111101010;
 parameter COP2_VSTX_B         = 'b1100101011;
 parameter COP2_VSTX_H         = 'b1101101011;
