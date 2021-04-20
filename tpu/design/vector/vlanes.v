@@ -2334,8 +2334,7 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
   // If mem_unit is stalled, pipeline can still go on if both
   //    i) it's a store hence requiring no writeback bank, AND
   //    ii) another memory instruction isn't waiting on the memunit
-  assign stall_memunit=_stall_memunit && (dst_we[FU_MEM][5] ||
-    (ctrl4_memunit_en && ~stall_mulunit && ~stall_matmul));
+  assign stall_memunit=_stall_memunit && (dst_we[FU_MEM][5] || (ctrl4_memunit_en && ~stall_mulunit && ~stall_matmul));
 
   pipereg #(1) memen5pipereg (
       .d( ctrl4_mem_en ),
