@@ -103,16 +103,13 @@ module FPMult_16(
 	//FPMult_RoundModule RoundModule(pipe_3[47:24], pipe_3[23:0], pipe_3[65:57], pipe_3[56:48], pipe_3[66], pipe_3[67], pipe_3[72:68], Z_int[31:0], Flags_int[4:0]) ;		
 	FPMult_RoundModule RoundModule(pipe_3[2*`MANTISSA+1:`MANTISSA+1], pipe_3[`MANTISSA:0], pipe_3[2*`MANTISSA+2*`EXPONENT+3:2*`MANTISSA+`EXPONENT+3], pipe_3[2*`MANTISSA+`EXPONENT+2:2*`MANTISSA+2], pipe_3[2*`MANTISSA+2*`EXPONENT+4], pipe_3[2*`MANTISSA+2*`EXPONENT+5], pipe_3[2*`MANTISSA+2*`EXPONENT+10:2*`MANTISSA+2*`EXPONENT+6], Z_int[`DWIDTH-1:0], Flags_int[4:0]) ;		
 
-	always @ (*) begin	
+	always @ (posedge clk) begin	
 		if(rst) begin
 			//pipe_0 = 0;
 			//pipe_1 = 0;
 			pipe_2 = 0; 
 			pipe_3 = 0;
 			pipe_4 = 0;
-                        q1_valid = 0;
-                        q2_valid = 0;
-                        q3_valid = 0;
 		end 
 		else begin		
 			/* PIPE 0
@@ -138,7 +135,6 @@ module FPMult_16(
 				[31:23] NormE
 				[22:0] NormM
 			*/
-                        q1_valid <= en;
 			pipe_2 <= {stage_1[4:0], GRS, Sp, NormE[`EXPONENT:0], NormM[`MANTISSA-1:0]} ;
 			/* PIPE 3
 				[72:68] InputExc
@@ -149,16 +145,28 @@ module FPMult_16(
 				[47:24] RoundM
 				[23:0] RoundMP
 			*/
-                        q2_valid <= q1_valid;
 			pipe_3 <= {pipe_2[`EXPONENT+`MANTISSA+7:`EXPONENT+`MANTISSA+1], RoundE[`EXPONENT:0], RoundEP[`EXPONENT:0], RoundM[`MANTISSA:0], RoundMP[`MANTISSA:0]} ;
 			/* PIPE 4
 				[36:5] Z
 				[4:0] Flags
 			*/				
-                        q3_valid <= q2_valid;
 			pipe_4 <= {Z_int[`DWIDTH-1:0], Flags_int[4:0]} ;
 		end
 	end
+always@(posedge clk)begin
+  if(rst)begin
+       q1_valid <= 0;
+       q2_valid <= 0;
+       q3_valid <= 0;
+  end
+  else begin
+       q1_valid <= en;
+       q2_valid <= q1_valid;
+       q3_valid <= q2_valid;
+  end
+end
+
+
 		
 endmodule
 

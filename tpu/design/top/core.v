@@ -140,7 +140,7 @@ output              trc_pipestall;
             COP2_VFLD,
             COP2_VLD_B,
             COP2_VLD_H,
-            COP2_VBFADD,
+           // COP2_VBFADD,
             COP2_VLD_L,
             COP2_VLD_U_B,
             COP2_VLD_U_H,

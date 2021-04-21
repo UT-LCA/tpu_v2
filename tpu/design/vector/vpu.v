@@ -393,7 +393,8 @@ reg is_cop2_s1;
           ctrl_vl_a_en=1;
           ctrl_vs_a_en=ir_op[BIT_VSSRC1]|ir_op[BIT_VSSRC2];
         end
-      COP2_VMOD:
+      //COP2_VMOD:
+      COP2_VBFADD:
         begin
           ctrl_vl_a_en=1;
           ctrl_vs_a_en=ir_op[BIT_VSSRC1]|ir_op[BIT_VSSRC2];

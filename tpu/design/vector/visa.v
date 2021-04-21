@@ -5,12 +5,15 @@ parameter COP2_VSUB_U         = 'b10zz000011;
 parameter COP2_VMULHI         = 'b10z0000100;
 parameter COP2_VMULHI_U       = 'b10z0000101;
 parameter COP2_VDIV           = 'b10zz000110; //Using as matmul
-// parameter COP2_VBFADD         = 'b0100000001; //Using BF16 add
-// parameter COP2_VBFMULT        = 'b0100000010; //Using BF16 MULT
+//parameter COP2_VBFADD         = 'b0100000001; //Using BF16 add
+//parameter COP2_VBFMULT        = 'b0100000010; //Using BF16 MULT
 //parameter COP2_VACT           = 'b0100000011; //Using ACT
 //parameter COP2_VTRP           = 'b0100000100; //Using ACT
 parameter COP2_VDIV_U         = 'b10zz000111;
-parameter COP2_VMOD           = 'b10zz001000;
+
+//parameter COP2_VMOD           = 'b10zz001000;
+parameter COP2_VBFADD           = 'b10zz001000;  // USING bfloat add Instr: vmod.vv vrdest, vrsrc1,vrsrc2
+
 parameter COP2_VMOD_U         = 'b10zz001001;
 parameter COP2_VCMP_EQ        = 'b10zz001010;
 parameter COP2_VCMP_NE        = 'b10zz001100;
@@ -98,7 +101,7 @@ parameter COP2_VLD_B          = 'b1100100001;
 parameter COP2_VLD_H          = 'b1101100001;
 
 //parameter COP2_VLD_W          = 'b1110100001;
-parameter COP2_VBFADD          = 'b1110100001;  // adding bfadder Instr: vld.u.w
+//parameter COP2_VBFADD         = 'b1110100001;  // adding bfadder Instr: vld.u.w
 
 parameter COP2_VLD_L          = 'b1111100001;
 parameter COP2_VLD_U_B        = 'b1100100010;

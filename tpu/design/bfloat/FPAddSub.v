@@ -171,14 +171,14 @@ module FPAddSub(
 		// Outputs
 		Mmin_3[`MANTISSA:0]) ;
 						
-        assign stage_2_3 = {pipe_3[`MANTISSA*2+`EXPONENT+14:`MANTISSA+1], Mmin_3[`MANTISSA:0]};
+        assign stage_3_4 = {pipe_3[`MANTISSA*2+`EXPONENT+14:`MANTISSA+1], Mmin_3[`MANTISSA:0]};
 	// Perform mantissa addition
 	FPAddSub_ExecutionModule ExecutionModule
 	(  // Inputs
 		stage_3_4[`MANTISSA*2+5:`MANTISSA+6], stage_3_4[`MANTISSA:0], stage_3_4[`MANTISSA*2+`EXPONENT+13], stage_3_4[`MANTISSA*2+`EXPONENT+12], stage_3_4[`MANTISSA*2+`EXPONENT+11], stage_3_4[`MANTISSA*2+`EXPONENT+14],
 		// Outputs
 		Sum_4[`DWIDTH:0], PSgn_4, Opr_4) ;
-        assign stage_4_5 = {stage_4_5[2*`MANTISSA+`EXPONENT+14], PSgn_4, Opr_4, stage_4_5[2*`MANTISSA+`EXPONENT+13:2*`MANTISSA+11], stage_4_5[`MANTISSA+5:`MANTISSA+1], Sum_4[`DWIDTH:0]};
+        assign stage_4_5 = {stage_3_4[2*`MANTISSA+`EXPONENT+14], PSgn_4, Opr_4, stage_3_4[2*`MANTISSA+`EXPONENT+13:2*`MANTISSA+11], stage_3_4[`MANTISSA+5:`MANTISSA+1], Sum_4[`DWIDTH:0]};
 	
 	// Prepare normalization of result
 	FPAddSub_NormalizeModule NormalizeModule
@@ -219,7 +219,7 @@ module FPAddSub(
 		// Outputs
 		result[`DWIDTH-1:0], flags[4:0]) ;			
 	
-	always @ (*) begin	
+	always @ (posedge clk) begin	
 		if(rst) begin
 			//pipe_1 = 0;
 			//pipe_2 = 0;
@@ -230,9 +230,6 @@ module FPAddSub(
 			//pipe_7 = 0;
 			//pipe_8 = 0;
 			pipe_9 = 0;
-                        q1_valid = 0;
-                        q2_valid = 0;
-                        q3_valid = 0;
 		end 
 		else begin
 		
@@ -260,7 +257,6 @@ module FPAddSub(
 				[28:24] InputExc_0
 				[23:0] MminS_1
 			*/
-                        q1_valid = en;
 			pipe_3 = {stage_1_2[`MANTISSA*2+`EXPONENT+13:`MANTISSA], MminS_2[`MANTISSA:0]} ;	
 			/* PIPE_4 :
 				[68] operation
@@ -298,7 +294,6 @@ module FPAddSub(
 				[37:33] InputExc_0
 				[32:0] Sum_4
 			*/					
-                        q2_valid = q1_valid;
 			pipe_6 = {stage_4_5[`EXPONENT+`EXPONENT+11], Shift_5[4:0], stage_4_5[`DWIDTH+`EXPONENT+10:`DWIDTH+1], SumS_5[`DWIDTH:0]} ;	
 			/* pipe_7 :
 				[56] operation
@@ -338,10 +333,23 @@ module FPAddSub(
 				[5:1] InputExc_8
 				[0] EOF
 			*/				
-                        q3_valid = q2_valid;
 			pipe_9 = {P_int[`DWIDTH-1:0], stage_6_7[2], stage_6_7[1], stage_6_7[0], stage_6_7[`EXPONENT+`MANTISSA+9:`EXPONENT+`MANTISSA+5], EOF} ;	
 		end
 	end		
+
+
+always@(posedge clk)begin
+  if(rst)begin
+      q1_valid = 0;
+      q2_valid = 0;
+      q3_valid = 0;
+  end
+  else begin
+      q1_valid <= en;
+      q2_valid <= q1_valid;
+      q3_valid <= q2_valid;
+  end
+end
 	
 endmodule
 
