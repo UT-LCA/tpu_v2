@@ -77,6 +77,13 @@ wire [ {WIDTH}-1:0 ]  shiftin_right;
 
 endmodule
         '''
+        filename = "verilog/velmshifter_"+str(numlanes)+"_"+str(width)
+        if(os.path.exists(filename) == False):
+            fp = open(filename,'w')
+            uut = velmshifter(fp)
+            uut.write(numlanes,width)
+            fp.close()
+
         return string.format(NUMLANES=numlanes, WIDTH=width)
 
     def write (self, numlanes, width):
@@ -147,6 +154,14 @@ input [ {WIDTH}-1:0 ]  shiftin_right;
 
 endmodule
         '''
+        
+        filename = "verilog/velmshifter_"+str(numlanes)+"_"+str(width)
+        if(os.path.exists(filename) == False):
+            fp = open(filename,'w')
+            uut = velmshifter(fp)
+            uut.write(numlanes,width)
+            fp.close()
+
         return string.format(WIDTH=width, NUMLANES=numlanes, JUMPSIZE=jumpsize)
 
     def write (self, numlanes, jumpsize, width):
@@ -520,11 +535,11 @@ endmodule
 if __name__ == '__main__':
     fp = open(args[0], "w")
     #uut1 = velmrotator(fp)
-    #uut2 = velmshifter_jump(fp)
-    uut3 = velmshifter(fp)
+    uut2 = velmshifter_jump(fp)
+    #uut3 = velmshifter(fp)
     #uut4 = velmshifter_laneunit(fp)
     #uut1.write(4,32)
-    #uut2.write(4,4,32)
-    uut3.write(4,1)
+    uut2.write(4,4,32)
+    #uut3.write(4,1)
     #uut4.write(32)
     fp.close()

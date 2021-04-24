@@ -63,6 +63,9 @@ wire [8 * {DWIDTH} -1:0] reduced_out_1; //output
 wire [8 * {DWIDTH} -1:0] reduced_out_add; //output
 wire [{DWIDTH} + {LOGDWIDTH}-1:0] reduced_out_unrounded;
 
+wire reset_reduction_unit;
+assign  reset_reduction_unit = ~resetn;
+
 reduction_unit_{DWIDTH}_{LOGDWIDTH} ucu(
   .clk(clk),
   .reset(reset_reduction_unit),
@@ -229,22 +232,6 @@ module reduction_unit_{DWIDTH}_{LOGDWIDTH}(
   input [1:0] mode;
   output [{DWIDTH}+{LOGDWIDTH}-1 : 0] outp;
 
-  wire   [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute0_out_stage4;
-  reg    [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute0_out_stage4_reg;
-  wire   [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute1_out_stage4;
-  reg    [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute1_out_stage4_reg;
-  wire   [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute2_out_stage4;
-  reg    [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute2_out_stage4_reg;
-  wire   [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute3_out_stage4;
-  wire   [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute3_out_stage4_reg;
-  wire   [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute4_out_stage4;
-  reg    [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute4_out_stage4_reg;
-  wire   [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute5_out_stage4;
-  reg    [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute5_out_stage4_reg;
-  wire   [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute6_out_stage4;
-  reg    [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute6_out_stage4_reg;
-  wire   [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute7_out_stage4;
-  wire   [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute7_out_stage4_reg;
 
   wire   [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute0_out_stage3;
   reg    [{DWIDTH}+{LOGDWIDTH}-1 : 0] compute0_out_stage3_reg;
@@ -292,10 +279,10 @@ module reduction_unit_{DWIDTH}_{LOGDWIDTH}(
       outp <= compute0_out_stage0;
     end
   end
-  reduction_processing_element_{DWIDTH}_{WIDTH} compute0_stage3(.A(compute0_out_stage4_reg),       .B(compute1_out_stage4_reg),    .OUT(compute0_out_stage3), .MODE(mode));
-  reduction_processing_element_{DWIDTH}_{WIDTH} compute1_stage3(.A(compute2_out_stage4_reg),       .B(compute3_out_stage4_reg),    .OUT(compute1_out_stage3), .MODE(mode));
-  reduction_processing_element_{DWIDTH}_{WIDTH} compute2_stage3(.A(compute4_out_stage4_reg),       .B(compute5_out_stage4_reg),    .OUT(compute2_out_stage3), .MODE(mode));
-  reduction_processing_element_{DWIDTH}_{WIDTH} compute3_stage3(.A(compute6_out_stage4_reg),       .B(compute7_out_stage4_reg),    .OUT(compute3_out_stage3), .MODE(mode));
+  reduction_processing_element_{DWIDTH}_{WIDTH} compute0_stage3(.A(inp0),       .B(inp1),    .OUT(compute0_out_stage3), .MODE(mode));
+  reduction_processing_element_{DWIDTH}_{WIDTH} compute1_stage3(.A(inp2),       .B(inp3),    .OUT(compute1_out_stage3), .MODE(mode));
+  reduction_processing_element_{DWIDTH}_{WIDTH} compute2_stage3(.A(inp4),       .B(inp5),    .OUT(compute2_out_stage3), .MODE(mode));
+  reduction_processing_element_{DWIDTH}_{WIDTH} compute3_stage3(.A(inp6),       .B(inp7),    .OUT(compute3_out_stage3), .MODE(mode));
 
   reduction_processing_element_{WIDTH}_{WIDTH} compute0_stage2(.A(compute0_out_stage3_reg),       .B(compute1_out_stage3_reg),    .OUT(compute0_out_stage2), .MODE(mode));
   reduction_processing_element_{WIDTH}_{WIDTH} compute1_stage2(.A(compute2_out_stage3_reg),       .B(compute3_out_stage3_reg),    .OUT(compute1_out_stage2), .MODE(mode));

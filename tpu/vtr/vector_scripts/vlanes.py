@@ -3630,10 +3630,10 @@ endmodule
 
 
 if __name__ == '__main__':
-    numlanes = 4 
+    numlanes = 8 
     log2numlanes = 2
-    mvl = 128
-    log2mvl = 7
+    mvl = 64
+    log2mvl = 6
     vpw = 4
     log2vpw = 2
     numbanks = 2

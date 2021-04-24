@@ -17,26 +17,27 @@ module trp_unit_{WIDTH} (
  input clk,
  input resetn,
  input en,
- input [{WIDTH}-1:0] a,
+ input [8*{WIDTH}-1:0] a,
  input [1:0] mode,
  input read,
  output busy,
  output reg valid,
- output reg[{WIDTH}-1:0] out
+ output reg[8*{WIDTH}-1:0] out
 );
 
 reg en_reduction;
 reg en_transpose;
 reg read_transpose;
 reg read_reduction;
-wire transpose_busy;
+//wire transpose_busy;
 wire reduction_busy;
 wire reduction_done;
-wire [{WIDTH}-1:0] reduction_out;
-wire [{WIDTH}-1:0] transpose_out;
+wire [8*{WIDTH}-1:0] reduction_out;
+wire [8*{WIDTH}-1:0] transpose_out;
  
  
-assign busy = transpose_busy || reduction_busy;
+//assign busy = transpose_busy || reduction_busy;
+assign busy = reduction_busy;
 
 always@(*)begin
   if(mode == 2'b11)begin
@@ -54,11 +55,16 @@ always@(*)begin
 end
 
 always@(*)begin
-  if(transpose_busy)begin
-    out = transpose_out;
-    valid = 1'b1;
-  end
-  else if(reduction_done)begin
+//  if(transpose_busy)begin
+//    out = transpose_out;
+//    valid = 1'b1;
+//  end
+//  else if(reduction_done)begin
+//    out = reduction_out;
+//    valid = 1'b1;
+//  end
+
+  if(reduction_done)begin
     out = reduction_out;
     valid = 1'b1;
   end
@@ -80,15 +86,15 @@ reduction_layer_{WIDTH}_{LOGWIDTH}_32_5_10 u_reduction_layer(
   .busy(reduction_busy)
 );
 
-transpose_{WIDTH}_2_1 u_transpose(
-  .clk(clk),
-  .resetn(resetn),
-  .read(),
-  .en(en_transpose), 
-  .a(a),
-  .out(transpose_out),
-  .busy(transpose_busy)
-);
+// transpose_{WIDTH}_2_1 u_transpose(
+//   .clk(clk),
+//   .resetn(resetn),
+//   .read(),
+//   .en(en_transpose), 
+//   .a(a),
+//   .out(transpose_out),
+//   .busy(transpose_busy)
+// );
 
 endmodule
 
@@ -97,10 +103,10 @@ endmodule
         uut1 = reduction_layer(fp1)
         uut1.write(width,logwidth,32,5,10)
         fp1.close()
-        fp2 = open("verilog/transpose.v",'a')
-        uut2 = transpose(fp2)
-        uut2.write(width,2,1)
-        fp2.close()
+        #fp2 = open("verilog/transpose.v",'a')
+        #uut2 = transpose(fp2)
+        #uut2.write(width,2,1)
+        #fp2.close()
 
         return string.format(WIDTH=width,LOGWIDTH=logwidth) 
 

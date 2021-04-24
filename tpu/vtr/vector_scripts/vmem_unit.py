@@ -4,6 +4,7 @@ from vmem_crossbar import vmem_crossbar
 from components import pipereg
 from optparse import OptionParser
 import re
+import os
 
 parser = OptionParser()
 (_,args) = parser.parse_args()
@@ -846,11 +847,19 @@ endmodule
         uut.write(numlanes,numparallellanes,1)
         fp.close()
 
-        fp = open("verilog/velmshifter.v",'a')
-        uut = velmshifter(fp)
-        uut.write(numlanes,vpuwidth)
-        uut.write(numlanes,1)
-        fp.close()
+        filename = "verilog/velmshifter_"+str(numlanes)+"_"+str(vpuwidth)
+        if(os.path.exists(filename) == False):
+            fp = open(filename,'w')
+            uut = velmshifter(fp)
+            uut.write(numlanes,vpuwidth)
+            fp.close()
+
+        filename = "verilog/velmshifter_"+str(numlanes)+"_1"
+        if(os.path.exists(filename) == False):
+            fp = open(filename,'w')
+            uut = velmshifter(fp)
+            uut.write(numlanes,1)
+            fp.close()
 
         fp = open("verilog/vstore_data_translator.v",'a')
         uut = vstore_data_translator(fp)
