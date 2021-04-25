@@ -133,6 +133,10 @@ output [ {NUMLANES}*{WIDTH}-1:0 ] outpipe;
 input [ {WIDTH}-1:0 ]  shiftin_left;
 input [ {WIDTH}-1:0 ]  shiftin_right;
 
+wire [{WIDTH}-1:0] temp_left;  // Sangram: added to remove warning
+wire [{WIDTH}-1:0] temp_right;  // Sangram: added to remove warning
+assign temp_left = shiftin_left; 
+assign temp_right = shiftin_right; 
 
 /***************************************************************************
   shiftin_left -> bn <-> bn-1 <-> ... <-> b1 <-> b0 <- shiftin_right
@@ -220,6 +224,10 @@ input [ {WIDTH}-1:0 ]  shiftin_right;
 
 wire [ ({NUMLANES}+1)*{WIDTH}-1:0 ] _outpipe;
 
+wire [{WIDTH}-1:0] temp_left;  // Sangram: added to remove warning
+wire [{WIDTH}-1:0] temp_right;  // Sangram: added to remove warning
+assign temp_left = shiftin_left; 
+assign temp_right = shiftin_right; 
 
 /***************************************************************************
   shiftin_left -> bn <-> bn-1 <-> ... <-> b1 <-> b0 <- shiftin_right

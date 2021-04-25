@@ -55,6 +55,7 @@ input [3:1] en;  //Enable for each pipestage
 
 output [WIDTH-1:0] result;
 
+wire [3:0] temp;
 /********* Control Signals *********/
 wire is_signed, dir, is_mul, saturate, half;
 assign is_mul=op[2];      // selects between opB and the computed shift amount
@@ -62,6 +63,7 @@ assign is_signed=~op[1];
 assign dir=op[0];         // selects between 2^sa and 2^(32-sa) for right shift
 assign saturate=op[3];
 assign half=op[4];
+assign temp = en;
 
 /********* Circuit Body *********/
 wire dum,dum2,dum3;
