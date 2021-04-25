@@ -599,8 +599,8 @@ wire                     [NUMFUS-1:0]   wb_dst_we;
 wire               [ {NUMLANES}-1 : 0 ]   wb_dst_mask[NUMFUS-1:0];
 
 wire                        [ `MAX_PIPE_STAGES-1 : 4 ]   dst_we[NUMFUS-1:0];
-wire             [ REGIDWIDTH-1 : 0 ]   dst[NUMFUS-1:0][`MAX_PIPE_STAGES-1:4];
-wire               [ {NUMLANES}-1 : 0 ]   dst_mask[NUMFUS-1:0][`MAX_PIPE_STAGES-1:4];
+wire             [(MAX_PIPE_STAGES-4) * NUMFUS * REGIDWIDTH-1 : 0 ] dst;
+wire               [ (MAX_PIPE_STAGES-4) * NUMFUS * {NUMLANES}-1 : 0 ]   dst_mask;
 wire             [ REGIDWIDTH-1 : 0 ]   dst_s2;
 reg              [ REGIDWIDTH-1 : 0 ]   _dst_s3[{NUMBANKS}-1:0];
 reg              [ REGIDWIDTH-1 : 0 ]   dst_s3[{NUMBANKS}-1:0];
@@ -2508,11 +2508,11 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
   always@*
     for (bd=0; bd<1+({NUMBANKS}-1)*{ALUPERBANK}; bd=bd+1)
     begin
-      alu_dst[4][bd*REGIDWIDTH +: REGIDWIDTH] = dst[FU_ALU+bd][4];
+      alu_dst[4][bd*REGIDWIDTH +: REGIDWIDTH] = dst[ 4*(NUMFUS*REGIDWIDTH) + (FU_ALU+bd) * REGIDWIDTH +: REGIDWIDTH];
 
       alu_dst_we[4][bd] = dst_we[FU_ALU+bd][4];
 
-      falu_dst[4][bd*REGIDWIDTH +: REGIDWIDTH] = dst[FU_FALU+bd][4];
+      falu_dst[4][bd*REGIDWIDTH +: REGIDWIDTH] = dst[4*(NUMFUS*REGIDWIDTH) + (FU_ALU+bd) * REGIDWIDTH +: REGIDWIDTH];
 
       falu_dst_we[4][bd] = dst_we[FU_FALU+bd][4];
     end
@@ -2521,13 +2521,13 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
   hazardchecker_{REGIDWIDTH}_{VELMIDWIDTH}_{TOTALALUS}_{NUMBANKS} src1hazchecker(
       .src( src1_s2 |(src_start_delayed[{LOG2MVL}-1:0]>>{LOG2NUMLANES}) ),
       .src_valid(ctrl2_vr_a_en),
-//      .dst({CBS}
-//        alu_dst[4],
-//        dst[FU_MUL][4],
-//        dst[FU_MEM][4],
-//        dst[FU_MATMUL][4]
-//        {CBE}),
-      .dst(),
+      .dst({CBS}
+        alu_dst,
+        dst[4*(NUMFUS*REGIDWIDTH)+(FU_MUL) * REGIDWIDTH +: REGIDWIDTH],
+        dst[4*(NUMFUS*REGIDWIDTH)+(FU_MEM) * REGIDWIDTH +: REGIDWIDTH],
+        dst[4*(NUMFUS*REGIDWIDTH)+(FU_MATMUL) * REGIDWIDTH +: REGIDWIDTH]
+        {CBE}),
+    //  .dst(),
       .dst_valid({CBS}
         alu_dst_we[4],
         dst_we[FU_MUL][4],
@@ -2544,13 +2544,13 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
   hazardchecker_{REGIDWIDTH}_{VELMIDWIDTH}_{TOTALALUS}_{NUMBANKS} src2hazchecker(
       .src( src2_s2 |(src_start_delayed[{LOG2MVL}-1:0]>>{LOG2NUMLANES}) ),
       .src_valid(ctrl2_vr_b_en),
-//      .dst({CBS}
-//        alu_dst[4],
-//        dst[FU_MUL][4],
-//        dst[FU_MEM][4],
-//        dst[FU_MATMUL][4]
-//        {CBE}),
-      .dst(),
+      .dst({CBS}
+        alu_dst,
+        dst[4*(NUMFUS*REGIDWIDTH)+(FU_MUL) * REGIDWIDTH +: REGIDWIDTH],
+        dst[4*(NUMFUS*REGIDWIDTH)+(FU_MEM) * REGIDWIDTH +: REGIDWIDTH],
+        dst[4*(NUMFUS*REGIDWIDTH)+(FU_MATMUL) * REGIDWIDTH +: REGIDWIDTH]
+        {CBE}),
+     // .dst(),
       .dst_valid({CBS}
         alu_dst_we[4],
         dst_we[FU_MUL][4],
@@ -2661,6 +2661,7 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
       src2_s3[b]=_src2_s3[b] | (rdelm[b*{LOG2MVL}+:{LOG2MVL}]>>{LOG2NUMLANES});
 
       // wrongbank_s3[b]=(`LO(rdelm[b*{LOG2MVL}+:{LOG2MVL}]>>{LOG2NUMLANES},{LOG2NUMBANKS})!=b);
+       wrongbank_s3[b]=(((rdelm[b*{LOG2MVL}+:{LOG2MVL}]>>{LOG2NUMLANES})&({CBS}{CBS}(32-{LOG2NUMBANKS}){CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE})) != b );
 
       vr_a_reg[b*BANKREGIDWIDTH +: BANKREGIDWIDTH]=src1_s3[b]>>{LOG2NUMBANKS};
       vr_b_reg[b*BANKREGIDWIDTH +: BANKREGIDWIDTH]=src2_s3[b]>>{LOG2NUMBANKS};
@@ -2848,10 +2849,10 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
             ctrl4_mem_dir_left=ctrl3_mem_dir_left[b3];
             ctrl4_memunit_op=ctrl3_memunit_op[b3];
             //Load base on first subvector or if INDEXED memory operation
-//            vbase_s4=(|(first_subvector&ctrl3_mem_en) || ctrl_memunit_op[3][5])? vbase[3] : vbase_s4 + ((((ctrl_memunit_op[3][4])? vstride[3]: 1)<<ctrl_memunit_op[3][3:2])<<{LOG2NUMLANES});
+            vbase_s4=(|(first_subvector&ctrl3_mem_en) || ctrl_memunit_op[3][5])? vbase[3] : vbase_s4 + ((((ctrl_memunit_op[3][4])? vstride[3]: 1)<<ctrl_memunit_op[3][3:2])<<{LOG2NUMLANES});
             // Partial Address Gen for each lane - just do multiplication part
-//            for (m=0; m<{NUMLANES}; m=m+1)
-//              vstrideoffset_s4[m*{VCWIDTH} +: {VCWIDTH}] = ((ctrl_memunit_op[3][4]) ? vstride[3] : 1)*m;
+            for (m=0; m<{NUMLANES}; m=m+1)
+              vstrideoffset_s4[m*{VCWIDTH} +: {VCWIDTH}] = ((ctrl_memunit_op[3][4]) ? vstride[3] : 1)*m;
             mem_last_subvector_s4=last_subvector[b3];
           end
           else if (ctrl3_alu_op[b3]!=(ALUOP_ZERO^ALUOP_ZERO)) //is ALU
@@ -2945,39 +2946,39 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
       end
 
   //Bank Multiplex for each functional unit
-//  always@*
-//  begin
-//    for (fn=0; fn<=FU_MUL; fn=fn+1)
-//    begin
-//      vr_src1[fn] =(src1scalar_s4[fn]) ? {CBS}{NUMLANES}{CBS}vs_s4[fn][{LANEWIDTH}-1:0]{CBE}{CBE} : vr_a_readdataout[banksel_s4[fn]];
+ always@*
+ begin
+   for (fn=0; fn<=FU_MUL; fn=fn+1)
+   begin
+     vr_src1[fn] =(src1scalar_s4[fn]) ? {CBS}{NUMLANES}{CBS}vs_s4[fn][{LANEWIDTH}-1:0]{CBE}{CBE} :(banksel_s4[fn]? vr_a_readdataout[1]: vr_a_readdataout[0]);
 
-//      vr_src2[fn] =(src2scalar_s4[fn]) ? {CBS}{NUMLANES}{CBS}vs_s4[fn][{LANEWIDTH}-1:0]{CBE}{CBE} : vr_b_readdataout[banksel_s4[fn]];
+     vr_src2[fn] =(src2scalar_s4[fn]) ? {CBS}{NUMLANES}{CBS}vs_s4[fn][{LANEWIDTH}-1:0]{CBE}{CBE} :(banksel_s4[fn]? vr_b_readdataout[1]: vr_b_readdataout[0]);
 
-//      vf_src1[fn] = vf_a_readdataout[banksel_s4[fn]*{NUMLANES} +: {NUMLANES}];
+     vf_src1[fn] = banksel_s4[fn] ? vf_a_readdataout[1*{NUMLANES} +: {NUMLANES}] : vf_a_readdataout[0*{NUMLANES} +: {NUMLANES}] ;
 
-//      vmask[fn] =vlane_en[fn] & ((ctrl4_ismasked[fn]) ? vf_a_readdataout[banksel_s4[fn]*{NUMLANES} +: {NUMLANES}] : {CBS}{NUMLANES}{CBS}1'b1{CBE}{CBE});
-//    end
+     vmask[fn] =vlane_en[fn] & ((ctrl4_ismasked[fn]) ? ( banksel_s4[fn]? vf_a_readdataout[1*{NUMLANES} +: {NUMLANES}]: vf_a_readdataout[0*{NUMLANES} +: {NUMLANES}] ) : {CBS}{NUMLANES}{CBS}1'b1{CBE}{CBE});
+   end
 
-//    vr_src1[FU_MEM] = vr_a_readdataout[banksel_s4[FU_MEM]];
+   vr_src1[FU_MEM] = vr_a_readdataout[banksel_s4[FU_MEM]];
 
-//    vr_src2[FU_MEM] = vr_b_readdataout[banksel_s4[FU_MEM]];
+   vr_src2[FU_MEM] = vr_b_readdataout[banksel_s4[FU_MEM]];
 
-//    vmask[FU_MEM] =  vlane_en[FU_MEM] & ((ctrl4_ismasked[FU_MEM]) ?      vf_a_readdataout[banksel_s4[FU_MEM]*{NUMLANES} +: {NUMLANES}] : {CBS}{NUMLANES}{CBS}1'b1{CBE}{CBE}) ;
+   vmask[FU_MEM] =  vlane_en[FU_MEM] & ((ctrl4_ismasked[FU_MEM]) ?(banksel_s4[FU_MEM] ?  vf_a_readdataout[1*{NUMLANES} +: {NUMLANES}] :  vf_a_readdataout[0*{NUMLANES} +: {NUMLANES}] ) : {CBS}{NUMLANES}{CBS}1'b1{CBE}{CBE}) ;
 
-//    vr_src1[FU_MATMUL] =(src1scalar_s4[FU_MATMUL]) ? {CBS}{NUMLANES}{CBS}vs_s4[FU_MATMUL][{LANEWIDTH}-1:0]{CBE}{CBE} :vr_a_readdataout[banksel_s4[FU_MATMUL]];
+   vr_src1[FU_MATMUL] =(src1scalar_s4[FU_MATMUL]) ? {CBS}{NUMLANES}{CBS}vs_s4[FU_MATMUL][{LANEWIDTH}-1:0]{CBE}{CBE} :vr_a_readdataout[banksel_s4[FU_MATMUL]];
 
-//    vr_src2[FU_MATMUL] =(src2scalar_s4[FU_MATMUL]) ? {CBS}{NUMLANES}{CBS}vs_s4[FU_MATMUL][{LANEWIDTH}-1:0]{CBE}{CBE} :vr_b_readdataout[banksel_s4[FU_MATMUL]];
+   vr_src2[FU_MATMUL] =(src2scalar_s4[FU_MATMUL]) ? {CBS}{NUMLANES}{CBS}vs_s4[FU_MATMUL][{LANEWIDTH}-1:0]{CBE}{CBE} :vr_b_readdataout[banksel_s4[FU_MATMUL]];
 
-//    vmask[FU_MATMUL] =  vlane_en[FU_MATMUL] & ((ctrl4_ismasked[FU_MATMUL]) ? vf_a_readdataout[banksel_s4[FU_MATMUL]*{NUMLANES} +: {NUMLANES}] : {CBS}{NUMLANES}{CBS}1'b1{CBE}{CBE});
+   vmask[FU_MATMUL] =  vlane_en[FU_MATMUL] & ((ctrl4_ismasked[FU_MATMUL]) ? (banksel_s4[FU_MATMUL]? vf_a_readdataout[1*{NUMLANES} +: {NUMLANES}] : vf_a_readdataout[0*{NUMLANES} +: {NUMLANES}] ) : {CBS}{NUMLANES}{CBS}1'b1{CBE}{CBE});
 
-//    for (fn2=FU_FALU; fn2<=FU_FALU+({NUMBANKS}-1)*{ALUPERBANK}; fn2=fn2+1)
-//    begin
-//      vf_src1[fn2] =(src1scalar_s4[fn2]&ctrl4_vf_a_sel[fn2-FU_FALU]) ? {CBS}{NUMLANES}{CBS}vs_s4[fn2][0]{CBE}{CBE} : vf_a_readdataout[banksel_s4[fn2]*{NUMLANES} +: {NUMLANES}];
+   for (fn2=FU_FALU; fn2<=FU_FALU+({NUMBANKS}-1)*{ALUPERBANK}; fn2=fn2+1)
+   begin
+     vf_src1[fn2] =(src1scalar_s4[fn2]&ctrl4_vf_a_sel[fn2-FU_FALU]) ? {CBS}{NUMLANES}{CBS}vs_s4[fn2][0]{CBE}{CBE} : (banksel_s4[fn2]? vf_a_readdataout[1*{NUMLANES} +: {NUMLANES}] : vf_a_readdataout[0*{NUMLANES} +: {NUMLANES}]);
 
-      //Only FALU uses this
-//      vf_src2[fn2] = (src2scalar_s4[fn2]) ? {CBS}{NUMLANES}{CBS}vs_s4[fn2][0]{CBE}{CBE} : vf_b_readdataout[banksel_s4[fn2]*{NUMLANES} +: {NUMLANES}];
-//    end
-//  end
+   //Only FALU uses this
+     vf_src2[fn2] = (src2scalar_s4[fn2]) ? {CBS}{NUMLANES}{CBS}vs_s4[fn2][0]{CBE}{CBE} : (banksel_s4[fn2]? vf_b_readdataout[1*{NUMLANES} +: {NUMLANES}]:vf_b_readdataout[0*{NUMLANES} +: {NUMLANES}]);
+   end
+ end
 
 /******************************************************************************/
 /************************** 5th Pipeline Stage ********************************/
@@ -3035,7 +3036,7 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
     // Writeback ports
     .in_dst(dst_s4[FU_MEM]),
     .in_dst_we(dst_we_s4[FU_MEM]),
-//    .out_dst(dst[FU_MEM][5]),
+    .out_dst(dst[5*(NUMFUS*REGIDWIDTH)+ FU_MEM * REGIDWIDTH +: REGIDWIDTH]),
     .out_dst(),
     .out_dst_we(vmem_unit_out_dst_we),
     .in_vs_dst_we(ctrl_vs_we[4]),
@@ -3057,7 +3058,7 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
     );
 
 
-  assign dst[FU_MEM][4]=dst_s4[FU_MEM];
+  assign dst[4*(NUMFUS*REGIDWIDTH)+FU_MEM * REGIDWIDTH +: REGIDWIDTH] =dst_s4[FU_MEM];
   assign dst_we[FU_MEM][4]=dst_we_s4[FU_MEM];
 
   //============== Multiplier Unit (spans stages 4-6) =============
@@ -3081,11 +3082,10 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
     .vmask(vmask[FU_MUL]),
     .in_dst(dst_s4[FU_MUL]),
     .in_dst_we(dst_we_s4[FU_MUL]),
-//    .out_dst({CBS}dst[FU_MUL][6],dst[FU_MUL][5],dst[FU_MUL][4]{CBE}),
-    .out_dst(),
+    .out_dst({CBS}dst[6*(NUMFUS*REGIDWIDTH) + FU_MUL*REGIDWIDTH +: REGIDWIDTH],dst[5*(NUMFUS*REGIDWIDTH) + FU_MUL*REGIDWIDTH +: REGIDWIDTH],dst[4*(NUMFUS*REGIDWIDTH) + FU_MUL*REGIDWIDTH +: REGIDWIDTH]{CBE}),
+//    .out_dst(),
     .out_dst_we(vmul_unit_out_dst_we),
-//    .out_dst_mask({CBS}dst_mask[FU_MUL][6],dst_mask[FU_MUL][5],dst_mask[FU_MUL][4]{CBE}),
-    .out_dst_mask(),
+    .out_dst_mask({CBS}dst_mask[6*(NUMFUS*{NUMLANES})+FU_MUL*{NUMLANES} +: {NUMLANES}],dst_mask[5*(NUMFUS*{NUMLANES})+FU_MUL*{NUMLANES} +: {NUMLANES}],dst_mask[4*(NUMFUS*{NUMLANES})+FU_MUL*{NUMLANES} +: {NUMLANES}]{CBE}),
     .result(mulshift_result_s5)
   );
 
@@ -3157,7 +3157,7 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
 
 //module instance 
     wire [{REGIDWIDTH}*(1+1)-1:0] aludstpipe_bk_q;
-    assign {CBS}dst[FU_ALU+bk][5],dst[FU_ALU+bk][4]{CBE} = aludstpipe_bk_q;
+    assign {CBS}dst[5*(NUMFUS*REGIDWIDTH)+(FU_ALU+bk)*REGIDWIDTH +: REGIDWIDTH],dst[4*(NUMFUS*REGIDWIDTH)+(FU_ALU+bk)*REGIDWIDTH +: REGIDWIDTH]{CBE} = aludstpipe_bk_q;
     pipe_{REGIDWIDTH}_1 aludstpipe_bk (
       .d( dst_s4[FU_ALU+bk] ),  
       .clk(clk),
@@ -3180,7 +3180,7 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
       .q(aludstwepipe_bk_q));
 
 wire [{NUMLANES}*(1+1)-1:0] aludstmaskpipe_bk_q;
-assign {CBS}dst_mask[FU_ALU+bk][5],dst_mask[FU_ALU+bk][4]{CBE} = aludstmaskpipe_bk_q;
+assign {CBS}dst_mask[5*(NUMFUS*{NUMLANES})+(FU_ALU+bk)*{NUMLANES} +: {NUMLANES}],dst_mask[4*(NUMFUS*{NUMLANES})+(FU_ALU+bk)*{NUMLANES} +: {NUMLANES}]{CBE} = aludstmaskpipe_bk_q;
 
 //module instance 
     pipe_{NUMLANES}_1 aludstmaskpipe_bk (
@@ -3192,7 +3192,7 @@ assign {CBS}dst_mask[FU_ALU+bk][5],dst_mask[FU_ALU+bk][4]{CBE} = aludstmaskpipe_
       .q(aludstmaskpipe_bk_q));
 
     wire [{REGIDWIDTH}*(1+1)-1:0] faludstpipe_bk_q;
-    assign {CBS}dst[FU_FALU+bk][5],dst[FU_FALU+bk][4]{CBE} = faludstpipe_bk_q;
+    assign {CBS}dst[5*(NUMFUS*REGIDWIDTH)+(FU_FALU+bk)*REGIDWIDTH +: REGIDWIDTH],dst[5*(NUMFUS*REGIDWIDTH)+(FU_FALU+bk)*REGIDWIDTH +: REGIDWIDTH]{CBE} = faludstpipe_bk_q;
 
 //module instance 
     pipe_{REGIDWIDTH}_1 faludstpipe_bk (
@@ -3233,8 +3233,8 @@ assign {CBS}dst_mask[FU_ALU+bk][5],dst_mask[FU_ALU+bk][4]{CBE} = aludstmaskpipe_
 '''
         string8_basic ='''
 
-      assign dst[FU_MATMUL][gg+4] = dst_matmul[REGIDWIDTH*(gg+1)-1:REGIDWIDTH*gg];
-      assign dst_mask[FU_MATMUL][gg+4] = dst_mask_matmul[{NUMLANES}*(gg+1)-1:{NUMLANES}*gg];
+      assign dst[(gg+4)*(NUMFUS*REGIDWIDTH)+(FU_MATMUL)*REGIDWIDTH +: REGIDWIDTH] = dst_matmul[REGIDWIDTH*(gg+1)-1:REGIDWIDTH*gg];
+      assign dst_mask[(gg+4)*(NUMFUS*{NUMLANES})+(FU_MATMUL)*{NUMLANES} +: {NUMLANES}] = dst_mask_matmul[{NUMLANES}*(gg+1)-1:{NUMLANES}*gg];
 
 '''
         string8 = ""
@@ -3341,9 +3341,9 @@ trp_unit_{REGIDWIDTH} u_trp (
 /************************** WB Pipeline Stage ********************************/
 /******************************************************************************/
 
-    assign wb_dst[FU_ALU+ba]=dst[FU_ALU+ba][5];
+    assign wb_dst[FU_ALU+ba]=dst[5*(NUMFUS*REGIDWIDTH)+(FU_ALU+ba)*REGIDWIDTH +: REGIDWIDTH];
     assign wb_dst_we[FU_ALU+ba]=dst_we[FU_ALU+ba][5] && ~pipe_squash[5];
-    assign wb_dst_mask[FU_ALU+ba]=dst_mask[FU_ALU+ba][5];
+    assign wb_dst_mask[FU_ALU+ba]=dst_mask[5*(NUMFUS*{NUMLANES})+(FU_ALU+ba)*{NUMLANES} +: {NUMLANES}];
     assign D_wb_last_subvector[FU_ALU+ba]=D_last_subvector_s5[FU_ALU+ba];
 
     assign D_wb_last_subvector[FU_FALU+ba]=D_last_subvector_s5[FU_FALU+ba];
@@ -3355,145 +3355,144 @@ trp_unit_{REGIDWIDTH} u_trp (
        
         string12='''
 
-  assign wb_dst[FU_MEM]=dst[FU_MEM][5];
+  assign wb_dst[FU_MEM]=dst[5*(NUMFUS*REGIDWIDTH)+(FU_MEM)*REGIDWIDTH +: REGIDWIDTH];
   assign wb_dst_we[FU_MEM]=dst_we[FU_MEM][5] && (~pipe_advance[5]|~pipe_squash[5]);
   assign wb_dst_mask[FU_MEM]=load_result_mask_s5;
   assign D_wb_last_subvector[FU_MEM]=D_last_subvector_s5[FU_MEM];
 
-  assign wb_dst[FU_MUL]=dst[FU_MUL][5];
+  assign wb_dst[FU_MUL]=dst[5*(NUMFUS*REGIDWIDTH)+(FU_MUL)*REGIDWIDTH +: REGIDWIDTH];
   assign wb_dst_we[FU_MUL]=dst_we[FU_MUL][5] && ~pipe_squash[5];
-  assign wb_dst_mask[FU_MUL]=dst_mask[FU_MUL][5];
+  assign wb_dst_mask[FU_MUL]=dst_mask[5*(NUMFUS*{NUMLANES})+(FU_MUL)*{NUMLANES} +: {NUMLANES}];
   assign D_wb_last_subvector[FU_MUL]=D_last_subvector_s5[FU_MUL];
 
 
-  assign wb_dst[FU_BFADDER] = dst[FU_BFADDER][5];
+  assign wb_dst[FU_BFADDER] = dst[5*(NUMFUS*REGIDWIDTH)+(FU_BFADDER)*REGIDWIDTH +: REGIDWIDTH];
   assign wb_dst_we[FU_BFADDER] = dst_we[FU_BFADDER][5] && ~pipe_squash[5];
-  assign wb_dst_mask[FU_BFADDER] = dst_mask[FU_BFADDER][5];
+  assign wb_dst_mask[FU_BFADDER] = dst_mask[5*(NUMFUS*{NUMLANES})+(FU_BFADDER)*{NUMLANES} +: {NUMLANES}];
   assign D_wb_last_subvector[FU_BFADDER] = D_last_subvector_s5[FU_BFADDER];
 
-  assign wb_dst[FU_BFMULT] = dst[FU_BFMULT][5];
+  assign wb_dst[FU_BFMULT] = dst[5*(NUMFUS*REGIDWIDTH)+(FU_BFMULT)*REGIDWIDTH +: REGIDWIDTH];
   assign wb_dst_we[FU_BFMULT] = dst_we[FU_BFMULT][5] && ~pipe_squash[5];
-  assign wb_dst_mask[FU_BFMULT] = dst_mask[FU_BFMULT][5];
+  assign wb_dst_mask[FU_BFMULT] = dst_mask[5*(NUMFUS*{NUMLANES})+(FU_BFMULT)*{NUMLANES} +: {NUMLANES}];
   assign D_wb_last_subvector[FU_BFMULT] = D_last_subvector_s5[FU_BFMULT];
 
-  assign wb_dst[FU_ACT] = dst[FU_ACT][5];
+  assign wb_dst[FU_ACT] = dst[5*(NUMFUS*REGIDWIDTH)+(FU_ACT)*REGIDWIDTH +: REGIDWIDTH];
   assign wb_dst_we[FU_ACT] = dst_we[FU_ACT][5] && ~pipe_squash[5];
-  assign wb_dst_mask[FU_ACT] = dst_mask[FU_ACT][5];
+  assign wb_dst_mask[FU_ACT] = dst_mask[5*(NUMFUS*{NUMLANES})+(FU_ACT)*{NUMLANES} +: {NUMLANES}];
   assign D_wb_last_subvector[FU_ACT] = D_last_subvector_s5[FU_ACT];
 
-  assign wb_dst[FU_MATMUL]=dst[FU_MATMUL][5];
+  assign wb_dst[FU_MATMUL]=dst[5*(NUMFUS*REGIDWIDTH)+(FU_MATMUL)*REGIDWIDTH +: REGIDWIDTH];
   assign wb_dst_we[FU_MATMUL]=dst_we[FU_MATMUL][5] && ~pipe_squash[5];
-  assign wb_dst_mask[FU_MATMUL]=dst_mask[FU_MATMUL][5];
+  assign wb_dst_mask[FU_MATMUL]=dst_mask[5*(NUMFUS*{NUMLANES})+(FU_MATMUL)*{NUMLANES} +: {NUMLANES}];
   //TODO: There is no code that assigns to the s31 var used below. Need to add that code
   //This is only a debug var, so it doesn't affect functionality
   assign D_wb_last_subvector[FU_MATMUL]=D_last_subvector_s31[FU_MATMUL];
 
   // ******************  Map functional units to banks ******************
-//    for (bw=0; bw<{NUMBANKS}; bw=bw+1)
-//  always@*
-//    begin
-//      vr_c_we[bw]=(wb_dst_we[FU_MUL] && `LO(wb_dst[FU_MUL],{LOG2NUMBANKS})==bw) //||
-//                  (wb_dst_we[FU_MATMUL] && `LO(wb_dst[FU_MATMUL],{LOG2NUMBANKS})//==bw) ||
-//                  (wb_dst_we[FU_BFADDER] && `LO(wb_dst[FU_BFADDER],//{LOG2NUMBANKS})==bw) ||
-//                  (wb_dst_we[FU_BFMULT] && `LO(wb_dst[FU_BFMULT],{LOG2NUMBANKS})//==bw) ||
-//                  (wb_dst_we[FU_ACT] && `LO(wb_dst[FU_ACT],{LOG2NUMBANKS})==bw) //||
-//                  (wb_dst_we[FU_MEM] && `LO(wb_dst[FU_MEM],{LOG2NUMBANKS})==bw) //||
-//                  (wb_dst_we[FU_ALU] && `LO(wb_dst[FU_ALU],{LOG2NUMBANKS})==bw &//& {ALUPERBANK}==0) ||
-//                  (wb_dst_we[FU_ALU+bw] && {ALUPERBANK}!=0);
-//      //TODO: Update this code for matmul. This is for debug only, so skipping //it for now.
-//      //Tells test_bench when to record register file contents.
-//
-//      //Record if instruction writes to VRF, on last subvector, and not stalled
-//      D_wb_instrdone[bw] = pipe_advance[5] && (
-//        (({ALUPERBANK}==0) ?
-//          (dst_we[FU_ALU][5] && D_wb_last_subvector[FU_ALU] && `LO(wb_dst//[FU_ALU],{LOG2NUMBANKS})==bw) :
-//          (dst_we[FU_ALU+bw][5] && D_wb_last_subvector[FU_ALU+bw])) || 
-//        (dst_we[FU_MUL][5] && D_wb_last_subvector[FU_MUL] && `LO(wb_dst[FU_MUL],//{LOG2NUMBANKS})==bw) || 
-//        (dst_we[FU_MEM][5] && D_wb_last_subvector[FU_MEM] && `LO(wb_dst[FU_MEM],//{LOG2NUMBANKS})==bw));
-//      //Take matmul output
-//      if (wb_dst_we[FU_MATMUL] && `LO(wb_dst[FU_MATMUL],{LOG2NUMBANKS})==bw)
-//
-//      begin
-//        vmask_final[bw]=wb_dst_mask[FU_MATMUL];
-//        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_MATMUL]>>//{LOG2NUMBANKS};
-//        vr_c_reg[bw]= wb_dst[FU_MATMUL];
-//        vr_c_writedatain[bw]= matmul_out;
-//        D_last_subvector_done[bw]=D_wb_last_subvector[FU_MATMUL];
-//      end      
-//      else if (wb_dst_we[FU_TRP] && `LO(wb_dst[FU_TRP],{LOG2NUMBANKS})==bw)
-//      begin
-//        vmask_final[bw]=wb_dst_mask[FU_TRP];
-//        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_TRP]>>//{LOG2NUMBANKS};
-//        vr_c_reg[bw]= wb_dst[FU_TRP];
-//        vr_c_writedatain[bw]= bfadder_result_s5;
-//        D_last_subvector_done[bw]=D_wb_last_subvector[FU_TRP];
-//      end
-//      //Take bfadder output
-//      else if (wb_dst_we[FU_BFADDER] && `LO(wb_dst[FU_BFADDER],{LOG2NUMBANKS})//==bw)
-//      begin
-//        vmask_final[bw]=wb_dst_mask[FU_BFADDER];
-//        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_BFADDER]>>//{LOG2NUMBANKS};
-//        vr_c_reg[bw]= wb_dst[FU_BFADDER];
-//        vr_c_writedatain[bw]= bfadder_result_s5;
-//        D_last_subvector_done[bw]=D_wb_last_subvector[FU_BFADDER];
-//      end
-//      else if (wb_dst_we[FU_BFMULT] && `LO(wb_dst[FU_BFMULT],{LOG2NUMBANKS})//==bw)
-//      begin
-//        vmask_final[bw]=wb_dst_mask[FU_BFMULT];
-//        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_BFMULT]>>//{LOG2NUMBANKS};
-//        vr_c_reg[bw]= wb_dst[FU_BFMULT];
-//        vr_c_writedatain[bw]= bfmult_result_s5;
-//        D_last_subvector_done[bw]=D_wb_last_subvector[FU_BFMULT];
-//      end
-//      else if (wb_dst_we[FU_ACT] && `LO(wb_dst[FU_ACT],{LOG2NUMBANKS})==bw)
-//      begin
-//        vmask_final[bw]=wb_dst_mask[FU_ACT];
-//        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_ACT]>>//{LOG2NUMBANKS};
-//        vr_c_reg[bw]= wb_dst[FU_ACT];
-//        vr_c_writedatain[bw]= act_result_s5;
-//        D_last_subvector_done[bw]=D_wb_last_subvector[FU_ACT];
-//      end
-//      //Take multiplier output
-//      else if (wb_dst_we[FU_MUL] && `LO(wb_dst[FU_MUL],{LOG2NUMBANKS})==bw)
-//      begin
-//        vmask_final[bw]=wb_dst_mask[FU_MUL];
-//        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_MUL]>>//{LOG2NUMBANKS};
-//        vr_c_reg[bw]= wb_dst[FU_MUL];
-//        vr_c_writedatain[bw]= mulshift_result_s5;
-//        D_last_subvector_done[bw]=D_wb_last_subvector[FU_MUL];
-//      end
-//      //Take Memory unit output
-//      else if (wb_dst_we[FU_MEM] && `LO(wb_dst[FU_MEM],{LOG2NUMBANKS})==bw)
-//      begin
-//        vmask_final[bw]=wb_dst_mask[FU_MEM];
-//        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_MEM]>>//{LOG2NUMBANKS};
-//        vr_c_reg[bw]= wb_dst[FU_MEM];
-//        vr_c_writedatain[bw]= load_result_s5;
-//        D_last_subvector_done[bw]=D_wb_last_subvector[FU_MEM];
-//      end
-//      else
-//      //Take ALU output
-//      begin
-//        vmask_final[bw]=wb_dst_mask[FU_ALU+bw*{ALUPERBANK}];
-//        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_ALU+bw*//{ALUPERBANK}]>>{LOG2NUMBANKS};
-//        vr_c_reg[bw]= wb_dst[FU_ALU+bw*{ALUPERBANK}];
-//        vr_c_writedatain[bw]= alu_result_s5[bw*{ALUPERBANK}];
-//        //Do ALU and FALU for last subvector
-//        D_last_subvector_done[bw]=
-//          (D_wb_last_subvector[FU_ALU+bw*{ALUPERBANK}] && `LO(wb_dst[FU_ALU+bw*//{ALUPERBANK}],{LOG2NUMBANKS})==bw) |
-//          (D_wb_last_subvector[FU_FALU+bw*{ALUPERBANK}] && `LO(dst[FU_FALU+bw*//{ALUPERBANK}][5],{LOG2NUMBANKS})==bw);
-//      end
-//
-//
-//      //Generate byte enable from mask
-//      for (j=0; j<{NUMLANES}; j=j+1)
-//        vr_c_byteen[bw*{VPW}*{NUMLANES} + j*{VPW} +: {VPW} ]={CBS}{VPW}{CBS}//vmask_final[bw][j]{CBE}{CBE};
-//
-//      //*********** Flag writeback ***********
-//      vf_c_reg[bw*BANKREGIDWIDTH+:BANKREGIDWIDTH]=dst[FU_FALU+bw*{ALUPERBANK}]//[5]>>{LOG2NUMBANKS};
-//      vf_c_writedatain[bw*{NUMLANES}+:{NUMLANES}]=flagalu_result_s5[bw*//{ALUPERBANK}];
-//      vf_c_we[bw]=dst_we[FU_FALU+bw*{ALUPERBANK}][5] && `LO(dst[FU_FALU+bw*//{ALUPERBANK}][5],{LOG2NUMBANKS})==bw;
-//    end
+  always@*
+    for (bw=0; bw<{NUMBANKS}; bw=bw+1)
+    begin
+      vr_c_we[bw]=(wb_dst_we[FU_MUL]     && (wb_dst[FU_MUL]    &&{CBS}{CBS}32-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE})==bw) ||
+                  (wb_dst_we[FU_MATMUL]  && (wb_dst[FU_MATMUL] &&{CBS}{CBS}32-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE})==bw) ||
+                  (wb_dst_we[FU_BFADDER] && (wb_dst[FU_BFADDER]&&{CBS}{CBS}32-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE})==bw) ||
+                  (wb_dst_we[FU_BFMULT]  && (wb_dst[FU_BFMULT] &&{CBS}{CBS}32-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE})==bw) ||
+                  (wb_dst_we[FU_ACT]     && (wb_dst[FU_ACT]    &&{CBS}{CBS}32-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE})==bw) ||
+                  (wb_dst_we[FU_MEM]     && (wb_dst[FU_MEM]    &&{CBS}{CBS}32-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE})==bw) ||
+                  (wb_dst_we[FU_ALU]     && (wb_dst[FU_ALU]    &&{CBS}{CBS}32-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE})==bw && {ALUPERBANK}==0) ||
+                  (wb_dst_we[FU_ALU+bw]  && {ALUPERBANK}!=0);
+      //TODO: Update this code for matmul. This is for debug only, so skipping //it for now.
+      //Tells test_bench when to record register file contents.
+
+      //Record if instruction writes to VRF, on last subvector, and not stalled
+      D_wb_instrdone[bw] = pipe_advance[5] && (
+        (({ALUPERBANK}==0) ?
+          (dst_we[FU_ALU][5] && D_wb_last_subvector[FU_ALU] && ((wb_dst[FU_ALU] && {CBS}{CBS}32-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE})==bw)) :
+          (dst_we[FU_ALU+bw][5] && D_wb_last_subvector[FU_ALU+bw]) || 
+          (dst_we[FU_MUL][5] && D_wb_last_subvector[FU_MUL] && ((wb_dst[FU_MUL] && {CBS}{CBS}32-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE})==bw))|| 
+          (dst_we[FU_MEM][5] && D_wb_last_subvector[FU_MEM] && ((wb_dst[FU_MEM] && {CBS}{CBS}32-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE})==bw))));
+      //Take matmul output
+      if (wb_dst_we[FU_MATMUL] && (wb_dst[FU_MATMUL] && ({CBS}{CBS}32-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE}))==bw)
+      begin
+        vmask_final[bw]=wb_dst_mask[FU_MATMUL];
+        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_MATMUL]>>{LOG2NUMBANKS};
+        vr_c_reg[bw]= wb_dst[FU_MATMUL];
+        vr_c_writedatain[bw]= matmul_out;
+        D_last_subvector_done[bw]=D_wb_last_subvector[FU_MATMUL];
+      end      
+      else if (wb_dst_we[FU_TRP] && (wb_dst[FU_TRP] && ({CBS}{CBS}32-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE}))==bw)
+      begin
+        vmask_final[bw]=wb_dst_mask[FU_TRP];
+        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_TRP]>>{LOG2NUMBANKS};
+        vr_c_reg[bw]= wb_dst[FU_TRP];
+        vr_c_writedatain[bw]= bfadder_result_s5;
+        D_last_subvector_done[bw]=D_wb_last_subvector[FU_TRP];
+      end
+      //Take bfadder output
+      else if (wb_dst_we[FU_BFADDER] && (wb_dst[FU_BFADDER] && ({CBS}{CBS}32-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE})) ==bw)
+      begin
+        vmask_final[bw]=wb_dst_mask[FU_BFADDER];
+        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_BFADDER]>>{LOG2NUMBANKS};
+        vr_c_reg[bw]= wb_dst[FU_BFADDER];
+        vr_c_writedatain[bw]= bfadder_result_s5;
+        D_last_subvector_done[bw]=D_wb_last_subvector[FU_BFADDER];
+      end
+      else if (wb_dst_we[FU_BFMULT] && (wb_dst[FU_BFMULT] && ({CBS}{CBS}32-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE}))==bw)
+      begin
+        vmask_final[bw]=wb_dst_mask[FU_BFMULT];
+        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_BFMULT]>>{LOG2NUMBANKS};
+        vr_c_reg[bw]= wb_dst[FU_BFMULT];
+        vr_c_writedatain[bw]= bfmult_result_s5;
+        D_last_subvector_done[bw]=D_wb_last_subvector[FU_BFMULT];
+      end
+      else if (wb_dst_we[FU_ACT] && (wb_dst[FU_ACT] &&({CBS}{CBS}32-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE}))==bw)
+      begin
+        vmask_final[bw]=wb_dst_mask[FU_ACT];
+        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_ACT]>>{LOG2NUMBANKS};
+        vr_c_reg[bw]= wb_dst[FU_ACT];
+        vr_c_writedatain[bw]= act_result_s5;
+        D_last_subvector_done[bw]=D_wb_last_subvector[FU_ACT];
+      end
+      //Take multiplier output
+      else if (wb_dst_we[FU_MUL] && (wb_dst[FU_MUL] && ({CBS}{CBS}32-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE}))==bw)
+      begin
+        vmask_final[bw]=wb_dst_mask[FU_MUL];
+        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_MUL]>>{LOG2NUMBANKS};
+        vr_c_reg[bw]= wb_dst[FU_MUL];
+        vr_c_writedatain[bw]= mulshift_result_s5;
+        D_last_subvector_done[bw]=D_wb_last_subvector[FU_MUL];
+      end
+      //Take Memory unit output
+      else if (wb_dst_we[FU_MEM] && (wb_dst[FU_MEM]&&({CBS}{CBS}32-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE}))==bw)
+      begin
+        vmask_final[bw]=wb_dst_mask[FU_MEM];
+        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_MEM]>>{LOG2NUMBANKS};
+        vr_c_reg[bw]= wb_dst[FU_MEM];
+        vr_c_writedatain[bw]= load_result_s5;
+        D_last_subvector_done[bw]=D_wb_last_subvector[FU_MEM];
+      end
+      else
+      //Take ALU output
+      begin
+        vmask_final[bw]=wb_dst_mask[FU_ALU+bw*{ALUPERBANK}];
+        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_ALU+bw*{ALUPERBANK}]>>{LOG2NUMBANKS};
+        vr_c_reg[bw]= wb_dst[FU_ALU+bw*{ALUPERBANK}];
+        vr_c_writedatain[bw]= alu_result_s5[bw*{ALUPERBANK}];
+        //Do ALU and FALU for last subvector
+        D_last_subvector_done[bw]=
+          (D_wb_last_subvector[FU_ALU+bw*{ALUPERBANK}] && (wb_dst[FU_ALU+bw*{ALUPERBANK}] & ({CBS}{CBS}32-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE})) ==bw) | 
+          (D_wb_last_subvector[FU_FALU+bw*{ALUPERBANK}] && (dst[5*(NUMFUS * REGIDWIDTH) + ((FU_FALU+bw)*{ALUPERBANK}) * REGIDWIDTH +: REGIDWIDTH] &({CBS}{CBS}32-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE}))==bw);
+      end
+
+
+      //Generate byte enable from mask
+      for (j=0; j<{NUMLANES}; j=j+1)
+        vr_c_byteen[bw*{VPW}*{NUMLANES} + j*{VPW} +: {VPW} ]={CBS}{VPW}{CBS}vmask_final[bw][j]{CBE}{CBE};
+
+      //*********** Flag writeback ***********
+      vf_c_reg[bw*BANKREGIDWIDTH+:BANKREGIDWIDTH]=dst[5*(NUMFUS* REGIDWIDTH) + (FU_FALU+bw*{ALUPERBANK})*REGIDWIDTH +: REGIDWIDTH]>>{LOG2NUMBANKS};
+      vf_c_writedatain[bw*{NUMLANES}+:{NUMLANES}]=flagalu_result_s5[bw*{ALUPERBANK}];
+      vf_c_we[bw]= (dst_we[FU_FALU+bw*{ALUPERBANK}][5] && (dst[5*(NUMFUS*REGIDWIDTH)+ (FU_FALU+bw*{ALUPERBANK}) * REGIDWIDTH +: REGIDWIDTH] & ({CBS}{CBS}32-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE}))==bw);
+    end
 
   //********** Scalar writeback ***********
   assign vs_wetrack={CBS}ctrl_vs_we[5:4],|ctrl3_vs_we,ctrl2_vs_we{CBE};
