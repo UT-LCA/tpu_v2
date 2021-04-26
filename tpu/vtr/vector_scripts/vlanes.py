@@ -3068,26 +3068,27 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
   wire [2:0] vmul_unit_out_dst_we;
   assign dst_we[FU_MUL][6:4] = vmul_unit_out_dst_we;
 
-//   vmul_unit_{LOG2LANEWIDTH}_{NUMMULLANES}_{LOG2NUMLANES}_{REGIDWIDTH} vmul_unit(
-//     .clk(clk),
-//     .resetn(resetn),
-//     .op(ctrl4_mulshift_op),
-//     .activate(ctrl4_mulshift_en),
-//     .en(pipe_advance[6:4]),
-//     .squash(pipe_squash[6:4]),
-//     .stall(stall_mulunit),
-//     .opA(vr_src1[FU_MUL]),
-//     .opB(vr_src2[FU_MUL]),
-//     .vshamt( (ctrl4_rshiftnonzero) ? vc_s4[FU_MUL] : 0 ),
-//     .vmask(vmask[FU_MUL]),
-//     .in_dst(dst_s4[FU_MUL]),
-//     .in_dst_we(dst_we_s4[FU_MUL]),
+   vmul_unit_{LOG2LANEWIDTH}_{NUMMULLANES}_{LOG2NUMLANES}_{REGIDWIDTH} vmul_unit(
+     .clk(clk),
+     .resetn(resetn),
+     .op(ctrl4_mulshift_op),
+     .activate(ctrl4_mulshift_en),
+     .en(pipe_advance[6:4]),
+     .squash(pipe_squash[6:4]),
+     .stall(stall_mulunit),
+     .opA(vr_src1[FU_MUL]),
+     .opB(vr_src2[FU_MUL]),
+     .vshamt( (ctrl4_rshiftnonzero) ? vc_s4[FU_MUL] : 0 ),
+     .vmask(vmask[FU_MUL]),
+     .in_dst(dst_s4[FU_MUL]),
+     .in_dst_we(dst_we_s4[FU_MUL]),
 //     .out_dst({CBS}dst[6*(NUMFUS*REGIDWIDTH) + FU_MUL*REGIDWIDTH +: REGIDWIDTH],dst[5*(NUMFUS*REGIDWIDTH) + FU_MUL*REGIDWIDTH +: REGIDWIDTH],dst[4*(NUMFUS*REGIDWIDTH) + FU_MUL*REGIDWIDTH +: REGIDWIDTH]{CBE}),
-// //    .out_dst(),
-//     .out_dst_we(vmul_unit_out_dst_we),
+     .out_dst(),
+     .out_dst_we(vmul_unit_out_dst_we),
 //     .out_dst_mask({CBS}dst_mask[6*(NUMFUS*{NUMLANES})+FU_MUL*{NUMLANES} +: {NUMLANES}],dst_mask[5*(NUMFUS*{NUMLANES})+FU_MUL*{NUMLANES} +: {NUMLANES}],dst_mask[4*(NUMFUS*{NUMLANES})+FU_MUL*{NUMLANES} +: {NUMLANES}]{CBE}),
-//     .result(mulshift_result_s5)
-//   );
+     .out_dst_mask(),
+     .result(mulshift_result_s5)
+   );
 
   //============== ALU Unit =============
 
@@ -3525,10 +3526,10 @@ endmodule
         uut = vmem_unit(fp)
         uut.write(lanewidth,numlanes,log2numlanes,nummemparallellanes,log2nummemparallellanes,vcwidth,dmem_writewidth,log2dmem_writewidth,dmem_readwidth,log2dmem_readwidth,regwidthminusvr,regidwidth)
         fp.close()
-        #fp = open("verilog/vmul_unit.v",'a')
-        #uut = vmul_unit(fp)
-        #uut.write(log2lanewidth,nummullanes,log2numlanes,regidwidth)
-        #fp.close()
+        fp = open("verilog/vmul_unit.v",'a')
+        uut = vmul_unit(fp)
+        uut.write(log2lanewidth,nummullanes,log2numlanes,regidwidth)
+        fp.close()
         #fp = open("verilog/vmul_unit.v",'a')
         #uut = vmul_unit(fp)
         #uut.write(log2lanewidth,nummullanes,log2numlanes,regidwidth)
