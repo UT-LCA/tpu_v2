@@ -28,31 +28,8 @@ input  wren_a;
 input  wren_b;
 input [{DWIDTH}-1:0] data_a;
 input [{DWIDTH}-1:0] data_b;
-output reg [{DWIDTH}-1:0] out_a;
-output reg [{DWIDTH}-1:0] out_b;
-
-`ifdef SIMULATION_MEMORY
-reg [{DWIDTH}-1:0] ram[{NUM_WORDS}-1:0];
-
-always @ (posedge clk) begin 
-  if (wren_a) begin
-      ram[address_a] <= data_a;
-  end
-  else begin
-      out_a <= ram[address_a];
-  end
-end
-  
-always @ (posedge clk) begin 
-  if (wren_b) begin
-      ram[address_b] <= data_b;
-  end 
-  else begin
-      out_b <= ram[address_b];
-  end
-end
- 
-`else
+output [{DWIDTH}-1:0] out_a;
+output[{DWIDTH}-1:0] out_b;
 
 dual_port_ram u_dual_port_ram(
 .addr1(address_a),
@@ -65,10 +42,6 @@ dual_port_ram u_dual_port_ram(
 .out2(out_b),
 .clk(clk)
 );
-
-`endif
-
-
 
 endmodule
 '''

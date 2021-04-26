@@ -139,7 +139,7 @@ class vpu():
 
     def make_str(self,log2dmem_writewidth,log2dmem_readwidth):
         numlanes = 8
-        log2numlanes = 2
+        log2numlanes = 3
         nummemparallellanes = 8 
         log2nummemparallellanes = 3
         nummullanes = 8
