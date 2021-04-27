@@ -5,7 +5,7 @@ class matmul_defines():
     def make_str(self):
         string = '''\
 
-`define DWIDTH 32
+`define DWIDTH 16
 `define AWIDTH 10
 `define MEM_SIZE 1024
 

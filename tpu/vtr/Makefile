@@ -1,5 +1,5 @@
-BASE_DIR = ~/Desktop/utexas_thesis
-BASE_FILE_NAME = cop0
+BASE_DIR = /home/sangramkate
+BASE_FILE_NAME = system
 
 SUB_DIR = scalar
 

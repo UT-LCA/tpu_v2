@@ -157,5 +157,5 @@ endmodule'''
 if __name__ == '__main__':
     fp = open(args[0], "w")
     uut1 = mem_icache(fp)
-    uut1.write(7,6)
+    uut1.write(7,12)
     fp.close()

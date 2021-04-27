@@ -1,6 +1,6 @@
 BASE_DIR = /home/sangramkate
 FINAL_FILE_NAME = final
-BASE_FILE_NAME = vpu
+BASE_FILE_NAME = processor
 
 SUB_DIR = vector
 

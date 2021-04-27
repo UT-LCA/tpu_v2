@@ -208,7 +208,7 @@ module vlanes_{NUMLANES}_{LOG2NUMLANES}_{NUMMEMPARALLELLANES}_{LOG2NUMMEMPARALLE
     vstride_in,
     vs_in,
     matmul_masks_in,
-
+    mulshift_result_s5,
     // vs Writeback
     vs_writedata,
     vs_we,       // Actually issues write command for vs (after done stalling)
@@ -300,6 +300,7 @@ input               dbus_cachemiss;
 input               dbus_wait;
 output  [ 31 : 0 ]  dbus_prefetch;
 
+output [ {LANEWIDTH}*{NUMLANES}-1 : 0 ] mulshift_result_s5;
 
 //`include "visa.v"
 parameter COP2_VADD           = 'b1000000000;
@@ -661,7 +662,6 @@ wire [ {LANEWIDTH}*{NUMLANES}-1 : 0 ] alu_result_s5[({NUMBANKS}-1)*{ALUPERBANK}:
 wire           [ {NUMLANES}-1 : 0 ] alu_cmpresult_s4[({NUMBANKS}-1)*{ALUPERBANK}:0];
 wire           [ {NUMLANES}-1 : 0 ] flagalu_result_s4[({NUMBANKS}-1)*{ALUPERBANK}:0];
 wire           [ {NUMLANES}-1 : 0 ] flagalu_result_s5[({NUMBANKS}-1)*{ALUPERBANK}:0];
-wire [ {LANEWIDTH}*{NUMLANES}-1 : 0 ] mulshift_result_s5;
 
 //Support 1 Lane processor
 // wire [(({LOG2NUMLANES}>0) ? {LOG2NUMLANES} : 1)-1:0] elmshamt[`MAX_PIPE_STAGES-1:2];
@@ -2592,9 +2592,9 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
       .haz(stall_hazfsrc2));
 
 
-//-///******************************************************************************/
-//-///************************** 3rd Pipeline Stage ********************************/
-//-///******************************************************************************/
+/******************************************************************************/
+/************************** 3rd Pipeline Stage ********************************/
+/******************************************************************************/
 
   always@*
     for (bi=0; bi<{NUMBANKS}; bi=bi+1)
@@ -2663,13 +2663,13 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
       src2_s3[b]=_src2_s3[b] | (rdelm[b*{LOG2MVL}+:{LOG2MVL}]>>{LOG2NUMLANES});
 
       // wrongbank_s3[b]=(`LO(rdelm[b*{LOG2MVL}+:{LOG2MVL}]>>{LOG2NUMLANES},{LOG2NUMBANKS})!=b);
-       wrongbank_s3[b]=(((rdelm[b*{LOG2MVL}+:{LOG2MVL}]>>{LOG2NUMLANES})&({CBS}{CBS}(32-{LOG2NUMBANKS}){CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE})) != b );
+       wrongbank_s3[b]=(((rdelm[b*{LOG2MVL}+:{LOG2MVL}]>>{LOG2NUMLANES})&({CBS}{CBS}({REGIDWIDTH}-{LOG2NUMBANKS}){CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE})) != b );
 
       vr_a_reg[b*BANKREGIDWIDTH +: BANKREGIDWIDTH]=src1_s3[b]>>{LOG2NUMBANKS};
       vr_b_reg[b*BANKREGIDWIDTH +: BANKREGIDWIDTH]=src2_s3[b]>>{LOG2NUMBANKS};
       vr_a_en[b]=ctrl3_vr_a_en[b] && pipe_advance[3];
       vr_b_en[b]=ctrl3_vr_b_en[b] && pipe_advance[3];
-
+     
     if ((ctrl3_vf_a_sel[b]))
     begin
       vf_a_reg[b*BANKREGIDWIDTH +: BANKREGIDWIDTH] = _src1_s3[((b-0)*((REGIDWIDTH-1)-(0)+1)+REGIDWIDTH-1) : ((b-0)*((REGIDWIDTH-1)-(0)+1)+REGIDWIDTH-VRIDWIDTH)] >> 1;
@@ -3068,6 +3068,9 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
   wire [2:0] vmul_unit_out_dst_we;
   assign dst_we[FU_MUL][6:4] = vmul_unit_out_dst_we;
 
+  wire [3*REGIDWIDTH-1:0] temp_vmul_dst;
+  wire [3*{NUMLANES}-1:0] temp_vmul_mask;
+
    vmul_unit_{LOG2LANEWIDTH}_{NUMMULLANES}_{LOG2NUMLANES}_{REGIDWIDTH} vmul_unit(
      .clk(clk),
      .resetn(resetn),
@@ -3082,14 +3085,17 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
      .vmask(vmask[FU_MUL]),
      .in_dst(dst_s4[FU_MUL]),
      .in_dst_we(dst_we_s4[FU_MUL]),
-//     .out_dst({CBS}dst[6*(NUMFUS*REGIDWIDTH) + FU_MUL*REGIDWIDTH +: REGIDWIDTH],dst[5*(NUMFUS*REGIDWIDTH) + FU_MUL*REGIDWIDTH +: REGIDWIDTH],dst[4*(NUMFUS*REGIDWIDTH) + FU_MUL*REGIDWIDTH +: REGIDWIDTH]{CBE}),
-     .out_dst(),
+     .out_dst(temp_vmul_dst),
      .out_dst_we(vmul_unit_out_dst_we),
-//     .out_dst_mask({CBS}dst_mask[6*(NUMFUS*{NUMLANES})+FU_MUL*{NUMLANES} +: {NUMLANES}],dst_mask[5*(NUMFUS*{NUMLANES})+FU_MUL*{NUMLANES} +: {NUMLANES}],dst_mask[4*(NUMFUS*{NUMLANES})+FU_MUL*{NUMLANES} +: {NUMLANES}]{CBE}),
-     .out_dst_mask(),
+     .out_dst_mask(temp_vmul_mask),
      .result(mulshift_result_s5)
    );
-
+    assign dst[6*(NUMFUS*REGIDWIDTH) + FU_MUL*REGIDWIDTH +: REGIDWIDTH] = temp_vmul_dst[3*REGIDWIDTH-1:2*REGIDWIDTH] ;
+    assign dst[5*(NUMFUS*REGIDWIDTH) + FU_MUL*REGIDWIDTH +: REGIDWIDTH] = temp_vmul_dst[2*REGIDWIDTH-1:1*REGIDWIDTH] ;
+    assign dst[4*(NUMFUS*REGIDWIDTH) + FU_MUL*REGIDWIDTH +: REGIDWIDTH] = temp_vmul_dst[1*REGIDWIDTH-1:0*REGIDWIDTH] ;
+    assign dst_mask[6*(NUMFUS*{NUMLANES})+FU_MUL*{NUMLANES} +: {NUMLANES}] = temp_vmul_mask[3*{NUMLANES}-1:2*{NUMLANES}];
+    assign dst_mask[5*(NUMFUS*{NUMLANES})+FU_MUL*{NUMLANES} +: {NUMLANES}] = temp_vmul_mask[2*{NUMLANES}-1:1*{NUMLANES}];
+    assign dst_mask[4*(NUMFUS*{NUMLANES})+FU_MUL*{NUMLANES} +: {NUMLANES}] = temp_vmul_mask[1*{NUMLANES}-1:0*{NUMLANES}];
   //============== ALU Unit =============
 
   //If APB value is true, create one ALU per bank (per lane)
@@ -3250,6 +3256,12 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
 
 //module instance 
 
+wire [`MAX_PIPE_STAGES-1:4] temp_matmul_we;
+wire [`MAT_MUL_SIZE * `DWIDTH-1:0] matmul_in0,matmul_in1;
+
+assign matmul_in0 = vr_src1[FU_MATMUL];
+assign matmul_in1 = vr_src2[FU_MATMUL];
+
  matmul_unit_{REGIDWIDTH}_29_{NUMLANES} u_matmul(
  .clk(clk),
  .resetn(resetn),
@@ -3257,8 +3269,8 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
  .en(pipe_advance[`MAX_PIPE_STAGES-1:4]),
  .squash(pipe_squash[`MAX_PIPE_STAGES-1:4]),
  .stall(stall_matmul),
- .a_data(vr_src1[FU_MATMUL][{NUMLANES}*{LANEWIDTH}-1:0]),
- .b_data(vr_src2[FU_MATMUL][{NUMLANES}*{LANEWIDTH}-1:0]),
+ .a_data(matmul_in0),
+ .b_data(matmul_in1),
  .validity_mask_a_rows(matmul_masks_in[1*`MAT_MUL_SIZE-1:0*`MAT_MUL_SIZE]),
  .validity_mask_a_cols(matmul_masks_in[2*`MAT_MUL_SIZE-1:1*`MAT_MUL_SIZE]),
  .validity_mask_b_rows(matmul_masks_in[2*`MAT_MUL_SIZE-1:1*`MAT_MUL_SIZE]),
@@ -3268,10 +3280,11 @@ wire [{NUMBANKS}*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
  .in_dst(dst_s4[FU_MATMUL]),
  .in_dst_we(dst_we_s4[FU_MATMUL]),
  .out_dst(dst_matmul),
-// .out_dst_we(dst_we[FU_MATMUL][`MAX_PIPE_STAGES-1:4]),
- .out_dst_we(),
+ .out_dst_we(temp_matmul_we),
  .out_dst_mask(dst_mask_matmul)
  );
+
+assign dst_we[FU_MATMUL] = temp_matmul_we;
 
 //module instance 
 
@@ -3395,7 +3408,7 @@ trp_unit_{LANEWIDTH} u_trp (
     for (bw=0; bw<{NUMBANKS}; bw=bw+1)
     begin
       vr_c_we[bw]=(wb_dst_we[FU_MUL]     && (wb_dst[FU_MUL]    &{CBS}{CBS}{REGIDWIDTH}-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE})==bw) ||
-               //   (wb_dst_we[FU_MATMUL]  && (wb_dst[FU_MATMUL] &{CBS}{CBS}{REGIDWIDTH}-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE})==bw) ||
+                  (wb_dst_we[FU_MATMUL]  && (wb_dst[FU_MATMUL] &{CBS}{CBS}{REGIDWIDTH}-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE})==bw) ||
                   (wb_dst_we[FU_BFADDER] && (wb_dst[FU_BFADDER]&{CBS}{CBS}{REGIDWIDTH}-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE})==bw) ||
                   (wb_dst_we[FU_BFMULT]  && (wb_dst[FU_BFMULT] &{CBS}{CBS}{REGIDWIDTH}-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE})==bw) ||
                   (wb_dst_we[FU_ACT]     && (wb_dst[FU_ACT]    &{CBS}{CBS}{REGIDWIDTH}-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE})==bw) ||
@@ -3418,15 +3431,14 @@ trp_unit_{LANEWIDTH} u_trp (
         vmask_final[bw]=wb_dst_mask[FU_MATMUL];
         _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_MATMUL]>>{LOG2NUMBANKS};
         vr_c_reg[bw]= wb_dst[FU_MATMUL];
-//        vr_c_writedatain[bw]= matmul_out;
+        vr_c_writedatain[bw]= matmul_out;
         D_last_subvector_done[bw]=D_wb_last_subvector[FU_MATMUL];
       end      
       else if(wb_dst_we[FU_TRP] && (wb_dst[FU_TRP] && ({CBS}{CBS}32-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE}))==bw)
-//      if (wb_dst_we[FU_TRP] && (wb_dst[FU_TRP] && ({CBS}{CBS}32-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE}))==bw)
       begin
-         vmask_final[bw]=wb_dst_mask[FU_TRP];
-         _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_TRP]>>{LOG2NUMBANKS};
-         vr_c_reg[bw]= wb_dst[FU_TRP];
+        vmask_final[bw]=wb_dst_mask[FU_TRP];
+        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_TRP]>>{LOG2NUMBANKS};
+        vr_c_reg[bw]= wb_dst[FU_TRP];
 //        vr_c_writedatain[bw]= trp_out;
         D_last_subvector_done[bw]=D_wb_last_subvector[FU_TRP];
       end
@@ -3461,7 +3473,7 @@ trp_unit_{LANEWIDTH} u_trp (
         vmask_final[bw]=wb_dst_mask[FU_MUL];
         _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_MUL]>>{LOG2NUMBANKS};
         vr_c_reg[bw]= wb_dst[FU_MUL];
-//        vr_c_writedatain[bw]= mulshift_result_s5;
+        vr_c_writedatain[bw]= mulshift_result_s5;
         D_last_subvector_done[bw]=D_wb_last_subvector[FU_MUL];
       end
       //Take Memory unit output
@@ -3470,7 +3482,7 @@ trp_unit_{LANEWIDTH} u_trp (
         vmask_final[bw]=wb_dst_mask[FU_MEM];
         _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_MEM]>>{LOG2NUMBANKS};
         vr_c_reg[bw]= wb_dst[FU_MEM];
-//        vr_c_writedatain[bw]= load_result_s5;
+        vr_c_writedatain[bw]= load_result_s5;
         D_last_subvector_done[bw]=D_wb_last_subvector[FU_MEM];
       end
       else
@@ -3479,7 +3491,7 @@ trp_unit_{LANEWIDTH} u_trp (
         vmask_final[bw]=wb_dst_mask[FU_ALU+bw*{ALUPERBANK}];
         _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_ALU+bw*{ALUPERBANK}]>>{LOG2NUMBANKS};
         vr_c_reg[bw]= wb_dst[FU_ALU+bw*{ALUPERBANK}];
-//        vr_c_writedatain[bw]= alu_result_s5[bw*{ALUPERBANK}];
+        vr_c_writedatain[bw]= alu_result_s5[bw*{ALUPERBANK}];
         //Do ALU and FALU for last subvector
         D_last_subvector_done[bw]=
           (D_wb_last_subvector[FU_ALU+bw*{ALUPERBANK}] && (wb_dst[FU_ALU+bw*{ALUPERBANK}] & ({CBS}{CBS}32-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE})) ==bw) | 
@@ -3492,9 +3504,9 @@ trp_unit_{LANEWIDTH} u_trp (
         vr_c_byteen[bw*{VPW}*{NUMLANES} + j*{VPW} +: {VPW} ]={CBS}{VPW}{CBS}vmask_final[bw][j]{CBE}{CBE};
 
       //*********** Flag writeback ***********
-//      vf_c_reg[bw*BANKREGIDWIDTH+:BANKREGIDWIDTH]=dst[5*(NUMFUS* REGIDWIDTH) + (FU_FALU+bw*{ALUPERBANK})*REGIDWIDTH +: REGIDWIDTH]>>{LOG2NUMBANKS};
+    //  vf_c_reg[bw*BANKREGIDWIDTH+:BANKREGIDWIDTH]=dst[5*(NUMFUS* REGIDWIDTH) + (FU_FALU+bw*{ALUPERBANK})*REGIDWIDTH +: REGIDWIDTH]>>{LOG2NUMBANKS};
       vf_c_writedatain[bw*{NUMLANES}+:{NUMLANES}]=flagalu_result_s5[bw*{ALUPERBANK}];
-//      vf_c_we[bw]= (dst_we[FU_FALU+bw*{ALUPERBANK}][5] && (dst[5*(NUMFUS*REGIDWIDTH)+ (FU_FALU+bw*{ALUPERBANK}) * REGIDWIDTH +: REGIDWIDTH] & ({CBS}{CBS}32-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE}))==bw);
+    //  vf_c_we[bw]= (dst_we[FU_FALU+bw*{ALUPERBANK}][5] && (dst[5*(NUMFUS*REGIDWIDTH)+ (FU_FALU+bw*{ALUPERBANK}) * REGIDWIDTH +: REGIDWIDTH] & ({CBS}{CBS}32-{LOG2NUMBANKS}{CBS}1'b0{CBE}{CBE},{CBS}{LOG2NUMBANKS}{CBS}1'b1{CBE}{CBE}{CBE}))==bw);
     end
 
   //********** Scalar writeback ***********
@@ -3509,7 +3521,8 @@ endmodule
         string = string_dispatchwidth + string1 + string2 + string3 + string4 + string5 + string6 + \
                   string7 + string8 + string9 + string10 + string11 + string12
         
-        output_string = self.process_case_stmt(string)
+        #string = string_dispatchwidth + string1 + string2 + string3 +string4 + string5 + "\n" + "endmodule"
+        output_string = self.process_case_stmt(string) 
         fp = open("verilog/vdispatcher.v",'a')
         uut = vdispatcher(fp)
         uut.write(numbanks,dispatcherwidth,log2mvl,log2mvl,log2numlanesp1)

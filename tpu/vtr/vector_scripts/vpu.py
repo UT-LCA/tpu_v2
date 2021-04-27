@@ -145,8 +145,8 @@ class vpu():
         nummullanes = 8
         mvl = 64
         log2mvl = 6  
-        vpw = 4  
-        log2vpw = 2 
+        vpw = 2 
+        log2vpw = 1 
         lanewidth = 8 * vpw  
         log2lanewidth = log2vpw + 3 
         numbanks = 2 
@@ -205,7 +205,7 @@ module vpu_{LOG2DMEM_WRITEWIDTH}_{LOG2DMEM_READWIDTH} (
     instr_en,     // tells when instr is valid and available
     instr_wait,   // if high says vpu is not ready to receive
     has_memop,    // indicates vector pipeline has a memory operation
-
+    mulshift_result,
     // For mtc2/ctc2 instructions
     scalar_in,    
     scalar_in_en,
@@ -310,7 +310,7 @@ input         dbus_cachematch;
 input         dbus_cachemiss;
 output  [ 31 : 0 ]  dbus_prefetch;
 input               dbus_wait;
-
+output [{LANEWIDTH}*{NUMLANES}-1:0] mulshift_result;
 
 reg                        [ 31 : 0 ]   ir;
 wire                       [ 31 : 0 ]   ir2;
@@ -1476,7 +1476,7 @@ ctrl_rdvc_sel=3;
     .vstride_in(vstride_readdataout),
     .vs_in(vs_readdataout),
     .matmul_masks_in(matmul_masks),
-
+    .mulshift_result_s5(mulshift_result),
     // vs Writeback
     .vs_dst(vlanes_vs_dst),
     .vs_wetrack(vlanes_vs_wetrack),  //1-bit for each pipe-stage

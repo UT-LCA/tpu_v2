@@ -1,6 +1,6 @@
 from mem_dcache_wb import mem_dcache_wb
 from mem_icache import mem_icache
-from vlanes import vlanes
+from core import core
 from optparse import OptionParser
 parser = OptionParser()
 (_,args) = parser.parse_args()
@@ -10,11 +10,11 @@ class processor():
         self.fp = fp
         
     def make_str(self):
-        log2dcachewidthbits = 32 
-        log2dcachedepth = 4096
-        log2icachewidthbits = 32
-        log2icachedepth = 4096
-        log2dramwidthbits = 128
+        log2dcachewidthbits = 7 
+        log2dcachedepth = 12
+        log2icachewidthbits = 7
+        log2icachedepth = 12
+        log2dramwidthbits = 5
         string = ''' 
 
 //`include "core.v"
@@ -214,17 +214,30 @@ input                          mem_icache_wren;
 /*************************  Instr Cache **************************/
 
   reg cache_flush;
-  always@(posedge mem_clk)
+  reg [31:0] next_address;
+
+  always@(posedge mem_clk)begin
     cache_flush<=~resetn;
+  end
+
+  always@(posedge clk)begin
+    if(resetn)
+      next_address <= 0;
+    else
+      next_address<= icache_address;
+  end
 
   mem_icache_{LOG2ICACHEDEPTH}_{LOG2ICACHEWIDTHBITS} icache1 (
     .resetn(resetn),
 
     // CPU data bus
     .bus_clk(clk),
-    .bus_address(icache_address),
+    .bus_address(next_address),
     .bus_readdata(icache_readdata),
+    .bus_writedata(0),
+    .bus_byteen(0),
     .bus_en(icache_en),
+    .bus_wren(0),
     .bus_wait(icache_wait),
 
     // Mem hierarchy
@@ -274,7 +287,8 @@ input                          mem_icache_wren;
   // Send single pulse to bus, unless already a request stalling
   assign ibus_en= (icache_state==CACHE_ISSUE);
 
-  assign ibus_address=icache_address;
+  always@(posedge clk)
+    ibus_address <= icache_address;
 
 
 /*************************  Data Cache **************************/
@@ -291,20 +305,21 @@ input                          mem_icache_wren;
         (dcache_state==CACHE_TAGLOOKUP || dcache_state==CACHE_STOREMISS);
   assign dcache_en = dcpu_en;
 
-  mem_dcache_wb_{LOG2DRAMWIDTHBITS}_{LOG2DCACHEWIDTHBITS}_{LOG2DCACHEDEPTH} dcache1 (
+  mem_dcache_wb_{LOG2DCACHEWIDTHBITS}_{LOG2DCACHEDEPTH}_{LOG2DRAMWIDTHBITS} dcache1 (
     .resetn(resetn),
 
     // CPU data bus    
     .bus_clk(clk),
     .bus_address(dcache_address),
+    .bus_readdata(dcache_readdata),
+    .bus_readdata_line(dcache_readdata_line),
     .bus_writedata(dcache_writedata),
     .bus_byteen(dcache_byteen),
     .bus_wren(dcache_wren),
+    .bus_en(dcache_en),
     .bus_dirty(1'b1),   //Every store is dirty (even on store miss)
     .bus_dirtywe(dcache_wren),
-    .bus_readdata(dcache_readdata),
-    .bus_readdata_line(dcache_readdata_line),
-    .bus_en(dcache_en),
+    .bus_wait(dbus_wait),
 
     // Mem hierarchy
     .mem_clk(mem_clk),
@@ -312,7 +327,6 @@ input                          mem_icache_wren;
     .mem_filldata(dmem_filldata),
     .mem_fillwe(dmem_fillwe),
     .mem_fillrddirty(dmem_fillrddirty),
-    .bus_flush(cache_flush), // Runs at 133 MHz
 
     // Write back outputs for writing into DRAM, wbwe accounts for dirty bit
     .mem_wbaddr(dmem_wbaddr),
@@ -320,6 +334,7 @@ input                          mem_icache_wren;
     .mem_wbwe(dmem_wbwe),
     .mem_wback(dmem_wback),
 
+    .bus_flush(cache_flush), // Runs at 133 MHz
     // Cache signals
     .cache_hit(dcache_hit), //Checks only match - doesn't consider if en was on
     .cache_miss(dcache_miss), //Checks if not in the cache AND if enabled
@@ -339,9 +354,9 @@ input                          mem_icache_wren;
   assign dcpu_readdata_line = dcache_readdata_line;
 
   //If this is an uncached access ([31]) wait on bus, otherwise wait on cache
-  multicyclestall staller(dcpu_en,
-      dcache_wait|(dcpu_address_r[31]&dbus_wait),
-      clk,resetn,dcpu_wait);
+  //multicyclestall staller(dcpu_en,
+  //    dcache_wait|(dcpu_address_r[31]&dbus_wait),
+  //    clk,resetn,dcpu_wait);
 
   // CPU should already stall 1st cycle, so register everything
   reg dcpu_en_r;
@@ -403,12 +418,18 @@ input                          mem_icache_wren;
 endmodule
 
                  '''
+        fp1 = open("verilog/core.v", "w")
+        uut2 = core(fp1)
+        uut2.write()
+        fp1.close()
         fp1 = open("verilog/mem_dcache_wb.v", "w")
         uut2 = mem_dcache_wb(fp1)
         uut2.write(log2dramwidthbits,log2dcachewidthbits,log2dcachedepth)
+        fp1.close()
         fp2 = open("verilog/mem_icache.v", "w")
         uut3 = mem_icache(fp2)
         uut3.write(log2icachedepth,log2icachewidthbits)
+        fp2.close()
         return string.format(LOG2DCACHEWIDTHBITS = log2dcachewidthbits ,\
                              LOG2DCACHEDEPTH = log2dcachedepth , \
                              LOG2ICACHEWIDTHBITS = log2icachewidthbits , \

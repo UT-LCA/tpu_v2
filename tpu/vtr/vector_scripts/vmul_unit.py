@@ -390,5 +390,5 @@ endmodule
 if __name__ == '__main__':
     fp = open(args[0], "w")
     uut1 = vmul_unit(fp)
-    uut1.write(5,8,3,8)
+    uut1.write(4,8,3,8)
     fp.close()
