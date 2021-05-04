@@ -660,7 +660,8 @@ generate
 for (pipe_stage=6; pipe_stage<`MAX_PIPE_STAGES-1; pipe_stage=pipe_stage+1) begin: pipe_squash_assign
   assign pipe_squash[pipe_stage] = pipe_advance[pipe_stage+1] & ~pipe_advance[pipe_stage];
   if (pipe_stage==(`MAX_PIPE_STAGES-2)) begin
-    assign internal_pipe_advance[pipe_stage] = internal_pipe_advance[pipe_stage+1] && ~stall_matmul;
+    //assign internal_pipe_advance[pipe_stage] = internal_pipe_advance[pipe_stage+1] && ~stall_matmul;
+    assign internal_pipe_advance[pipe_stage] = internal_pipe_advance[pipe_stage+1];
   end
   else begin
     assign internal_pipe_advance[pipe_stage] = internal_pipe_advance[pipe_stage+1];
@@ -2566,6 +2567,7 @@ matmul_unit #(REGIDWIDTH,`MATMUL_STAGES,NUMLANES) u_matmul(
 .resetn(resetn),
 .activate(ctrl4_matmul_en),
 .en(pipe_advance[`MAX_PIPE_STAGES-1:4]),
+//.en({(`MAX_PIPE_STAGES-4){1'b1}}),
 .squash(pipe_squash[`MAX_PIPE_STAGES-1:4]),
 .stall(stall_matmul),
 .a_data(vr_src1[FU_MATMUL][NUMLANES*LANEWIDTH-1:0]),
@@ -2760,9 +2762,9 @@ pipe #(NUMLANES,3) bfmultdstmaskpipe (
   assign wb_dst_mask[FU_ACT] = dst_mask[FU_ACT][5];
   assign D_wb_last_subvector[FU_ACT] = D_last_subvector_s5[FU_ACT];
 
-  assign wb_dst[FU_MATMUL]=dst[FU_MATMUL][5];
-  assign wb_dst_we[FU_MATMUL]=dst_we[FU_MATMUL][5] && ~pipe_squash[5];
-  assign wb_dst_mask[FU_MATMUL]=dst_mask[FU_MATMUL][5];
+  assign wb_dst[FU_MATMUL]=dst[FU_MATMUL][`MAX_PIPE_STAGES-1];
+  assign wb_dst_we[FU_MATMUL]=dst_we[FU_MATMUL][`MAX_PIPE_STAGES-1] && ~pipe_squash[`MAX_PIPE_STAGES-1];
+  assign wb_dst_mask[FU_MATMUL]=dst_mask[FU_MATMUL][`MAX_PIPE_STAGES-1];
   //TODO: There is no code that assigns to the s31 var used below. Need to add that code
   //This is only a debug var, so it doesn't affect functionality
   assign D_wb_last_subvector[FU_MATMUL]=D_last_subvector_s31[FU_MATMUL];

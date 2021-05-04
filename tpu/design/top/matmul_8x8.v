@@ -112,7 +112,7 @@ assign clk_cnt_for_latching_c_data =
 //Note that while this shifting is happening, the matmul is calculating
 //outputs in its PEs.
 assign clk_cnt_for_shifting_inputs =                        
-                          (1);  //Ideally this should have been 7, but if we keep this as
+                          (7);  //Ideally this should have been 7, but if we keep this as
                                 //7, then stall signal is asserted a bit later than required
 
 always @(posedge clk) begin

@@ -73,8 +73,8 @@ vector_add:
   nop
   nop
   nop
-	vadd.vv		$vr7, a_v, b_v		# c = a + b
-	vadd.vv		$vr8, a_v, b_v		# c = a + b
+	#vadd.vv		$vr7, a_v, b_v		# c = a + b
+	#vadd.vv		$vr8, a_v, b_v		# c = a + b
   nop
   nop
   nop
@@ -82,19 +82,54 @@ vector_add:
   # vc31 - a_rows
   # vc30 - a_cols, b_rows
   # vc29 - b_cols
-  li t3, 0xf0
+  li t3, 0xff
   ctc2 t3, $vc31
   ctc2 t3, $vc30
   ctc2 t3, $vc29
 
-	#vadd.vv		c_v, a_v, b_v		# c = a + b
+  nop
+  nop
+  nop
+  nop
+  nop
+  nop
+  nop
+  nop
+  nop
+  nop
+  nop
+  nop
+  nop
+  nop
+  nop
+  nop
+  nop
+  nop
+  nop
+  nop
+  nop
+  nop
+  nop
+  nop
+  nop
+	vadd.vv		c_v, a_v, b_v		# c = a + b
 	#vmullo.vv		c_v, a_v, b_v		# c = a * b
+  nop
+  nop
+  nop
+  nop
+  nop
 	vdiv.vv		c_v, a_v, b_v		# c = a matmul b #hack:  fixme: todo: Using DIV as Matmul
   #nop
 
 	#vadd.vv		$vr9, $vr7, $vr8	#bias operation
 	vst.b	  	c_v, c_addr, addr_inc	# store C
-  #nop
+  nop
+  nop
+  nop
+  nop
+  nop
+  nop
 
 	# restore stack
 	lw	ra, 8(sp)

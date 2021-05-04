@@ -3,7 +3,7 @@
 #define WIDTH 8
 #define HEIGHT 8
 
-/*
+
 char frame1[WIDTH*HEIGHT]={
 
   0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,
@@ -29,8 +29,8 @@ char frame2[WIDTH*HEIGHT]={
   0x7f,0x7e,0x7d,0x7c,0x7b,0x7a,0x79,0x78
 
 };
-*/
 
+/*
 //Using the following data for matmul just makes
 //it a bit easier to debug. All 1s means the 
 //output matrix should have all 8s
@@ -60,4 +60,5 @@ char frame2[WIDTH*HEIGHT]={
 
 };
 
+*/
 
