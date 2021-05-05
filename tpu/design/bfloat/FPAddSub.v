@@ -1,24 +1,19 @@
 `timescale 1ns / 1ps
 
 //////////////////////////////////////////////////////////////////////////////////
-//
-// Create Date:    01:56:20 09/07/2012 
-// Module Name:    FPAddSub
-// Project Name: 	 Floating Point Project
-// Author:			 Fredrik Brosser
-//
-// Description:	 Top Module for a 32-bit floating point adder/subtractor.
-//						 Follows the IEEE754 Single Precision standard.
+// Description:	 Top Module for a 16-bit floating point adder/subtractor.
+//						 Floating point 16
 //						 Supports only the default rounding mode.
 //
-//	Inputs:
-//				a (32 bits)			: Single precision IEEE754 floating point number
-//				b (32 bits)			: Single precision IEEE754 floating point number
+//	Inputs:	
+//				bf16 (1 bit) 			: 1/ BFloat16, 0/IEEE Half precision mode
+//				a (16 bits)			:  floating point number
+//				b (16 bits)			:  floating point number
 //				operation (1 bit)	: Single control bit. 0/Addition, 1/Subtraction
 //
 //
 // Outputs:
-//				result (32 bits)	: Result of the operation, in IEEE754 Single format
+//				result (16 bits)	: Result of the operation
 //				flags	 (5 bits)	: Flags indicating exceptions:
 //											Bit 4: Overflow
 //											Bit 3: Underflow
@@ -27,81 +22,70 @@
 //											Bit 0: Inexact
 //
 //////////////////////////////////////////////////////////////////////////////////
-`define EXPONENT 5
-`define MANTISSA 10
-`define ACTUAL_MANTISSA 11
-`define EXPONENT_LSB 10
-`define EXPONENT_MSB 14
-`define MANTISSA_LSB 0
-`define MANTISSA_MSB 9
-`define MANTISSA_MUL_SPLIT_LSB 3
-`define MANTISSA_MUL_SPLIT_MSB 9
+
+`define EXPONENT 8
+`define MANTISSA 7
 `define SIGN 1
-`define SIGN_LOC 15
 `define DWIDTH (`SIGN+`EXPONENT+`MANTISSA)
-`define IEEE_COMPLIANCE 1
+
 
 module FPAddSub(
+		bf16,
 		clk,
 		rst,
-                en,
 		a,
 		b,
 		operation,			// 0 add, 1 sub
 		result,
-                valid,
 		flags
 	);
-	
+	input bf16; //1 for Bfloat16, 0 for IEEE half precision
+
 	// Clock and reset
 	input clk ;										// Clock signal
 	input rst ;										// Reset (active high, resets pipeline registers)
 	
 	// Input ports
-	input en ;
 	input [`DWIDTH-1:0] a ;								// Input A, a 32-bit floating point number
 	input [`DWIDTH-1:0] b ;								// Input B, a 32-bit floating point number
 	input operation ;								// Operation select signal
 	
 	// Output ports
-	output valid;
 	output [`DWIDTH-1:0] result ;						// Result of the operation
 	output [4:0] flags ;							// Flags indicating exceptions according to IEEE754
 	
 	// Pipeline Registers
 	//reg [79:0] pipe_1;							// Pipeline register PreAlign->Align1
-	reg [`DWIDTH*2+15:0] pipe_1;							// Pipeline register PreAlign->Align1
-        wire[`DWIDTH*2+15:0] stage_0_1;
+	reg [2*`EXPONENT + 2*`DWIDTH + 5:0] pipe_1;							// Pipeline register PreAlign->Align1
 
 	//reg [67:0] pipe_2;							// Pipeline register Align1->Align3
-	reg [`MANTISSA*2+`EXPONENT+13:0] pipe_2;							// Pipeline register Align1->Align3
-        wire[`MANTISSA*2+`EXPONENT+13:0] stage_1_2;
+	//reg [2*`EXPONENT+ 2*`MANTISSA + 8:0] pipe_2;							// Pipeline register Align1->Align3
+	wire [2*`EXPONENT+ 2*`MANTISSA + 8:0] pipe_2;
 
 	//reg [76:0] pipe_3;	68						// Pipeline register Align1->Align3
-	reg [`MANTISSA*2+`EXPONENT+14:0] pipe_3;							// Pipeline register Align1->Align3
+	reg [2*`EXPONENT+ 2*`MANTISSA + 9:0] pipe_3;							// Pipeline register Align1->Align3
 
 	//reg [69:0] pipe_4;							// Pipeline register Align3->Execute
-	reg [`MANTISSA*2+`EXPONENT+15:0] pipe_4;							// Pipeline register Align3->Execute
-        wire[`MANTISSA*2+`EXPONENT+15:0] stage_3_4;
-
+	//reg [2*`EXPONENT+ 2*`MANTISSA + 9:0] pipe_4;							// Pipeline register Align3->Execute
+	wire [2*`EXPONENT+ 2*`MANTISSA + 9:0] pipe_4;
+	
 	//reg [51:0] pipe_5;							// Pipeline register Execute->Normalize
 	reg [`DWIDTH+`EXPONENT+11:0] pipe_5;							// Pipeline register Execute->Normalize
-        wire[`DWIDTH+`EXPONENT+11:0] stage_4_5;
 
 	//reg [56:0] pipe_6;							// Pipeline register Nomalize->NormalizeShift1
-	reg [`DWIDTH+`EXPONENT+16:0] pipe_6;							// Pipeline register Nomalize->NormalizeShift1
+	//reg [`DWIDTH+`EXPONENT+16:0] pipe_6;							// Pipeline register Nomalize->NormalizeShift1
+	wire [`DWIDTH+`EXPONENT+16:0] pipe_6;
 
 	//reg [56:0] pipe_7;							// Pipeline register NormalizeShift2->NormalizeShift3
-	reg [`DWIDTH+`EXPONENT+16:0] pipe_7;							// Pipeline register NormalizeShift2->NormalizeShift3
-        wire[`DWIDTH+`EXPONENT+16:0] stage_6_7;
-
+	//reg [`DWIDTH+`EXPONENT+16:0] pipe_7;							// Pipeline register NormalizeShift2->NormalizeShift3
+	wire [`DWIDTH+`EXPONENT+16:0] pipe_7;
 	//reg [54:0] pipe_8;							// Pipeline register NormalizeShift3->Round
 	reg [`EXPONENT*2+`MANTISSA+15:0] pipe_8;							// Pipeline register NormalizeShift3->Round
-        wire[`EXPONENT*2+`MANTISSA+15:0] stage_7_8;
 
 	//reg [40:0] pipe_9;							// Pipeline register NormalizeShift3->Round
-	reg [`DWIDTH+8:0] pipe_9;							// Pipeline register NormalizeShift3->Round
-	
+	//reg [`DWIDTH+8:0] pipe_9;							// Pipeline register NormalizeShift3->Round
+	wire [`DWIDTH+8:0] pipe_9;
+
 	// Internal wires between modules
 	wire [`DWIDTH-2:0] Aout_0 ;							// A - sign
 	wire [`DWIDTH-2:0] Bout_0 ;							// B - sign
@@ -110,17 +94,17 @@ module FPAddSub(
 	wire Sb_0 ;										// B's sign
 	wire MaxAB_1 ;									// Indicates the larger of A and B(0/A, 1/B)
 	wire [`EXPONENT-1:0] CExp_1 ;							// Common Exponent
-	wire [4:0] Shift_1 ;							// Number of steps to smaller mantissa shift right (align)
+	wire [`EXPONENT-1:0] Shift_1 ;							// Number of steps to smaller mantissa shift right (align)
 	wire [`MANTISSA-1:0] Mmax_1 ;							// Larger mantissa
 	wire [4:0] InputExc_0 ;						// Input numbers are exceptions
-	wire [9:0] ShiftDet_0 ;
+	wire [2*`EXPONENT-1:0] ShiftDet_0 ;
 	wire [`MANTISSA-1:0] MminS_1 ;						// Smaller mantissa after 0/16 shift
 	wire [`MANTISSA:0] MminS_2 ;						// Smaller mantissa after 0/4/8/12 shift
 	wire [`MANTISSA:0] Mmin_3 ;							// Smaller mantissa after 0/1/2/3 shift
 	wire [`DWIDTH:0] Sum_4 ;
 	wire PSgn_4 ;
 	wire Opr_4 ;
-	wire [4:0] Shift_5 ;							// Number of steps to shift sum left (normalize)
+	wire [`EXPONENT-1:0] Shift_5 ;							// Number of steps to shift sum left (normalize)
 	wire [`DWIDTH:0] SumS_5 ;							// Sum after 0/16 shift
 	wire [`DWIDTH:0] SumS_6 ;							// Sum after 0/16 shift
 	wire [`DWIDTH:0] SumS_7 ;							// Sum after 0/16 shift
@@ -133,34 +117,25 @@ module FPAddSub(
 	wire FG_8 ;										// Final sticky bit
 	wire [`DWIDTH-1:0] P_int ;
 	wire EOF ;
-        reg q1_valid;
-        reg q2_valid;
-        reg q3_valid;
-        
-	assign valid = q3_valid;
+	
 	// Prepare the operands for alignment and check for exceptions
 	FPAddSub_PrealignModule PrealignModule
 	(	// Inputs
 		a, b, operation,
 		// Outputs
-		Sa_0, Sb_0, ShiftDet_0[9:0], InputExc_0[4:0], Aout_0[`DWIDTH-2:0], Bout_0[`DWIDTH-2:0], Opout_0) ;
-	
-        assign stage_0_1 = {Opout_0, Aout_0[`DWIDTH-2:0], Bout_0[`DWIDTH-2:0], Sa_0, Sb_0, ShiftDet_0[9:0], InputExc_0[4:0]};
-	
+		Sa_0, Sb_0, ShiftDet_0[2*`EXPONENT-1:0], InputExc_0[4:0], Aout_0[`DWIDTH-2:0], Bout_0[`DWIDTH-2:0], Opout_0) ;
+		
 	// Prepare the operands for alignment and check for exceptions
 	FPAddSub_AlignModule AlignModule
 	(	// Inputs
-		//pipe_1[14+2*`DWIDTH:16+`DWIDTH], pipe_1[15+`DWIDTH:17], pipe_1[14:5],
-		stage_0_1[14+2*`DWIDTH:16+`DWIDTH], stage_0_1[15+`DWIDTH:17], stage_0_1[14:5],
+		pipe_1[2*`EXPONENT + 2*`DWIDTH + 4: 2*`EXPONENT +`DWIDTH + 6], pipe_1[2*`EXPONENT +`DWIDTH + 5 :  2*`EXPONENT +7], pipe_1[2*`EXPONENT+4:5],
 		// Outputs
-		CExp_1[`EXPONENT-1:0], MaxAB_1, Shift_1[4:0], MminS_1[`MANTISSA-1:0], Mmax_1[`MANTISSA-1:0]) ;	
+		CExp_1[`EXPONENT-1:0], MaxAB_1, Shift_1[`EXPONENT-1:0], MminS_1[`MANTISSA-1:0], Mmax_1[`MANTISSA-1:0]) ;	
 
-        assign stage_1_2 = {stage_0_1[`DWIDTH*2+15], stage_0_1[16:15], MaxAB_1, CExp_1[`EXPONENT-1:0], Shift_1[4:0], Mmax_1[`MANTISSA-1:0], stage_0_1[4:0], MminS_1[`MANTISSA-1:0]};
-          
 	// Alignment Shift Stage 1
 	FPAddSub_AlignShift1 AlignShift1
 	(  // Inputs
-		stage_1_2[`MANTISSA-1:0], stage_1_2[2*`MANTISSA+9:2*`MANTISSA+7],
+		bf16, pipe_2[`MANTISSA-1:0], pipe_2[`EXPONENT+ 2*`MANTISSA + 4 : 2*`MANTISSA + 7],
 		// Outputs
 		MminS_2[`MANTISSA:0]) ;
 
@@ -171,19 +146,17 @@ module FPAddSub(
 		// Outputs
 		Mmin_3[`MANTISSA:0]) ;
 						
-        assign stage_3_4 = {pipe_3[`MANTISSA*2+`EXPONENT+14:`MANTISSA+1], Mmin_3[`MANTISSA:0]};
 	// Perform mantissa addition
 	FPAddSub_ExecutionModule ExecutionModule
 	(  // Inputs
-		stage_3_4[`MANTISSA*2+5:`MANTISSA+6], stage_3_4[`MANTISSA:0], stage_3_4[`MANTISSA*2+`EXPONENT+13], stage_3_4[`MANTISSA*2+`EXPONENT+12], stage_3_4[`MANTISSA*2+`EXPONENT+11], stage_3_4[`MANTISSA*2+`EXPONENT+14],
+		pipe_4[`MANTISSA*2+5:`MANTISSA+6], pipe_4[`MANTISSA:0], pipe_4[2*`EXPONENT+ 2*`MANTISSA + 8], pipe_4[2*`EXPONENT+ 2*`MANTISSA + 7], pipe_4[2*`EXPONENT+ 2*`MANTISSA + 6], pipe_4[2*`EXPONENT+ 2*`MANTISSA + 9],
 		// Outputs
 		Sum_4[`DWIDTH:0], PSgn_4, Opr_4) ;
-        assign stage_4_5 = {stage_3_4[2*`MANTISSA+`EXPONENT+14], PSgn_4, Opr_4, stage_3_4[2*`MANTISSA+`EXPONENT+13:2*`MANTISSA+11], stage_3_4[`MANTISSA+5:`MANTISSA+1], Sum_4[`DWIDTH:0]};
 	
 	// Prepare normalization of result
 	FPAddSub_NormalizeModule NormalizeModule
 	(  // Inputs
-		stage_4_5[`DWIDTH:0], 
+		pipe_5[`DWIDTH:0], 
 		// Outputs
 		SumS_5[`DWIDTH:0], Shift_5[4:0]) ;
 					
@@ -193,22 +166,18 @@ module FPAddSub(
 		pipe_6[`DWIDTH:0], pipe_6[`DWIDTH+`EXPONENT+14:`DWIDTH+`EXPONENT+11],
 		// Outputs
 		SumS_7[`DWIDTH:0]) ;
-        
-        assign stage_6_7 = {pipe_6[`DWIDTH+`EXPONENT+16:`DWIDTH+1], SumS_7[`DWIDTH:0]};
 		
 	// Normalization Shift Stage 3 and final guard, sticky and round bits
 	FPAddSub_NormalizeShift2 NormalizeShift2
 	(  // Inputs
-		stage_6_7[`DWIDTH:0], stage_6_7[`DWIDTH+`EXPONENT+5:`DWIDTH+6], stage_6_7[`DWIDTH+`EXPONENT+15:`DWIDTH+`EXPONENT+11],
+		pipe_7[`DWIDTH:0], pipe_7[`DWIDTH+`EXPONENT+5:`DWIDTH+6], pipe_7[`DWIDTH+`EXPONENT+15:`DWIDTH+`EXPONENT+11],
 		// Outputs
 		NormM_8[`MANTISSA-1:0], NormE_8[`EXPONENT:0], ZeroSum_8, NegE_8, R_8, S_8, FG_8) ;
-       
-        assign stage_7_8 = {FG_8, stage_6_7[`DWIDTH+`EXPONENT+16], stage_6_7[`DWIDTH+`EXPONENT+10], stage_6_7[`DWIDTH+`EXPONENT+8:`DWIDTH+1], NormM_8[`MANTISSA-1:0], NormE_8[`EXPONENT:0], ZeroSum_8, NegE_8, R_8, S_8};
 
 	// Round and put result together
 	FPAddSub_RoundModule RoundModule
 	(  // Inputs
-		 stage_7_8[3], stage_7_8[4+`EXPONENT:4], stage_7_8[`EXPONENT+`MANTISSA+4:5+`EXPONENT], stage_7_8[1], stage_7_8[0], stage_7_8[`EXPONENT*2+`MANTISSA+15], stage_7_8[`EXPONENT*2+`MANTISSA+12], stage_7_8[`EXPONENT*2+`MANTISSA+11], stage_7_8[`EXPONENT*2+`MANTISSA+14], stage_7_8[`EXPONENT*2+`MANTISSA+10], 
+		 pipe_8[3], pipe_8[4+`EXPONENT:4], pipe_8[`EXPONENT+`MANTISSA+4:5+`EXPONENT], pipe_8[1], pipe_8[0], pipe_8[`EXPONENT*2+`MANTISSA+15], pipe_8[`EXPONENT*2+`MANTISSA+12], pipe_8[`EXPONENT*2+`MANTISSA+11], pipe_8[`EXPONENT*2+`MANTISSA+14], pipe_8[`EXPONENT*2+`MANTISSA+10], 
 		// Outputs
 		P_int[`DWIDTH-1:0], EOF) ;
 	
@@ -219,152 +188,148 @@ module FPAddSub(
 		// Outputs
 		result[`DWIDTH-1:0], flags[4:0]) ;			
 	
+
+assign pipe_2 = {pipe_1[2*`EXPONENT + 2*`DWIDTH + 5], pipe_1[2*`EXPONENT +6:2*`EXPONENT +5], MaxAB_1, CExp_1[`EXPONENT-1:0], Shift_1[`EXPONENT-1:0], Mmax_1[`MANTISSA-1:0], pipe_1[4:0], MminS_1[`MANTISSA-1:0]} ;
+assign pipe_4 = {pipe_3[2*`EXPONENT+ 2*`MANTISSA + 9:`MANTISSA+1], Mmin_3[`MANTISSA:0]} ;
+assign pipe_6 = {pipe_5[`DWIDTH+`EXPONENT+11], Shift_5[4:0], pipe_5[`DWIDTH+`EXPONENT+10:`DWIDTH+1], SumS_5[`DWIDTH:0]} ;
+assign pipe_7 = {pipe_6[`DWIDTH+`EXPONENT+16:`DWIDTH+1], SumS_7[`DWIDTH:0]} ;
+assign pipe_9 = {P_int[`DWIDTH-1:0], pipe_8[2], pipe_8[1], pipe_8[0], pipe_8[`EXPONENT+`MANTISSA+9:`EXPONENT+`MANTISSA+5], EOF} ;
+
 	always @ (posedge clk) begin	
 		if(rst) begin
-			//pipe_1 = 0;
-			//pipe_2 = 0;
-			pipe_3 = 0;
-			//pipe_4 = 0;
-			//pipe_5 = 0;
-			pipe_6 = 0;
-			//pipe_7 = 0;
-			//pipe_8 = 0;
-			pipe_9 = 0;
+			pipe_1 <= 0;
+			//pipe_2 <= 0;
+			pipe_3 <= 0;
+			//pipe_4 <= 0;
+			pipe_5 <= 0;
+			//pipe_6 <= 0;
+			//pipe_7 <= 0;
+			pipe_8 <= 0;
+			//pipe_9 <= 0;
 		end 
 		else begin
-		
-			//pipe_1 = {Opout_0, Aout_0[`DWIDTH-2:0], Bout_0[`DWIDTH-2:0], Sa_0, Sb_0, ShiftDet_0[9:0], InputExc_0[4:0]} ;	
-			/* PIPE_2 :
-				[67] operation
-				[66] Sa_0
-				[65] Sb_0
-				[64] MaxAB_0
-				[63:56] CExp_0
-				[55:51] Shift_0
-				[50:28] Mmax_0
-				[27:23] InputExc_0
-				[22:0] MminS_1
-			*/
-			//pipe_2 = {pipe_1[`DWIDTH*2+15], pipe_1[16:15], MaxAB_1, CExp_1[`EXPONENT-1:0], Shift_1[4:0], Mmax_1[`MANTISSA-1:0], pipe_1[4:0], MminS_1[`MANTISSA-1:0]} ;	
-			/* PIPE_3 :
-				[68] operation
-				[67] Sa_0
-				[66] Sb_0
-				[65] MaxAB_0
-				[64:57] CExp_0
-				[56:52] Shift_0
-				[51:29] Mmax_0
-				[28:24] InputExc_0
-				[23:0] MminS_1
-			*/
-			pipe_3 = {stage_1_2[`MANTISSA*2+`EXPONENT+13:`MANTISSA], MminS_2[`MANTISSA:0]} ;	
-			/* PIPE_4 :
-				[68] operation
-				[67] Sa_0
-				[66] Sb_0
-				[65] MaxAB_0
-				[64:57] CExp_0
-				[56:52] Shift_0
-				[51:29] Mmax_0
-				[28:24] InputExc_0
-				[23:0] Mmin_3
-			*/					
-			//pipe_4 = {pipe_3[`MANTISSA*2+`EXPONENT+14:`MANTISSA+1], Mmin_3[`MANTISSA:0]} ;	
-			/* PIPE_5 :
-				[51] operation
-				[50] PSgn_4
-				[49] Opr_4
-				[48] Sa_0
-				[47] Sb_0
-				[46] MaxAB_0
-				[45:38] CExp_0
-				[37:33] InputExc_0
-				[32:0] Sum_4
-			*/					
-			//pipe_5 = {pipe_4[2*`MANTISSA+`EXPONENT+14], PSgn_4, Opr_4, pipe_4[2*`MANTISSA+`EXPONENT+13:2*`MANTISSA+11], pipe_4[`MANTISSA+5:`MANTISSA+1], Sum_4[`DWIDTH:0]} ;
-			/* PIPE_6 :
-				[56] operation
-				[55:51] Shift_5
-				[50] PSgn_4
-				[49] Opr_4
-				[48] Sa_0
-				[47] Sb_0
-				[46] MaxAB_0
-				[45:38] CExp_0
-				[37:33] InputExc_0
-				[32:0] Sum_4
-			*/					
-			pipe_6 = {stage_4_5[`EXPONENT+`EXPONENT+11], Shift_5[4:0], stage_4_5[`DWIDTH+`EXPONENT+10:`DWIDTH+1], SumS_5[`DWIDTH:0]} ;	
-			/* pipe_7 :
-				[56] operation
-				[55:51] Shift_5
-				[50] PSgn_4
-				[49] Opr_4
-				[48] Sa_0
-				[47] Sb_0
-				[46] MaxAB_0
-				[45:38] CExp_0
-				[37:33] InputExc_0
-				[32:0] Sum_4
-			*/						
-			//pipe_7 = {pipe_6[`DWIDTH+`EXPONENT+16:`DWIDTH+1], SumS_7[`DWIDTH:0]} ;	
-			/* pipe_8:
-				[54] FG_8 
-				[53] operation
-				[52] PSgn_4
-				[51] Sa_0
-				[50] Sb_0
-				[49] MaxAB_0
-				[48:41] CExp_0
-				[40:36] InputExc_8
-				[35:13] NormM_8 
-				[12:4] NormE_8
-				[3] ZeroSum_8
-				[2] NegE_8
-				[1] R_8
-				[0] S_8
-			*/				
-			//pipe_8 = {FG_8, pipe_6[`DWIDTH+`EXPONENT+16], pipe_6[`DWIDTH+`EXPONENT+10], pipe_6[`DWIDTH+`EXPONENT+8:`DWIDTH+1], NormM_8[`MANTISSA-1:0], NormE_8[`EXPONENT:0], ZeroSum_8, NegE_8, R_8, S_8} ;	
-			/* pipe_9:
-				[40:9] P_int
-				[8] NegE_8
-				[7] R_8
-				[6] S_8
-				[5:1] InputExc_8
-				[0] EOF
-			*/				
-			pipe_9 = {P_int[`DWIDTH-1:0], stage_6_7[2], stage_6_7[1], stage_6_7[0], stage_6_7[`EXPONENT+`MANTISSA+9:`EXPONENT+`MANTISSA+5], EOF} ;	
+/* PIPE_1:
+	[2*`EXPONENT + 2*`DWIDTH + 5]  Opout_0
+	[2*`EXPONENT + 2*`DWIDTH + 4: 2*`EXPONENT +`DWIDTH + 6] A_out0
+	[2*`EXPONENT +`DWIDTH + 5 :  2*`EXPONENT +7] Bout_0
+	[2*`EXPONENT +6] Sa_0
+	[2*`EXPONENT +5] Sb_0
+	[2*`EXPONENT +4 : 5] ShiftDet_0
+	[4:0] Input Exc
+*/
+			pipe_1 <= {Opout_0, Aout_0[`DWIDTH-2:0], Bout_0[`DWIDTH-2:0], Sa_0, Sb_0, ShiftDet_0[2*`EXPONENT -1:0], InputExc_0[4:0]} ;	
+/* PIPE_2
+[2*`EXPONENT+ 2*`MANTISSA + 8] operation
+[2*`EXPONENT+ 2*`MANTISSA + 7] Sa_0
+[2*`EXPONENT+ 2*`MANTISSA + 6] Sb_0
+[2*`EXPONENT+ 2*`MANTISSA + 5] MaxAB_0
+[2*`EXPONENT+ 2*`MANTISSA + 4:`EXPONENT+ 2*`MANTISSA + 5] CExp_0
+[`EXPONENT+ 2*`MANTISSA + 4 : 2*`MANTISSA + 5] Shift_0
+[2*`MANTISSA + 4:`MANTISSA + 5] Mmax_0
+[`MANTISSA + 4 : `MANTISSA] InputExc_0
+[`MANTISSA-1:0] MminS_1
+*/
+			//pipe_2 <= {pipe_1[2*`EXPONENT + 2*`DWIDTH + 5], pipe_1[2*`EXPONENT +6:2*`EXPONENT +5], MaxAB_1, CExp_1[`EXPONENT-1:0], Shift_1[`EXPONENT-1:0], Mmax_1[`MANTISSA-1:0], pipe_1[4:0], MminS_1[`MANTISSA-1:0]} ;	
+/* PIPE_3
+[2*`EXPONENT+ 2*`MANTISSA + 9] operation
+[2*`EXPONENT+ 2*`MANTISSA + 8] Sa_0
+[2*`EXPONENT+ 2*`MANTISSA + 7] Sb_0
+[2*`EXPONENT+ 2*`MANTISSA + 6] MaxAB_0
+[2*`EXPONENT+ 2*`MANTISSA + 5:`EXPONENT+ 2*`MANTISSA + 6] CExp_0
+[`EXPONENT+ 2*`MANTISSA + 5 : 2*`MANTISSA + 6] Shift_0
+[2*`MANTISSA + 5:`MANTISSA + 6] Mmax_0
+[`MANTISSA + 5 : `MANTISSA + 1] InputExc_0
+[`MANTISSA:0] MminS_2
+*/
+			pipe_3 <= {pipe_2[2*`EXPONENT+ 2*`MANTISSA + 8:`MANTISSA], MminS_2[`MANTISSA:0]} ;	
+/* PIPE_4
+[2*`EXPONENT+ 2*`MANTISSA + 9] operation
+[2*`EXPONENT+ 2*`MANTISSA + 8] Sa_0
+[2*`EXPONENT+ 2*`MANTISSA + 7] Sb_0
+[2*`EXPONENT+ 2*`MANTISSA + 6] MaxAB_0
+[2*`EXPONENT+ 2*`MANTISSA + 5:`EXPONENT+ 2*`MANTISSA + 6] CExp_0
+[`EXPONENT+ 2*`MANTISSA + 5 : 2*`MANTISSA + 6] Shift_0
+[2*`MANTISSA + 5:`MANTISSA + 6] Mmax_0
+[`MANTISSA + 5 : `MANTISSA + 1] InputExc_0
+[`MANTISSA:0] MminS_3
+*/				
+			//pipe_4 <= {pipe_3[2*`EXPONENT+ 2*`MANTISSA + 9:`MANTISSA+1], Mmin_3[`MANTISSA:0]} ;	
+/* PIPE_5 :
+[`DWIDTH+ `EXPONENT + 11] operation
+[`DWIDTH+ `EXPONENT + 10] PSgn_4
+[`DWIDTH+ `EXPONENT + 9] Opr_4
+[`DWIDTH+ `EXPONENT + 8] Sa_0
+[`DWIDTH+ `EXPONENT + 7] Sb_0
+[`DWIDTH+ `EXPONENT + 6] MaxAB_0
+[`DWIDTH+ `EXPONENT + 5 :`DWIDTH+6] CExp_0
+[`DWIDTH+5:`DWIDTH+1] InputExc_0
+[`DWIDTH:0] Sum_4
+*/					
+			pipe_5 <= {pipe_4[2*`EXPONENT+ 2*`MANTISSA + 9], PSgn_4, Opr_4, pipe_4[2*`EXPONENT+ 2*`MANTISSA + 8:`EXPONENT+ 2*`MANTISSA + 6], pipe_4[`MANTISSA+5:`MANTISSA+1], Sum_4[`DWIDTH:0]} ;
+/* PIPE_6 :
+[`DWIDTH+ `EXPONENT + 16] operation
+[`DWIDTH+ `EXPONENT + 15:`DWIDTH+ `EXPONENT + 11] Shift_5
+[`DWIDTH+ `EXPONENT + 10] PSgn_4
+[`DWIDTH+ `EXPONENT + 9] Opr_4
+[`DWIDTH+ `EXPONENT + 8] Sa_0
+[`DWIDTH+ `EXPONENT + 7] Sb_0
+[`DWIDTH+ `EXPONENT + 6] MaxAB_0
+[`DWIDTH+ `EXPONENT + 5 :`DWIDTH+6] CExp_0
+[`DWIDTH+5:`DWIDTH+1] InputExc_0
+[`DWIDTH:0] Sum_4
+*/				
+			//pipe_6 <= {pipe_5[`DWIDTH+`EXPONENT+11], Shift_5[4:0], pipe_5[`DWIDTH+`EXPONENT+10:`DWIDTH+1], SumS_5[`DWIDTH:0]} ;	
+/* PIPE_7 :
+[`DWIDTH+ `EXPONENT + 16] operation
+[`DWIDTH+ `EXPONENT + 15:`DWIDTH+ `EXPONENT + 11] Shift_5
+[`DWIDTH+ `EXPONENT + 10] PSgn_4
+[`DWIDTH+ `EXPONENT + 9] Opr_4
+[`DWIDTH+ `EXPONENT + 8] Sa_0
+[`DWIDTH+ `EXPONENT + 7] Sb_0
+[`DWIDTH+ `EXPONENT + 6] MaxAB_0
+[`DWIDTH+ `EXPONENT + 5 :`DWIDTH+6] CExp_0
+[`DWIDTH+5:`DWIDTH+1] InputExc_0
+[`DWIDTH:0] Sum_4
+*/						
+			//pipe_7 <= {pipe_6[`DWIDTH+`EXPONENT+16:`DWIDTH+1], SumS_7[`DWIDTH:0]} ;	
+/* PIPE_8:
+[2*`EXPONENT + `MANTISSA + 15] FG_8 
+[2*`EXPONENT + `MANTISSA + 14] operation
+[2*`EXPONENT + `MANTISSA + 13] PSgn_4
+[2*`EXPONENT + `MANTISSA + 12] Sa_0
+[2*`EXPONENT + `MANTISSA + 11] Sb_0
+[2*`EXPONENT + `MANTISSA + 10] MaxAB_0
+[2*`EXPONENT + `MANTISSA + 9:`EXPONENT + `MANTISSA + 10] CExp_0
+[`EXPONENT + `MANTISSA + 9:`EXPONENT + `MANTISSA + 5] InputExc_8
+[`EXPONENT + `MANTISSA + 4 :`EXPONENT + 5] NormM_8 
+[`EXPONENT + 4 :4] NormE_8
+[3] ZeroSum_8
+[2] NegE_8
+[1] R_8
+[0] S_8
+*/				
+			pipe_8 <= {FG_8, pipe_7[`DWIDTH+`EXPONENT+16], pipe_7[`DWIDTH+`EXPONENT+10], pipe_7[`DWIDTH+`EXPONENT+8:`DWIDTH+1], NormM_8[`MANTISSA-1:0], NormE_8[`EXPONENT:0], ZeroSum_8, NegE_8, R_8, S_8} ;	
+/* pipe_9:
+[`DWIDTH + 8 :9] P_int
+[8] NegE_8
+[7] R_8
+[6] S_8
+[5:1] InputExc_8
+[0] EOF
+*/				
+			//pipe_9 <= {P_int[`DWIDTH-1:0], pipe_8[2], pipe_8[1], pipe_8[0], pipe_8[`EXPONENT+`MANTISSA+9:`EXPONENT+`MANTISSA+5], EOF} ;	
 		end
 	end		
-
-
-always@(posedge clk)begin
-  if(rst)begin
-      q1_valid = 0;
-      q2_valid = 0;
-      q3_valid = 0;
-  end
-  else begin
-      q1_valid <= en;
-      q2_valid <= q1_valid;
-      q3_valid <= q2_valid;
-  end
-end
 	
 endmodule
 
-//////////////////////////////////////////////////////////////////////////////////
-//
-// Create Date:    	16:49:15 10/16/2012 
-// Module Name:    	FPAddSub_PrealignModule
-// Project Name: 	 	Floating Point Project
-// Author:			 	Fredrik Brosser
+
 //
 // Description:	 	The pre-alignment module is responsible for taking the inputs
 //							apart and checking the parts for exceptions.
 //							The exponent difference is also calculated in this module.
 //
-//////////////////////////////////////////////////////////////////////////////////
+
 
 module FPAddSub_PrealignModule(
 		A,
@@ -387,7 +352,7 @@ module FPAddSub_PrealignModule(
 	// Output ports
 	output Sa ;												// A's sign
 	output Sb ;												// B's sign
-	output [9:0] ShiftDet ;
+	output [2*`EXPONENT-1:0] ShiftDet ;
 	output [4:0] InputExc ;								// Input numbers are exceptions
 	output [`DWIDTH-2:0] Aout ;
 	output [`DWIDTH-2:0] Bout ;
@@ -416,24 +381,19 @@ module FPAddSub_PrealignModule(
 	
 	assign Sa = A[`DWIDTH-1] ;									// A's sign bit
 	assign Sb = B[`DWIDTH-1] ;									// B's sign	bit
-	assign ShiftDet = {DBA[4:0], DAB[4:0]} ;		// Shift data
+	assign ShiftDet = {DBA[`EXPONENT-1:0], DAB[`EXPONENT-1:0]} ;		// Shift data
 	assign Opout = operation ;
 	assign Aout = A[`DWIDTH-2:0] ;
 	assign Bout = B[`DWIDTH-2:0] ;
 	
 endmodule
 
-//////////////////////////////////////////////////////////////////////////////////
-//
-// Create Date:    	16:49:15 10/16/2012 
-// Module Name:    	FPAddSub_AlignModule
-// Project Name: 	 	Floating Point Project
-// Author:			 	Fredrik Brosser
+
 //
 // Description:	 	The alignment module determines the larger input operand and
 //							sets the mantissas, shift and common exponent accordingly.
 //
-//////////////////////////////////////////////////////////////////////////////////
+
 
 module FPAddSub_AlignModule (
 		A,
@@ -449,12 +409,12 @@ module FPAddSub_AlignModule (
 	// Input ports
 	input [`DWIDTH-2:0] A ;								// Input A, a 32-bit floating point number
 	input [`DWIDTH-2:0] B ;								// Input B, a 32-bit floating point number
-	input [9:0] ShiftDet ;
+	input [2*`EXPONENT-1:0] ShiftDet ;
 	
 	// Output ports
 	output [`EXPONENT-1:0] CExp ;							// Common Exponent
 	output MaxAB ;									// Incidates larger of A and B (0/A, 1/B)
-	output [4:0] Shift ;							// Number of steps to smaller mantissa shift right
+	output [`EXPONENT-1:0] Shift ;							// Number of steps to smaller mantissa shift right
 	output [`MANTISSA-1:0] Mmin ;							// Smaller mantissa 
 	output [`MANTISSA-1:0] Mmax ;							// Larger mantissa
 	
@@ -469,7 +429,7 @@ module FPAddSub_AlignModule (
 	// Determine final shift value
 	//assign Shift = MaxAB ? (BOF ? ShiftDet[9:5] : 5'b11001) : (AOF ? ShiftDet[4:0] : 5'b11001) ;
 	
-	assign Shift = MaxAB ? ShiftDet[9:5] : ShiftDet[4:0] ;
+	assign Shift = MaxAB ? ShiftDet[2*`EXPONENT-1:`EXPONENT] : ShiftDet[`EXPONENT-1:0] ;
 	
 	// Take out smaller mantissa and append shift space
 	assign Mmin = MaxAB ? A[`MANTISSA-1:0] : B[`MANTISSA-1:0] ; 
@@ -482,26 +442,23 @@ module FPAddSub_AlignModule (
 	
 endmodule
 
-//////////////////////////////////////////////////////////////////////////////////
-//
-// Create Date:    16:49:36 10/16/2012 
-// Module Name:    FPAddSub_AlignShift1
-// Project Name: 	 Floating Point Project
-// Author:			 Fredrik Brosser
-//
+
 // Description:	 Alignment shift stage 1, performs 16|12|8|4 shift
 //
-//////////////////////////////////////////////////////////////////////////////////
 
+
+// ONLY THIS MODULE IS HARDCODED for half precision fp16 and bfloat16
 module FPAddSub_AlignShift1(
+		bf16,
 		MminP,
 		Shift,
 		Mmin
 	);
 	
 	// Input ports
+	input bf16;
 	input [`MANTISSA-1:0] MminP ;						// Smaller mantissa after 16|12|8|4 shift
-	input [2:0] Shift ;						// Shift amount
+	input [`EXPONENT-3:0] Shift ;						// Shift amount. Last 2 bits of shifting are done in next stage. Hence, we have [`EXPONENT - 2] bits
 	
 	// Output ports
 	output [`MANTISSA:0] Mmin ;						// The smaller mantissa
@@ -511,18 +468,38 @@ module FPAddSub_AlignShift1(
 	reg	  [`MANTISSA:0]		Lvl2;
 	wire    [2*`MANTISSA+1:0]    Stage1;	
 	integer           i;                // Loop variable
-	
-	always @(*) begin						
-		// Rotate by 16?
-		//Lvl1 <= Shift[2] ? {17'b00000000000000001, MminP[22:16]} : {1'b1, MminP}; 
-		Lvl1 <= Shift[2] ? {11'b0000000000} : {1'b1, MminP}; 
-		
+
+	wire [`MANTISSA:0] temp_0; 
+
+assign temp_0 = 0;
+
+	always @(*) begin
+		if (bf16 == 1'b1) begin						
+//hardcoding for bfloat16
+	//For bfloat16, we can shift the mantissa by a max of 7 bits since mantissa has a width of 7. 
+	//Hence if either, bit[3]/bit[4]/bit[5]/bit[6]/bit[7] is 1, we can make it 0. This corresponds to bits [5:1] in our updated shift which doesn't contain last 2 bits.
+		//Lvl1 <= (Shift[1]|Shift[2]|Shift[3]|Shift[4]|Shift[5]) ? {temp_0} : {1'b1, MminP};  // MANTISSA + 1 width	
+		Lvl1 <= (|Shift[`EXPONENT-3:1]) ? {temp_0} : {1'b1, MminP};  // MANTISSA + 1 width	
+		end
+		else begin
+		//for half precision fp16, 10 bits can be shifted. Hence, only shifts till 10 (01010)can be made. 
+		Lvl1 <= Shift[2] ? {temp_0} : {1'b1, MminP};
+		end
 	end
 	
-	assign Stage1 = { 11'b0, Lvl1};
-	
-	always @(*) begin    					// Rotate {0 | 4 | 8 | 12} bits
-	  case (Shift[1:0])
+	assign Stage1 = { temp_0, Lvl1}; //2*MANTISSA + 2 width
+
+	always @(*) begin    					// Rotate {0 | 4 } bits
+	if(bf16 == 1'b1) begin
+	  case (Shift[0])
+			// Rotate by 0	
+			1'b0:  Lvl2 <= Stage1[`MANTISSA:0];       			
+			// Rotate by 4	
+			1'b1:  begin for (i=0; i<=`MANTISSA; i=i+1) begin Lvl2[i] <= Stage1[i+4]; end Lvl2[`MANTISSA:`MANTISSA-3] <= 0; end
+	  endcase
+	end
+	else begin
+	  case (Shift[1:0])					// Rotate {0 | 4 | 8} bits
 			// Rotate by 0	
 			2'b00:  Lvl2 <= Stage1[`MANTISSA:0];       			
 			// Rotate by 4	
@@ -534,22 +511,17 @@ module FPAddSub_AlignShift1(
 			//2'b11:  begin for (i=0; i<=`MANTISSA; i=i+1) begin Lvl2[i] <= Stage1[i+12]; end Lvl2[`MANTISSA:`MANTISSA-12] <= 0; end
 	  endcase
 	end
-	
+	end
+
 	// Assign output to next shift stage
 	assign Mmin = Lvl2;
 	
 endmodule
 
-//////////////////////////////////////////////////////////////////////////////////
-//
-// Create Date:    16:50:05 10/16/2012 
-// Module Name:    FPAddSub_AlignShift2
-// Project Name: 	 Floating Point Project
-// Author:			 Fredrik Brosser
-//
+
 // Description:	 Alignment shift stage 2, performs 3|2|1 shift
 //
-//////////////////////////////////////////////////////////////////////////////////
+
 
 module FPAddSub_AlignShift2(
 		MminP,
@@ -559,7 +531,7 @@ module FPAddSub_AlignShift2(
 	
 	// Input ports
 	input [`MANTISSA:0] MminP ;						// Smaller mantissa after 16|12|8|4 shift
-	input [1:0] Shift ;						// Shift amount
+	input [1:0] Shift ;						// Shift amount. Last 2 bits
 	
 	// Output ports
 	output [`MANTISSA:0] Mmin ;						// The smaller mantissa
@@ -589,16 +561,11 @@ module FPAddSub_AlignShift2(
 
 endmodule
 
-//////////////////////////////////////////////////////////////////////////////////
-//
-// Create Date:    11:35:05 09/05/2012 
-// Module Name:    FPAddSub_ExecutionModule 
-// Project Name: 	 Floating Point Project
-// Author:			 Fredrik Brosser
+
 //
 // Description:	 Module that executes the addition or subtraction on mantissas.
 //
-//////////////////////////////////////////////////////////////////////////////////
+
 
 module FPAddSub_ExecutionModule(
 		Mmax,
@@ -625,26 +592,25 @@ module FPAddSub_ExecutionModule(
 	output PSgn ;							// The sign for the result
 	output Opr ;							// The effective (performed) operation
 
-	assign Opr = (OpMode^Sa^Sb); 		// Resolve sign to determine operation
+	wire [`EXPONENT-1:0]temp_1;
 
+	assign Opr = (OpMode^Sa^Sb); 		// Resolve sign to determine operation
+	assign temp_1 = 0;
 	// Perform effective operation
-	assign Sum = (OpMode^Sa^Sb) ? ({1'b1, Mmax, 5'b00000} - {Mmin, 5'b00000}) : ({1'b1, Mmax, 5'b00000} + {Mmin, 5'b00000}) ;
+//SAMIDH_UNSURE 5--> 8
+
+	assign Sum = (OpMode^Sa^Sb) ? ({1'b1, Mmax, temp_1} - {Mmin, temp_1}) : ({1'b1, Mmax, temp_1} + {Mmin, temp_1}) ;
 	
 	// Assign result sign
 	assign PSgn = (MaxAB ? Sb : Sa) ;
 
 endmodule
 
-//////////////////////////////////////////////////////////////////////////////////
-//
-// Create Date:    16:05:07 09/07/2012
-// Module Name:    FBAddSub_NormalizeModule
-// Project Name: 	 Floating Point Project
-// Author:			 Fredrik Brosser
+
 //
 // Description:	 Determine the normalization shift amount and perform 16-shift
 //
-//////////////////////////////////////////////////////////////////////////////////
+
 
 module FPAddSub_NormalizeModule(
 		Sum,
@@ -658,7 +624,7 @@ module FPAddSub_NormalizeModule(
 	// Output ports
 	output [`DWIDTH:0] Mmin ;					// Mantissa after 16|0 shift
 	output [4:0] Shift ;					// Shift amount
-	
+	//Changes in this doesn't matter since even Bfloat16 can't go beyond 7 shift to the mantissa (only 3 bits valid here)  
 	// Determine normalization shift amount by finding leading nought
 	assign Shift =  ( 
 		Sum[16] ? 5'b00000 :	 
@@ -701,16 +667,10 @@ module FPAddSub_NormalizeModule(
 
 endmodule
 
-//////////////////////////////////////////////////////////////////////////////////
-//
-// Create Date:    16:49:36 10/16/2012 
-// Module Name:    FPAddSub_NormalizeShift1 
-// Project Name: 	 Floating Point Project
-// Author:			 Fredrik Brosser
-//
+
 // Description:	 Normalization shift stage 1, performs 12|8|4|3|2|1|0 shift
 //
-//////////////////////////////////////////////////////////////////////////////////
+
 
 module FPAddSub_NormalizeShift1(
 		MminP,
@@ -766,17 +726,11 @@ module FPAddSub_NormalizeShift1(
 	
 endmodule
 
-//////////////////////////////////////////////////////////////////////////////////
-//
-// Create Date:    17:34:18 10/16/2012 
-// Module Name:    FPAddSub_NormalizeShift2 
-// Project Name: 	 Floating Point Project
-// Author:			 Fredrik Brosser
-//
+
 // Description:	 Normalization shift stage 2, calculates post-normalization
 //						 mantissa and exponent, as well as the bits used in rounding		
 //
-//////////////////////////////////////////////////////////////////////////////////
+
 
 module FPAddSub_NormalizeShift2(
 		PSSum,
@@ -826,18 +780,12 @@ module FPAddSub_NormalizeShift2(
 	
 endmodule
 
-//////////////////////////////////////////////////////////////////////////////////
-//
-// Create Date:    11:33:28 09/11/2012 
-// Module Name:    FPAddSub_RoundModule 
-// Project Name: 	 Floating Point Project
-// Author:			 Fredrik Brosser
-//
+
 // Description:	 Performs 'Round to nearest, tie to even'-rounding on the
 //						 normalized mantissa according to the G, R, S bits. Calculates
 //						 final result and checks for exponent overflow.
 //
-//////////////////////////////////////////////////////////////////////////////////
+
 
 module FPAddSub_RoundModule(
 		ZeroSum,
@@ -879,6 +827,8 @@ module FPAddSub_RoundModule(
 	wire ExpAdd ;						// May have to add 1 to compensate for overflow 
 	wire RoundOF ;						// Rounding overflow
 	
+	wire [`EXPONENT:0]temp_2;
+	assign temp_2 = 0;
 	// The cases where we need to round upwards (= adding one) in Round to nearest, tie to even
 	assign RoundUp = (G & ((R | S) | NormM[0])) ;
 	
@@ -889,7 +839,7 @@ module FPAddSub_RoundModule(
 
 	// Calculate post-rounding exponent
 	assign ExpAdd = (RoundOF ? 1'b1 : 1'b0) ; 				// Add 1 to exponent to compensate for overflow
-	assign RoundE = ZeroSum ? 5'b00000 : (NormE + ExpAdd) ; 							// Final exponent
+	assign RoundE = ZeroSum ? temp_2 : (NormE + ExpAdd) ; 							// Final exponent
 
 	// If zero, need to determine sign according to rounding
 	assign FSgn = (ZeroSum & (Sa ^ Sb)) | (ZeroSum ? (Sa & Sb & ~Ctrl) : ((~MaxAB & Sa) | ((Ctrl ^ Sb) & (MaxAB | Sa)))) ;
@@ -902,17 +852,12 @@ module FPAddSub_RoundModule(
 	
 endmodule
 
-//////////////////////////////////////////////////////////////////////////////////
-//
-// Create Date:    13:00:02 16/11/2012 
-// Module Name:    FPAddSub_ExceptionModule 
-// Project Name: 	 Floating Point Project
-// Author:			 Fredrik Brosser
+
 //
 // Description:	 Check the final result for exception conditions and set
 //						 flags accordingly.
 //
-//////////////////////////////////////////////////////////////////////////////////
+
 
 module FPAddSub_ExceptionModule(
 		Z,
@@ -972,6 +917,7 @@ endmodule
 module FPAddSub_tb;
 
 	// Inputs
+	reg bf16;
 	reg clk;
 	reg rst;
 	reg [`DWIDTH-1:0] a;
@@ -984,7 +930,8 @@ module FPAddSub_tb;
 	integer i ;
 
 	// Instantiate the Unit Under Test (UUT)
- FPAddSub uut(
+ FPAddSub uut(  
+		bf16,
 		clk,
 		rst,
 		a,
@@ -1001,6 +948,7 @@ module FPAddSub_tb;
 	
 	initial begin
 		// Initialize Inputs
+		bf16 = 1'b0;
 		clk = 0;
 		rst = 0;
 		a = 0;
@@ -1010,16 +958,34 @@ module FPAddSub_tb;
 		#10;
         
 		// Add stimulus here
+/*
+// Enable for IEEE half precision fp16
 
-		// expected: 
+		// expected: 4321, e37b, ac0a
 		#10 a = 16'h1234; b = 16'h4321;
 		
 		#10 a = 16'hE37B; b = 16'h1AB4; 	
 
 		#10 a = 16'hABCD; b = 16'h9876;
+*/
 
+// Enable for Bfloat16
+// TEST 
+// -0.0938132594008 + 0.902540103395 = 0.808726843994
+// Expected Z = 0011111101001111 = 3F4F
+#10 a = 16'b1011110111000000; b = 16'b0011111101100111; operation = 1'b0; 
 
-		#100 
+// TEST 
+// 0.410328351971 + -0.602296218197 = -0.191967866226
+// Expected Z = 1011111001000100 = BE44
+#10 a = 16'b0011111011010010; b = 16'b1011111100011010; operation = 1'b0; 
+
+// TEST
+// -0.711840021901 + -0.867110062082 = -1.57895008398
+// Expected Z = 1011111111001010 = BFCA
+#10 a = 16'b1011111100110110; b = 16'b1011111101011101; operation = 1'b0; 
+
+		#1000
 
 		#10 $finish; 
 

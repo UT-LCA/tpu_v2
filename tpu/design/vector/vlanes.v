@@ -618,7 +618,7 @@ reg   [NUMBANKS-1:0] D_wb_instrdone;
 
 
 //tell vpu to hold vc,vbase,etc values
-assign is_stalled=~internal_pipe_advance | {stall_srcstart,2'b0};
+assign is_stalled= (~internal_pipe_advance | {stall_srcstart,2'b0}) & ~stall_matmul;
 
 assign has_memop=ctrl1_mem_en|ctrl2_mem_en|(|ctrl3_mem_en)|ctrl4_mem_en|ctrl5_mem_en;
 
@@ -635,7 +635,7 @@ assign internal_pipe_advance[0]=internal_pipe_advance[1];
 assign internal_pipe_advance[1]=internal_pipe_advance[2];
 assign internal_pipe_advance[2]=internal_pipe_advance[3] && 
                           ~stall_srcstart &&
-                          ~stall_dispatcher &&
+                          ~stall_dispatcher && ~stall_matmul &&
                           ~stall_hazsrc1 && ~stall_hazsrc2 && 
                           ~stall_hazfsrc1 && ~stall_hazfsrc2 && 
                           ~stall_mulcooldown;
@@ -659,13 +659,7 @@ genvar pipe_stage;
 generate
 for (pipe_stage=6; pipe_stage<`MAX_PIPE_STAGES-1; pipe_stage=pipe_stage+1) begin: pipe_squash_assign
   assign pipe_squash[pipe_stage] = pipe_advance[pipe_stage+1] & ~pipe_advance[pipe_stage];
-  if (pipe_stage==(`MAX_PIPE_STAGES-2)) begin
-    //assign internal_pipe_advance[pipe_stage] = internal_pipe_advance[pipe_stage+1] && ~stall_matmul;
-    assign internal_pipe_advance[pipe_stage] = internal_pipe_advance[pipe_stage+1];
-  end
-  else begin
-    assign internal_pipe_advance[pipe_stage] = internal_pipe_advance[pipe_stage+1];
-  end
+  assign internal_pipe_advance[pipe_stage] = internal_pipe_advance[pipe_stage+1];
 end
 endgenerate
 
@@ -2603,107 +2597,84 @@ trp_unit #(REGIDWIDTH) u_trp (
 genvar g_func;
 wire[5*NUMLANES-1:0] bfadd_excp;
 wire[5*NUMLANES-1:0] bfmult_excp;
-wire bfadder_output_valid;
-wire bfmult_output_valid;
 
 wire squash_bfadder_dstmask_NC;
 wire squash_bfadder_dstpipe_NC;
 wire squash_bfmult_dstmask_NC;
 wire squash_bfmult_dstpipe_NC;
 
-pipe #(REGIDWIDTH,3) bfadddstpipe (
+pipe #(REGIDWIDTH,4) bfadddstpipe (
   .d( dst_s4[FU_BFADDER] ),  
   .clk(clk),
   .resetn(resetn),
-  .en( pipe_advance[6:4] ),
+  .en( pipe_advance[7:4] ),
   .squash(squash_bfadder_dstpipe_NC),
-  .q({dst[FU_BFADDER][7],dst[FU_BFADDER][6],dst[FU_BFADDER][5],dst[FU_BFADDER][4]}));
+  .q({dst[FU_BFADDER][8],dst[FU_BFADDER][7],dst[FU_BFADDER][6],dst[FU_BFADDER][5],dst[FU_BFADDER][4]}));
 
-pipe #(1,3) bfadddstwepipe (
+pipe #(1,4) bfadddstwepipe (
   .d( dst_we_s4[FU_BFADDER]),  
   .clk(clk),
   .resetn(resetn),
-  .en( pipe_advance[6:4] ),
-  .squash( pipe_squash[6:4] ),
-  .q({dst_we[FU_BFADDER][7],dst_we[FU_BFADDER][6],dst_we[FU_BFADDER][5],dst_we[FU_BFADDER][4]}));
+  .en( pipe_advance[7:4] ),
+  .squash( pipe_squash[7:4] ),
+  .q({dst_we[FU_BFADDER][8],dst_we[FU_BFADDER][7],dst_we[FU_BFADDER][6],dst_we[FU_BFADDER][5],dst_we[FU_BFADDER][4]}));
 
-pipe #(NUMLANES,3) bfadddstmaskpipe (
+pipe #(NUMLANES,4) bfadddstmaskpipe (
   .d( vmask[FU_BFADDER] ),  
   .clk(clk),
   .resetn(resetn),
-  .en( pipe_advance[6:4] ),
+  .en( pipe_advance[7:4] ),
   .squash(squash_bfadder_dstmask_NC),
-  .q({dst[FU_BFMULT][7],dst[FU_BFMULT][6],dst_mask[FU_BFADDER][5],dst_mask[FU_BFADDER][4]}));
+  .q({dst[FU_BFMULT][8],dst[FU_BFMULT][7],dst[FU_BFMULT][6],dst_mask[FU_BFADDER][5],dst_mask[FU_BFADDER][4]}));
+
+  pipe #(REGIDWIDTH,4) bfmultdstpipe (
+    .d( dst_s4[FU_BFMULT] ),  
+    .clk(clk),
+    .resetn(resetn),
+    .en( pipe_advance[7:4] ),
+    .squash(squash_bfmult_dstpipe_NC),
+    .q({dst[FU_BFMULT][8],dst[FU_BFMULT][7],dst[FU_BFMULT][6],dst[FU_BFMULT][5],dst[FU_BFMULT][4]}));
+  
+  pipe #(1,4) bfmultdstwepipe (
+    .d( dst_we_s4[FU_BFMULT]),  
+    .clk(clk),
+    .resetn(resetn),
+    .en( pipe_advance[7:4] ),
+    .squash( pipe_squash[7:4] ),
+    .q({dst_we[FU_BFMULT][8],dst_we[FU_BFMULT][7],dst_we[FU_BFMULT][6],dst_we[FU_BFMULT][5],dst_we[FU_BFMULT][4]}));
+  
+  pipe #(NUMLANES,4) bfmultdstmaskpipe (
+    .d( vmask[FU_BFMULT] ),  
+    .clk(clk),
+    .resetn(resetn),
+    .en( pipe_advance[4] ),
+    .squash(squash_bfmult_dstmask_NC),
+    .q({dst_mask[FU_BFMULT][8],dst_mask[FU_BFMULT][7],dst_mask[FU_BFMULT][6],dst_mask[FU_BFMULT][5],dst_mask[FU_BFMULT][4]}));
 
   generate
   for(g_func =0; g_func <NUMLANES; g_func = g_func+1) begin
 
 FPAddSub bfloat_add(
+        .bf16(1),
 	.clk(clk),
 	.rst(~resetn),
-        .en(ctrl4_bfadder_en),
+        //.en(ctrl4_bfadder_en),
 	.a(vr_src1[FU_BFADDER][g_func * LANEWIDTH +: LANEWIDTH]),
 	.b(vr_src2[FU_BFADDER][g_func * LANEWIDTH +: LANEWIDTH]),
 	.operation(1'b0),
 	.result(bfadder_result_s5[g_func*LANEWIDTH +: LANEWIDTH]),
-        .valid(bfadder_output_valid),
 	.flags(bfadd_excp[5*g_func +: 5]));
 
 FPMult_16 bfloat_mult(
+        .bf16(1),
 	.clk(clk),
 	.rst(~resetn),
-        .en(ctrl4_bfmult_en),
+        //.en(ctrl4_bfmult_en),
 	.a(vr_src1[FU_BFMULT][g_func * LANEWIDTH +: LANEWIDTH]),
 	.b(vr_src1[FU_BFMULT][g_func * LANEWIDTH +: LANEWIDTH]),
 	.result(bfmult_result_s5[g_func*LANEWIDTH +: LANEWIDTH]),
-        .valid(bfmult_output_valid),
 	.flags(bfmult_excp[5*g_func +: 5]));
 
-
-pipe #(REGIDWIDTH,3) bfmultdstpipe (
-  .d( dst_s4[FU_BFMULT+g_func] ),  
-  .clk(clk),
-  .resetn(resetn),
-  .en( pipe_advance[6:4] ),
-  .squash(squash_bfmult_dstpipe_NC),
-  .q({dst[FU_BFMULT+g_func][7],dst[FU_BFMULT+g_func][6],dst[FU_BFMULT+g_func][5],dst[FU_BFMULT+g_func][4]}));
-
-pipe #(1,3) bfmultdstwepipe (
-  .d( dst_we_s4[FU_BFMULT+g_func] & ~ctrl4_vf_wbsel[g_func] ),  
-  .clk(clk),
-  .resetn(resetn),
-  .en( pipe_advance[6:4] ),
-  .squash( pipe_squash[6:4] ),
-  .q({dst_we[FU_BFMULT+g_func][7],dst_we[FU_BFMULT+g_func][6],dst_we[FU_BFMULT+g_func][5],dst_we[FU_BFMULT+g_func][4]}));
-
-pipe #(NUMLANES,3) bfmultdstmaskpipe (
-  .d( vmask[FU_BFMULT+g_func] ),  
-  .clk(clk),
-  .resetn(resetn),
-  .en( pipe_advance[4] ),
-  .squash(squash_bfmult_dstmask_NC),
-  .q({dst_mask[FU_BFMULT+g_func][7],dst_mask[FU_BFMULT+g_func][6],dst_mask[FU_BFMULT+g_func][5],dst_mask[FU_BFMULT+g_func][4]}));
-
-//    bfloat_adder #(REGIDWIDTH) bf_add(
-//    .clk(clk),
-//    .resetn(resetn),
-//    .en(ctrl4_bfadder_en),
-//    .stall(stall_bf_adder),
-//    .a(vr_src1[FU_BFADDER][g_func * LANEWIDTHE +: LANEWIDTH]),
-//    .b(vr_src2[FU_BFADDER][g_func * LANEWIDTHE +: LANEWIDTH]),
-//    .out(bfadder_result_s5[g_func*LANEWIDTH +: LANEWIDTH])
-//    );
-//    
-//    bfloat_mult #(REGIDWIDTH) bf_mult(
-//    .clk(clk),
-//    .resetn(resetn),
-//    .en(ctrl4_bfmult_en),
-//    .stall(stall_bf_adder),
-//    .a(vr_src1[FU_BFMULT][g_func * LANEWIDTHE +: LANEWIDTH]),
-//    .b(vr_src2[FU_BFMULT][g_func * LANEWIDTHE +: LANEWIDTH]),
-//    .out(bfmult_result_s5[g_func*LANEWIDTH +: LANEWIDTH])
-//    );
- 
 ///////////////////////////
 // activation unit
 ///////////////////////////
@@ -2746,15 +2717,14 @@ pipe #(NUMLANES,3) bfmultdstmaskpipe (
   assign wb_dst_mask[FU_MUL]=dst_mask[FU_MUL][5];
   assign D_wb_last_subvector[FU_MUL]=D_last_subvector_s5[FU_MUL];
 
-
-  assign wb_dst[FU_BFADDER] = dst[FU_BFADDER][7];
-  assign wb_dst_we[FU_BFADDER] = dst_we[FU_BFADDER][7] && ~pipe_squash[7];
-  assign wb_dst_mask[FU_BFADDER] = dst_mask[FU_BFADDER][7];
+  assign wb_dst[FU_BFADDER] = dst[FU_BFADDER][8];
+  assign wb_dst_we[FU_BFADDER] = dst_we[FU_BFADDER][8] && ~pipe_squash[8];
+  assign wb_dst_mask[FU_BFADDER] = dst_mask[FU_BFADDER][8];
   assign D_wb_last_subvector[FU_BFADDER] = D_last_subvector_s5[FU_BFADDER];
 
-  assign wb_dst[FU_BFMULT] = dst[FU_BFMULT][7];
-  assign wb_dst_we[FU_BFMULT] = dst_we[FU_BFMULT][7] && ~pipe_squash[7];
-  assign wb_dst_mask[FU_BFMULT] = dst_mask[FU_BFMULT][7];
+  assign wb_dst[FU_BFMULT] = dst[FU_BFMULT][8];
+  assign wb_dst_we[FU_BFMULT] = dst_we[FU_BFMULT][8] && ~pipe_squash[8];
+  assign wb_dst_mask[FU_BFMULT] = dst_mask[FU_BFMULT][8];
   assign D_wb_last_subvector[FU_BFMULT] = D_last_subvector_s5[FU_BFMULT];
 
   assign wb_dst[FU_ACT] = dst[FU_ACT][5];
