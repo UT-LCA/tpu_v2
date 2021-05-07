@@ -58,9 +58,93 @@ module vlanes (
     dbus_cachematch,
     dbus_cachemiss,
     dbus_prefetch,    //Prefetch hint
-    dbus_wait
+    dbus_wait,
 
-    );
+    M_AWID    ,
+    M_AWADDR  ,
+    M_AWLEN   ,
+    M_AWSIZE  ,
+    M_AWBURST ,
+    M_AWLOCK  ,
+    M_AWCACHE ,
+    M_AWPROT  ,
+    M_AWQOS   ,
+    M_AWVALID ,
+    M_AWREADY ,
+    M_WDATA   ,
+    M_WSTRB   ,
+    M_WLAST   ,
+    M_WVALID  ,
+    M_WREADY  ,
+    M_ARID    ,
+    M_ARADDR  ,
+    M_ARLEN   ,
+    M_ARSIZE  ,
+    M_ARBURST ,
+    M_ARLOCK  ,
+    M_ARCACHE ,
+    M_ARPROT  ,
+    M_ARQOS   ,
+    M_ARVALID ,
+    M_ARREADY ,
+    M_RID     ,
+    M_RDATA   ,
+    M_RRESP   ,
+    M_RLAST   ,
+    M_RVALID  ,
+    M_RREADY  ,
+    M_BREADY  ,
+    M_BVALID  ,
+    M_BRESP   ,
+    M_BID     ,
+
+    S_AWID   , 
+    S_AWADDR , 
+    S_AWLEN  , 
+    S_AWSIZE , 
+    S_AWBURST, 
+    S_AWLOCK , 
+    S_AWCACHE, 
+    S_AWPROT , 
+    S_AWQOS  , 
+    S_AWVALID, 
+    S_AWREADY, 
+    S_WDATA  , 
+    S_WSTRB  , 
+    S_WLAST  , 
+    S_WVALID , 
+    S_WREADY , 
+    S_ARID   , 
+    S_ARADDR , 
+    S_ARLEN  , 
+    S_ARSIZE , 
+    S_ARBURST, 
+    S_ARLOCK , 
+    S_ARCACHE, 
+    S_ARPROT , 
+    S_ARQOS  , 
+    S_ARVALID, 
+    S_ARREADY, 
+    S_RID    , 
+    S_RDATA  , 
+    S_RRESP  , 
+    S_RLAST  , 
+    S_RVALID , 
+    S_RREADY , 
+    S_BREADY , 
+    S_BVALID , 
+    S_BRESP  , 
+    S_BID    , 
+    dma_dbus_address,   
+    dma_dbus_readdata,  
+    dma_dbus_writedata, 
+    dma_dbus_byteen,
+    dma_dbus_en,        
+    dma_dbus_wren,      
+    dma_dbus_prefetch,  
+    dma_dbus_wait,      
+    dma_dbus_data_valid   
+ );
 
 parameter NUMLANES=4;
 parameter LOG2NUMLANES=2;
@@ -151,6 +235,97 @@ input               dbus_cachematch;
 input               dbus_cachemiss;
 input               dbus_wait;
 output  [ 31 : 0 ]  dbus_prefetch;
+
+output  [6 - 1:0]                    M_AWID;                                                 
+output  [LANEWIDTH- 1:0]             M_AWADDR;                                    
+output  [7:0]                        M_AWLEN;                                                    
+output  [2:0]                        M_AWSIZE;                                                   
+output  [1:0]                        M_AWBURST;                                                  
+output                               M_AWLOCK;                                                         
+output  [3:0]                        M_AWCACHE;                                                  
+output  [2:0]                        M_AWPROT;                                                   
+output  [3:0]                        M_AWQOS;                                                    
+output                               M_AWVALID;                                                        
+input                                M_AWREADY;                                                        
+output  [NUMLANES*LANEWIDTH-1 : 0]   M_WDATA;                                     
+output  [(NUMLANES*LANEWIDTH)/8-1 : 0] M_WSTRB;                                   
+output                               M_WLAST;                                                          
+output                               M_WVALID;                                                         
+input                                M_WREADY;                                                         
+
+output  [6-1 : 0]                    M_ARID;                                                 
+output  [LANEWIDTH-1 : 0]            M_ARADDR;                                    
+output  [7 : 0]                      M_ARLEN;                                                  
+output  [2 : 0]                      M_ARSIZE;                                                 
+output  [1 : 0]                      M_ARBURST;                                                
+output                               M_ARLOCK;                                                         
+output  [3 : 0]                      M_ARCACHE;                                                
+output  [2 : 0]                      M_ARPROT;                                                 
+output  [3 : 0]                      M_ARQOS;                                                  
+output                               M_ARVALID;                                                        
+input                                M_ARREADY;                                                        
+input   [6-1 : 0]                    M_RID;                                         	    
+input   [NUMLANES*LANEWIDTH-1 : 0]   M_RDATA;                                     
+input   [1 : 0]                      M_RRESP;                                                  
+input                                M_RLAST;                                                          
+input                                M_RVALID;                                                         
+output                               M_RREADY;                                                         
+
+output                               M_BREADY;                                                         
+input                                M_BVALID;                                                         
+input   [1 : 0]                      M_BRESP;                                                  
+input   [6-1 : 0]                    M_BID;                                                   
+
+input  [6 - 1:0]                    S_AWID;                                                 
+input  [LANEWIDTH- 1:0]             S_AWADDR;                                    
+input  [7:0]                        S_AWLEN;                                                    
+input  [2:0]                        S_AWSIZE;                                                   
+input  [1:0]                        S_AWBURST;                                                  
+input                               S_AWLOCK;                                                         
+input  [3:0]                        S_AWCACHE;                                                  
+input  [2:0]                        S_AWPROT;                                                   
+input  [3:0]                        S_AWQOS;                                                    
+input                               S_AWVALID;                                                        
+output                                S_AWREADY;                                                        
+input  [NUMLANES*LANEWIDTH-1 : 0]   S_WDATA;                                     
+input  [(NUMLANES*LANEWIDTH)/8-1 : 0] S_WSTRB;                                   
+input                               S_WLAST;                                                          
+input                               S_WVALID;                                                         
+output                                S_WREADY;                                                         
+
+input  [6-1 : 0]                    S_ARID;                                                 
+input  [LANEWIDTH-1 : 0]            S_ARADDR;                                    
+input  [7 : 0]                      S_ARLEN;                                                  
+input  [2 : 0]                      S_ARSIZE;                                                 
+input  [1 : 0]                      S_ARBURST;                                                
+input                               S_ARLOCK;                                                         
+input  [3 : 0]                      S_ARCACHE;                                                
+input  [2 : 0]                      S_ARPROT;                                                 
+input  [3 : 0]                      S_ARQOS;                                                  
+input                               S_ARVALID;                                                        
+output                                S_ARREADY;                                                        
+output   [6-1 : 0]                    S_RID;                                         	    
+output   [NUMLANES*LANEWIDTH-1 : 0]   S_RDATA;                                     
+output   [1 : 0]                      S_RRESP;                                                  
+output                                S_RLAST;                                                          
+output                                S_RVALID;                                                         
+input                               S_RREADY;                                                         
+
+input                               S_BREADY;                                                         
+output                                S_BVALID;                                                         
+output   [1 : 0]                      S_BRESP;                                                  
+output   [6-1 : 0]                    S_BID;                                                  
+
+//DMA signals
+output [31:0]                 dma_dbus_address;   
+input [DMEM_READWIDTH-1:0]    dma_dbus_readdata;  
+output [DMEM_WRITEWIDTH-1:0]  dma_dbus_writedata; 
+output [DMEM_WRITEWIDTH/8-1:0]dma_dbus_byteen;
+output                        dma_dbus_en;        
+output                        dma_dbus_wren;      
+output                        dma_dbus_prefetch;  
+input                         dma_dbus_wait;      
+input                         dma_dbus_data_valid;
 
 
 `include "visa.v"
@@ -2367,6 +2542,171 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
       .q(ctrl5_mem_en ));
 
   //============== Memory Unit =============
+  // axi_master ---------------------------
+  //
+axi4_master #(
+    .P_TARGET_SLAVE_BASE_ADDR(0),                           
+    .P_ADDR_WIDTH(32),                                      
+    .P_DATA_WIDTH(128)                                      
+)inst_axi_master
+(
+    .req_addr      (),
+    .req_data      (),
+    .req_en        (),
+    .req_type      (),
+    .req_read_data (),
+    .axi_busy      (),
+    .CLOCK         (M_CLOCK    ),                                                          
+    .RESET         (M_RESET    ),                                                          
+    .AWID          (M_AWID     ),                                                           
+    .AWADDR        (M_AWADDR   ),                                                         
+    .AWLEN         (M_AWLEN    ),                                                          
+    .AWSIZE        (M_AWSIZE   ),                                                         
+    .AWBURST       (M_AWBURST  ),                                                        
+    .AWLOCK        (M_AWLOCK   ),                                                         
+    .AWCACHE       (M_AWCACHE  ),                                                        
+    .AWPROT        (M_AWPROT   ),                                                         
+    .AWQOS         (M_AWQOS    ),                                                          
+    .AWVALID       (M_AWVALID  ),                                                        
+    .AWREADY       (M_AWREADY  ),                                                        
+    .WDATA         (M_WDATA    ),                                                          
+    .WSTRB         (M_WSTRB    ),                                                          
+    .WLAST         (M_WLAST    ),                                                          
+    .WVALID        (M_WVALID   ),                                                         
+    .WREADY        (M_WREADY   ),                                                         
+    .ARID          (M_ARID     ),                                                           
+    .ARADDR        (M_ARADDR   ),                                                         
+    .ARLEN         (M_ARLEN    ),                                                          
+    .ARSIZE        (M_ARSIZE   ),                                                         
+    .ARBURST       (M_ARBURST  ),                                                        
+    .ARLOCK        (M_ARLOCK   ),                                                         
+    .ARCACHE       (M_ARCACHE  ),                                                        
+    .ARPROT        (M_ARPROT   ),                                                         
+    .ARQOS         (M_ARQOS    ),                                                          
+    .ARVALID       (M_ARVALID  ),                                                        
+    .ARREADY       (M_ARREADY  ),                                                        
+    .RID           (M_RID      ),                                                            
+    .RDATA         (M_RDATA    ),                                                          
+    .RRESP         (M_RRESP    ),                                                          
+    .RLAST         (M_RLAST    ),                                                          
+    .RVALID        (M_RVALID   ),                                                         
+    .RREADY        (M_RREADY   ),                                                         
+    .BREADY        (M_BREADY   ),                                                         
+    .BVALID        (M_BVALID   ),                                                         
+    .BRESP         (M_BRESP    ),                                                          
+    .BID           (M_BID      )                                                             
+);
+
+axi4_slave #(
+    .P_ADDR_WIDTH(16),
+    .P_DATA_WIDTH(128)
+)
+inst_axi_slave
+(
+    .req_addr      (),
+    .req_data      (),
+    .req_en        (),
+    .req_type      (),
+    .req_read_data (),
+    .axi_busy      (),
+    .CLOCK         (S_CLOCK    ),                                                          
+    .RESET         (S_RESET    ),                                                          
+    .AWID          (S_AWID     ),                                                           
+    .AWADDR        (S_AWADDR   ),                                                         
+    .AWLEN         (S_AWLEN    ),                                                          
+    .AWSIZE        (S_AWSIZE   ),                                                         
+    .AWBURST       (S_AWBURST  ),                                                        
+    .AWLOCK        (S_AWLOCK   ),                                                         
+    .AWCACHE       (S_AWCACHE  ),                                                        
+    .AWPROT        (S_AWPROT   ),                                                         
+    .AWQOS         (S_AWQOS    ),                                                          
+    .AWVALID       (S_AWVALID  ),                                                        
+    .AWREADY       (S_AWREADY  ),                                                        
+    .WDATA         (S_WDATA    ),                                                          
+    .WSTRB         (S_WSTRB    ),                                                          
+    .WLAST         (S_WLAST    ),                                                          
+    .WVALID        (S_WVALID   ),                                                         
+    .WREADY        (S_WREADY   ),                                                         
+    .ARID          (S_ARID     ),                                                           
+    .ARADDR        (S_ARADDR   ),                                                         
+    .ARLEN         (S_ARLEN    ),                                                          
+    .ARSIZE        (S_ARSIZE   ),                                                         
+    .ARBURST       (S_ARBURST  ),                                                        
+    .ARLOCK        (S_ARLOCK   ),                                                         
+    .ARCACHE       (S_ARCACHE  ),                                                        
+    .ARPROT        (S_ARPROT   ),                                                         
+    .ARQOS         (S_ARQOS    ),                                                          
+    .ARVALID       (S_ARVALID  ),                                                        
+    .ARREADY       (S_ARREADY  ),                                                        
+    .RID           (S_RID      ),                                                            
+    .RDATA         (S_RDATA    ),                                                          
+    .RRESP         (S_RRESP    ),                                                          
+    .RLAST         (S_RLAST    ),                                                          
+    .RVALID        (S_RVALID   ),                                                         
+    .RREADY        (S_RREADY   ),                                                         
+    .BREADY        (S_BREADY   ),                                                         
+    .BVALID        (S_BVALID   ),                                                         
+    .BRESP         (S_BRESP    ),                                                          
+    .BID           (S_BID      )                                                             
+);
+
+  //
+  ///---------------------------------------
+
+wire [NUMLANES*8 -1:0] dma_lane_addr;
+wire [NUMLANES-1:0] dma_lane_wren;
+wire [NUMLANES-1:0] dma_lane_rden;
+wire [NUMLANES*LANEWIDTH-1:0] dma_lane_wrdata;
+wire [NUMLANES*LANEWIDTH-1:0] dma_lane_rddata;
+wire [NUMLANES*LANEWIDTH-1:0] load_mem_result_s5;
+wire dma_busy;
+
+  vmem_local(
+   .clk(clk),
+   .resetn(resetn),
+   .en(pipe_advance[4]),
+   .op(ctrl4_memunit_op),
+   .address_a(vbase_s4),
+   .stride_val_a(vstrideoffset_s4),
+   .offset_a(vr_src1[FU_MEM]),
+   .data_a(vr_src2[FU_MEM]),
+   .out_a(load_mem_result_s5),
+   .address_b(dma_lane_addr),
+   .rden_b(dma_lane_rden),
+   .wren_b(dma_lane_wren),
+   .data_b(dma_lane_wrdata),
+   .out_b(dma_lane_rddata)
+  );
+
+  dma #(
+    .NUMLANES(NUMLANES),
+    .WIDTH(LANEWIDTH),
+    .ADDRWIDTH(8),
+    .DMEM_ADDRWIDTH(32)
+  )inst_dma(
+   .clk(clk),
+   .resetn(resetn),
+   .mem_addr(),
+   .num_bytes(),
+   .dma_en(),
+   .lane_addr(),
+  
+   .local_addr(dma_lane_addr),
+   .local_we(dma_lane_we),
+   .local_wrdata(dma_lane_wrdata),
+   .local_rddate(dma_lane_rddata),
+  
+   .dma_busy(dma_busy),
+   .dbus_address   (dma_dbus_address   ),
+   .dbus_readdata  (dma_dbus_readdata  ), 
+   .dbus_writedata (dma_dbus_writedata ),
+   .dbus_byteen    (dma_dbus_byteen    ),
+   .dbus_en        (dma_dbus_en        ),
+   .dbus_wren      (dma_dbus_wren      ),
+   .dbus_prefetch  (dma_dbus_prefetch  ),
+   .dbus_wait      (dma_dbus_wait      ),
+   .dbus_data_valid(dma_dbus_data_valid)
+  );
 
   vmem_unit vmem_unit(
     .clk(clk),

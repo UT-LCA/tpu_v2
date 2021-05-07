@@ -83,7 +83,7 @@ module vmem_unit (
     in_vs_dst_we,
     out_vs_dst_we,
 
-    // Vector operations ports
+  // Vector operations ports
     sa,
     dir_left,
 
