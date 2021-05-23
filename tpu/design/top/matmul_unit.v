@@ -19,6 +19,7 @@
 `define LOG2_MAT_MUL_SIZE 3
 
 `define BB_MAT_MUL_SIZE `MAT_MUL_SIZE
+
 `define NUM_CYCLES_IN_MAC 3
 `define MEM_ACCESS_LATENCY 1
 `define REG_DATAWIDTH 32
@@ -43,25 +44,31 @@ module matmul_unit(
  validity_mask_a_cols,
  validity_mask_b_rows,
  validity_mask_b_cols,
- c_data, 
+ c_data,
+ stall_matmul, 
  vmask,
  in_dst,
  in_dst_we,
  out_dst,
  out_dst_we,
+ out_data_avail,
  out_dst_mask
 );
 
 parameter REGIDWIDTH=8;
 parameter PIPE_STAGES_MATMUL=29;
 parameter NUMLANES=8;
+parameter MATMUL_STAGES = 35;
 
  input clk;
  input resetn;
  input activate;
- input [PIPE_STAGES_MATMUL:1] en;  //Enable for each pipestage
- input [PIPE_STAGES_MATMUL:1] squash;  //Squash for each pipestage
+// input [PIPE_STAGES_MATMUL:1] en;  //Enable for each pipestage
+// input [PIPE_STAGES_MATMUL:1] squash;  //Squash for each pipestage
+ input [NUMLANES-1:0] en;  //Enable for each pipestage
+ input [NUMLANES-1:0] squash;  //Squash for each pipestage
  output stall;
+ output reg stall_matmul;
  input [`MAT_MUL_SIZE*`DWIDTH-1:0] a_data;
  input [`MAT_MUL_SIZE*`DWIDTH-1:0] b_data;
  input [`MASK_WIDTH-1:0] validity_mask_a_rows;
@@ -74,13 +81,21 @@ parameter NUMLANES=8;
 
  input    [REGIDWIDTH-1:0] in_dst;
  input                     in_dst_we;
- output [PIPE_STAGES_MATMUL*REGIDWIDTH-1:0] out_dst;
- output            [PIPE_STAGES_MATMUL-1:0] out_dst_we;
- output   [PIPE_STAGES_MATMUL*NUMLANES-1:0] out_dst_mask;
+// output [PIPE_STAGES_MATMUL*REGIDWIDTH-1:0] out_dst;
+// output            [PIPE_STAGES_MATMUL-1:0] out_dst_we;
+// output   [PIPE_STAGES_MATMUL*NUMLANES-1:0] out_dst_mask;
+ output [NUMLANES*REGIDWIDTH-1:0] out_dst;
+ output            [NUMLANES-1:0] out_dst_we;
+ output   [NUMLANES*NUMLANES-1:0] out_dst_mask;
+ output out_data_avail;
+//wire [PIPE_STAGES_MATMUL:1] ctrl_activate;
+//wire [PIPE_STAGES_MATMUL:1] squash_activatepipe_NC;
+wire [NUMLANES-1:0] ctrl_activate;
+wire [NUMLANES-1:0] squash_activatepipe_NC;
 
-wire [PIPE_STAGES_MATMUL:1] ctrl_activate;
-wire [PIPE_STAGES_MATMUL:1] squash_activatepipe_NC;
-pipe #(1,PIPE_STAGES_MATMUL-1) activatepipe (
+
+//pipe #(1,PIPE_STAGES_MATMUL-1) activatepipe (
+pipe #(1,NUMLANES) activatepipe (
     .d(activate),
     .clk(clk),
     .resetn(resetn),
@@ -103,36 +118,62 @@ matmul_8x8 mat(
     .a_data(a_data),
     .b_data(b_data),
     .c_data_out(c_data), 
-    .c_data_available(c_data_available),
+    .c_data_available(out_data_avail),
     .validity_mask_a_rows(validity_mask_a_rows),
     .validity_mask_a_cols(validity_mask_a_cols),
     .validity_mask_b_rows(validity_mask_b_rows),
     .validity_mask_b_cols(validity_mask_b_cols)
 );
 
-wire [PIPE_STAGES_MATMUL:1] squash_dstpipe_NC;
-pipe #(REGIDWIDTH,PIPE_STAGES_MATMUL-1) dstpipe (
-    .d(in_dst ),  
+reg [5:0] cnt;
+
+always@(posedge clk)begin
+   if(!resetn)begin
+     cnt <= 0;
+   end
+   else begin
+     if(!activate)
+        cnt <= 0;
+     else if(activate)
+        cnt <= cnt+1;
+   end
+end
+
+always@(*)begin
+  if(cnt < NUMLANES-1)
+    stall_matmul = 1'b0;
+  else if (cnt >= MATMUL_STAGES)
+    stall_matmul = 1'b0;
+  else
+    stall_matmul = 1'b1; 
+end
+
+
+//pipe #(REGIDWIDTH,PIPE_STAGES_MATMUL-1) dstpipe (
+wire [NUMLANES-1:0] squash_dstpipe_NC;
+pipe #(REGIDWIDTH,NUMLANES) dstpipe (
+    .d(in_dst),  
     .clk(clk),
     .resetn(resetn),
-    .en(en[PIPE_STAGES_MATMUL-1:1] & {1'b1,{(PIPE_STAGES_MATMUL-2){~stall}}} ),
+    .en(en[NUMLANES-1:0] & {(NUMLANES){(~stall) | (~stall_matmul) }} ),
     .squash(squash_dstpipe_NC),
     .q(out_dst));
 
-pipe #(1,PIPE_STAGES_MATMUL-1) dstwepipe (
+//pipe #(1,PIPE_STAGES_MATMUL-1) dstwepipe (
+pipe #(1,NUMLANES) dstwepipe (
     .d(in_dst_we ),  
     .clk(clk),
     .resetn(resetn),
-    .en(en[PIPE_STAGES_MATMUL-1:1] & {1'b1,{(PIPE_STAGES_MATMUL-2){~stall}}} ),
-    .squash(squash[PIPE_STAGES_MATMUL-1:1]),
+    .en(en[NUMLANES-1:0] & {(NUMLANES){~stall| (~stall_matmul)}} ),
+    .squash(squash[NUMLANES-1:1]),
     .q(out_dst_we));
 
 wire [PIPE_STAGES_MATMUL:1] squash_dstmaskpipe_NC;
-pipe #(NUMLANES,PIPE_STAGES_MATMUL-1) dstmaskpipe (
+pipe #(NUMLANES,NUMLANES) dstmaskpipe (
     .d(vmask ),  
     .clk(clk),
     .resetn(resetn),
-    .en(en[PIPE_STAGES_MATMUL-1:1] & {1'b1,{(PIPE_STAGES_MATMUL-2){~stall}}} ),
+    .en(en[NUMLANES-1:0] & {(NUMLANES){~stall| (~stall_matmul)}} ),
     .squash(squash_dstmaskpipe_NC),
     .q(out_dst_mask));
 

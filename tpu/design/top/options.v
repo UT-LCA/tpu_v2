@@ -86,7 +86,7 @@
 //mult consumes 3 cycles
 //`define MAX_PIPE_STAGES 7
 //matmul consumes 29 cycles
-`define MAX_PIPE_STAGES 33
+`define MAX_PIPE_STAGES 8
 `define MATMUL_STAGES 29
 
 /****************** SIZE OF THE MATMUL UNIT ***************/

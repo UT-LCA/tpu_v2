@@ -554,6 +554,7 @@ wire stall_mulcooldown;
 wire stall_mulunit;
 wire stall_matmul;
 
+wire temp_stall_matmul;
 // DEBUG signals for Modelsim
 wire  [7:0] D_instr[2:1];
 reg   [7:0] D_instr_s3[NUMBANKS-1:0];
@@ -629,7 +630,7 @@ assign has_memop=ctrl1_mem_en|ctrl2_mem_en|(|ctrl3_mem_en)|ctrl4_mem_en|ctrl5_me
 /* Memunit is in stage 5 but we stall in stage 4 so we don't squash the
 * destination register contents*/
 
-assign pipe_advance=internal_pipe_advance & ~{3'b0,stall_in};
+assign pipe_advance=internal_pipe_advance & ~{5'b0,stall_in};
 
 assign internal_pipe_advance[0]=internal_pipe_advance[1];
 assign internal_pipe_advance[1]=internal_pipe_advance[2];
@@ -638,10 +639,10 @@ assign internal_pipe_advance[2]=internal_pipe_advance[3] &&
                           ~stall_dispatcher &&
                           ~stall_hazsrc1 && ~stall_hazsrc2 && 
                           ~stall_hazfsrc1 && ~stall_hazfsrc2 && 
-                          ~stall_mulcooldown;
+                          ~stall_mulcooldown; 
 assign internal_pipe_advance[3]=internal_pipe_advance[4];
 assign internal_pipe_advance[4]=internal_pipe_advance[5];
-assign internal_pipe_advance[5]=internal_pipe_advance[6] && ~stall_mulunit && ~stall_memunit;
+assign internal_pipe_advance[5]=internal_pipe_advance[6] && ~stall_mulunit && ~stall_memunit && ~temp_stall_matmul;
 //assign internal_pipe_advance[6]=1'b1;
 
 assign pipe_squash[0]=pipe_advance[1]&~pipe_advance[0];
@@ -650,26 +651,10 @@ assign pipe_squash[2]=pipe_advance[3]&~pipe_advance[2];
 assign pipe_squash[3]=pipe_advance[4]&~pipe_advance[3];
 assign pipe_squash[4]=pipe_advance[5]&~pipe_advance[4];
 assign pipe_squash[5]=pipe_advance[6]&~pipe_advance[5];
+assign pipe_squash[6]=1'b0;
+assign pipe_squash[7]=1'b0;
+assign internal_pipe_advance[7:6] = 2'b11;
 //assign pipe_squash[6]=1'b0;
-
-//The code below basically replicates the statements above for
-//pipe stages from 6 to MAX_PIPE_STAGES. Using generate statement
-//to reduce typing.
-genvar pipe_stage;
-generate
-for (pipe_stage=6; pipe_stage<`MAX_PIPE_STAGES-1; pipe_stage=pipe_stage+1) begin: pipe_squash_assign
-  assign pipe_squash[pipe_stage] = pipe_advance[pipe_stage+1] & ~pipe_advance[pipe_stage];
-  if (pipe_stage==(`MAX_PIPE_STAGES-2)) begin
-    assign internal_pipe_advance[pipe_stage] = internal_pipe_advance[pipe_stage+1] && ~stall_matmul;
-  end
-  else begin
-    assign internal_pipe_advance[pipe_stage] = internal_pipe_advance[pipe_stage+1];
-  end
-end
-endgenerate
-
-assign pipe_squash[`MAX_PIPE_STAGES-1]=1'b0;
-assign internal_pipe_advance[`MAX_PIPE_STAGES-1]=1'b1;
 
 /******************************************************************************/
 /************************** 1st Pipeline Stage ********************************/
@@ -2548,26 +2533,30 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
  //This code is just for assigning from signals connected
  //to the matmul, which are linear multi bit signals, to the
  //multi-dimensional signals.
- wire [`MATMUL_STAGES*REGIDWIDTH-1:0] dst_matmul;
- wire [`MATMUL_STAGES*NUMLANES-1:0] dst_mask_matmul;
- genvar g;
-  generate
-    for (g=0; g<`MATMUL_STAGES; g=g+1) begin: matmul_dst_gen
-      assign dst[FU_MATMUL][g+4] = dst_matmul[REGIDWIDTH*(g+1)-1:REGIDWIDTH*g];
-      assign dst_mask[FU_MATMUL][g+4] = dst_mask_matmul[NUMLANES*(g+1)-1:NUMLANES*g];
-    end
- endgenerate
+ wire [NUMLANES*REGIDWIDTH-1:0] dst_matmul;
+ wire [NUMLANES-1:0] dst_we_matmul;
+ wire [NUMLANES*NUMLANES-1:0] dst_mask_matmul;
+
+ assign dst[FU_MATMUL][4] = dst_matmul[(REGIDWIDTH*NUMLANES)-1:REGIDWIDTH*(NUMLANES-1)];
+ assign dst_mask[FU_MATMUL][4] = dst_mask_matmul[(NUMLANES*NUMLANES)-1:NUMLANES*(NUMLANES-1)];
+ assign dst_we[FU_MATMUL][4] = dst_we_matmul[NUMLANES-1];
+
 
 ///////////////////////////
 // Matmul unit
 ///////////////////////////
+//
+
+wire out_data_avail;
+
 matmul_unit #(REGIDWIDTH,`MATMUL_STAGES,NUMLANES) u_matmul(
 .clk(clk),
 .resetn(resetn),
 .activate(ctrl4_matmul_en),
-.en(pipe_advance[`MAX_PIPE_STAGES-1:4]),
-.squash(pipe_squash[`MAX_PIPE_STAGES-1:4]),
+.en({NUMLANES{pipe_advance[6]}}),
+.squash({NUMLANES{pipe_squash[6]}}),
 .stall(stall_matmul),
+.stall_matmul(temp_stall_matmul),
 .a_data(vr_src1[FU_MATMUL][NUMLANES*LANEWIDTH-1:0]),
 .b_data(vr_src2[FU_MATMUL][NUMLANES*LANEWIDTH-1:0]),
 .validity_mask_a_rows(matmul_masks_in[1*`MAT_MUL_SIZE-1:0*`MAT_MUL_SIZE]),
@@ -2579,7 +2568,8 @@ matmul_unit #(REGIDWIDTH,`MATMUL_STAGES,NUMLANES) u_matmul(
 .in_dst(dst_s4[FU_MATMUL]),
 .in_dst_we(dst_we_s4[FU_MATMUL]),
 .out_dst(dst_matmul),
-.out_dst_we(dst_we[FU_MATMUL][`MAX_PIPE_STAGES-1:4]),
+.out_dst_we(dst_we_matmul),
+.out_data_avail(out_data_avail),
 .out_dst_mask(dst_mask_matmul)
 );
 
@@ -2760,9 +2750,9 @@ pipe #(NUMLANES,3) bfmultdstmaskpipe (
   assign wb_dst_mask[FU_ACT] = dst_mask[FU_ACT][5];
   assign D_wb_last_subvector[FU_ACT] = D_last_subvector_s5[FU_ACT];
 
-  assign wb_dst[FU_MATMUL]=dst[FU_MATMUL][5];
-  assign wb_dst_we[FU_MATMUL]=dst_we[FU_MATMUL][5] && ~pipe_squash[5];
-  assign wb_dst_mask[FU_MATMUL]=dst_mask[FU_MATMUL][5];
+  assign wb_dst[FU_MATMUL]=dst[FU_MATMUL][4];
+  assign wb_dst_we[FU_MATMUL]=dst_we[FU_MATMUL][4] && out_data_avail;
+  assign wb_dst_mask[FU_MATMUL]=dst_mask[FU_MATMUL][4];
   //TODO: There is no code that assigns to the s31 var used below. Need to add that code
   //This is only a debug var, so it doesn't affect functionality
   assign D_wb_last_subvector[FU_MATMUL]=D_last_subvector_s31[FU_MATMUL];
