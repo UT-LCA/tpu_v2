@@ -55,8 +55,18 @@ module processor (
     mem_icache_data,
     mem_icache_out,
     mem_icache_byteen,
-    mem_icache_wren
-   
+    mem_icache_wren,
+
+    //DMA interface
+    dma_dbus_address,   
+    dma_dbus_readdata,  
+    dma_dbus_writedata, 
+    dma_dbus_byteen,
+    dma_dbus_en,        
+    dma_dbus_wren,      
+    dma_dbus_prefetch,  
+    dma_dbus_wait,      
+    dma_dbus_data_valid   
     // AXI Interface
     );
 
@@ -129,6 +139,16 @@ output [31-1:0]   mem_icache_out;
 input  [32/8-1:0] mem_icache_byteen;
 input                          mem_icache_wren;
 
+// DMA signals
+output [31:0]                   dma_dbus_address;   
+input  [DCACHEWIDTHBITS-1:0]    dma_dbus_readdata;  
+output [DCACHEWIDTHBITS-1:0]    dma_dbus_writedata; 
+output [DCACHEWIDTHBITS/8-1:0]  dma_dbus_byteen;
+output                          dma_dbus_en;        
+output                          dma_dbus_wren;      
+output                          dma_dbus_prefetch;  
+input                           dma_dbus_wait;      
+input                           dma_dbus_data_valid;
 
 // AXI interface
 
@@ -209,7 +229,17 @@ input                          mem_icache_wren;
     .dbus_cachematch(dcache_hit),
     .dbus_cachemiss(dcache_miss),
     .dbus_prefetch(dcpu_prefetch),
-    .dbus_wait(dcpu_wait) 
+    .dbus_wait(dcpu_wait),
+    
+    .dma_dbus_address	(dma_dbus_address), 
+    .dma_dbus_readdata	(dma_dbus_readdata), 
+    .dma_dbus_writedata	(dma_dbus_writedata),
+    .dma_dbus_byteen	(dma_dbus_byteen),
+    .dma_dbus_en	(dma_dbus_en),       
+    .dma_dbus_wren	(dma_dbus_wren),     
+    .dma_dbus_prefetch	(dma_dbus_prefetch), 
+    .dma_dbus_wait	(dma_dbus_wait),     
+    .dma_dbus_data_valid (dma_dbus_data_valid)
     );
 
 

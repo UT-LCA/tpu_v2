@@ -53,8 +53,17 @@ module vpu (
     dbus_cachematch,
     dbus_cachemiss,
     dbus_prefetch,
-    dbus_wait
+    dbus_wait,
 
+    dma_dbus_address,   
+    dma_dbus_readdata,  
+    dma_dbus_writedata, 
+    dma_dbus_byteen,
+    dma_dbus_en,        
+    dma_dbus_wren,      
+    dma_dbus_prefetch,  
+    dma_dbus_wait,      
+    dma_dbus_data_valid   
     );
 
 parameter LOG2NUMLANES=`LOG2NUMLANES;
@@ -130,6 +139,16 @@ input         dbus_cachemiss;
 output  [ 31 : 0 ]  dbus_prefetch;
 input               dbus_wait;
 
+//DMA interface
+output [31:0]                 dma_dbus_address;   
+input [DMEM_READWIDTH-1:0]    dma_dbus_readdata;  
+output [DMEM_WRITEWIDTH-1:0]  dma_dbus_writedata; 
+output [DMEM_WRITEWIDTH/8-1:0]dma_dbus_byteen;
+output                        dma_dbus_en;        
+output                        dma_dbus_wren;      
+output                        dma_dbus_prefetch;  
+input                         dma_dbus_wait;      
+input                         dma_dbus_data_valid;
 
 reg                        [ 31 : 0 ]   ir;
 wire                       [ 31 : 0 ]   ir2;
@@ -158,6 +177,11 @@ wire    [ LOG2NUMNONMEMVCREGS-1 : 0 ]   vc_c_reg;
 wire                [ VCWIDTH-1 : 0 ]   vc_c_writedatain;
 wire                                    vc_c_we;
 wire                [ VCWIDTH-1 : 0 ]   vl;
+wire                [ VCWIDTH-1 : 0 ]   dma_en;
+wire                [ VCWIDTH-1 : 0 ]   mem_addr;
+wire                [ VCWIDTH-1 : 0 ]   num_bytes;
+wire                [ VCWIDTH-1 : 0 ]   lane_addr;
+wire                [ VCWIDTH-1 : 0 ]   dma_we;
 //Masks for the matmul (3 masks. each is 8-bit.)
 //1-bit for each row/column element in the matmul. we have an 8x8 matmul)
 wire         [3*`MAT_MUL_SIZE-1 : 0 ]   matmul_masks;
@@ -242,7 +266,7 @@ wire       haz_vinc;
 wire       haz_vstride;
 wire       haz_vs_RAW;
 wire       haz_vs_WAW;
-
+wire dma_busy;
 reg cfc_satisfied;
 
 reg ctrl__vc_writedatain_sel;          //1 - vmstc, 0 - mtc;
@@ -951,6 +975,7 @@ reg is_cop2_s1;
   assign vstride_a_en=ctrl_vstride_a_en&~stall1;
   assign vs_a_en=ctrl_vs_a_en&~stall1;
 
+  wire [VCWIDTH-1:0] temp;
   vregfile_control vregfile_control (
       .clk(clk),
       .resetn(resetn), 
@@ -963,7 +988,14 @@ reg is_cop2_s1;
       .vl(vl),
       //The reserved registers vc31, vc30, vc29 are used
       //for the matmul's masks.
-      .matmul_masks(matmul_masks)
+      .matmul_masks(matmul_masks),
+      .dma_en(dma_en),
+      .lane_addr(lane_addr),
+      .mem_addr(mem_addr),
+      .num_bytes(num_bytes),
+      .dma_we(dma_we),
+      .dma_busy(dma_busy),
+      .temp(temp)
       );
     defparam vregfile_control.WIDTH=VCWIDTH;
     defparam vregfile_control.NUMREGS=NUMNONMEMVCREGS;
@@ -1182,17 +1214,17 @@ reg is_cop2_s1;
   /************** Datapath - Control Regs *******************/
 
   assign vc_c_we = ctrl_vc_we_s2&~vcdest_s2[5] & ~stall2;
-  assign vc_c_reg = vcdest_s2[LOG2NUMNONMEMVCREGS-1:0]; 
+  assign vc_c_reg =  vcdest_s2[LOG2NUMNONMEMVCREGS-1:0]; 
   //temporary to feed to base,inc, and stride regfiles (without vl logic)
   assign _vc_c_writedatain= (ctrl__vc_writedatain_sel_s2) ? vs_a_readdataout :
                                                         scalar_in;
-  assign vc_c_writedatain= (ctrl_vc_writedatain_sel_s2==0) ? _vc_c_writedatain :
+  assign vc_c_writedatain= ( (ctrl_vc_writedatain_sel_s2==0) ? _vc_c_writedatain :
                             //vhalf instruction
                             (ctrl_vc_writedatain_sel_s2==1) ? vl_readdataout>>1:
                             //vsatvl instruction
                             //(vl_readdataout>vc_readdataout) ? vc_readdataout :
                             (vl_readdataout>MVL) ? MVL : 
-                            vl_readdataout;
+                            vl_readdataout);
 
   assign vbase_c_we = ctrl_vc_we_s2 & (vcdest_s2[5:4]==2) & ~stall2;
   assign vbase_c_reg = vcdest_s2[LOG2NUMVBASEREGS-1:0];
@@ -1255,7 +1287,12 @@ reg is_cop2_s1;
     .vstride_in(vstride_readdataout),
     .vs_in(vs_readdataout),
     .matmul_masks_in(matmul_masks),
-
+    .dma_en(dma_en),
+    .mem_addr(mem_addr),
+    .num_bytes(num_bytes),
+    .lane_addr(lane_addr),
+    .dma_we(dma_we),
+    .dma_busy(dma_busy),
     // vs Writeback
     .vs_dst(vlanes_vs_dst),
     .vs_wetrack(vlanes_vs_wetrack),  //1-bit for each pipe-stage
@@ -1272,7 +1309,18 @@ reg is_cop2_s1;
     .dbus_cachematch(dbus_cachematch),
     .dbus_cachemiss(dbus_cachemiss),
     .dbus_prefetch(dbus_prefetch),
-    .dbus_wait(dbus_wait)
+    .dbus_wait(dbus_wait),
+
+    //DMA interface
+    .dma_dbus_address	(dma_dbus_address), 
+    .dma_dbus_readdata	(dma_dbus_readdata), 
+    .dma_dbus_writedata	(dma_dbus_writedata),
+    .dma_dbus_byteen	(dma_dbus_byteen),
+    .dma_dbus_en	(dma_dbus_en),       
+    .dma_dbus_wren	(dma_dbus_wren),     
+    .dma_dbus_prefetch	(dma_dbus_prefetch), 
+    .dma_dbus_wait	(dma_dbus_wait),     
+    .dma_dbus_data_valid(dma_dbus_data_valid)
     );
   defparam 
     vlanes.NUMLANES=NUMLANES,

@@ -23,6 +23,11 @@ vector_add:
 #define	b_v		$vr1
 #define c_v		$vr4
 
+#define dma_ctrl        $vc30
+#define mem_add         $vc29
+#define lane_add        $vc28
+#define dma_busy        $vc27
+
 # we get function arguments in a0-a3
 #define	n_pixels_r	a0
 #define	a_r		a1
@@ -45,6 +50,19 @@ vector_add:
 	# set shamt_v, vpw, vfmask0
   # load immediate
 	#li	t3, 8 #this is not used anywhere
+  ### Sangram
+        li t3, 0x10000000  ##Main memory access address
+        ctc2 t3,mem_add
+        li t3, 0
+        ctc2 t3, lane_add  # Local memory per lane start address
+        li t3, 257 # numbytes = 64, we = 0, en = 1, (final value = 64 << 2 + 1 = 257)
+        ctc2 t3,dma_ctrl
+        li t3, 256 # setting the enable bit to low
+        ctc2 t3, dma_ctrl
+        li t3, 1
+target: cfc2 t4,dma_busy
+        beq t4,t3,target
+  ###
   # move to coprocessor (t3->shamt_v)
 	#mtc2	t3, shamt_v #we don't need this in the simple matmul program
   # load immediate

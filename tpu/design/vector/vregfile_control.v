@@ -17,7 +17,14 @@ module vregfile_control (
     c_we,
 
     vl,
-    matmul_masks
+    matmul_masks,
+    dma_en,
+    lane_addr,
+    mem_addr,
+    num_bytes,
+    dma_we,
+    dma_busy,
+    temp
     );
 
 parameter WIDTH=32;
@@ -29,12 +36,49 @@ input resetn;
 
 input a_en;
 input [LOG2NUMREGS-1:0] a_reg,c_reg;
-output [WIDTH-1:0] a_readdataout;
+output reg [WIDTH-1:0] a_readdataout;
 input [WIDTH-1:0] c_writedatain;
 input c_we;
 
 output reg [WIDTH-1:0] vl;
+output reg dma_en;
+output reg [WIDTH-1:0] lane_addr;
+output reg [WIDTH-1:0] mem_addr;
+output reg [WIDTH-1:0] num_bytes;
+output reg [WIDTH-1:0] temp;
+output reg dma_we;
 output reg [3*`MAT_MUL_SIZE-1:0] matmul_masks;
+input dma_busy;
+
+wire [WIDTH-1:0] _a_readdataout;
+
+reg mux_sel,next_mux_sel;
+
+always@(posedge clk)begin
+  if(!resetn)
+    mux_sel <= 1'b0;
+  else begin
+    if(a_en)
+      mux_sel <= next_mux_sel;
+  end       
+end
+
+
+always @* begin
+  num_bytes[1:0] = 2'h0;
+  next_mux_sel = 1'b0;
+  if(dma_busy)begin
+    if(a_reg == 27)
+      next_mux_sel = 1'b1;
+    else
+      next_mux_sel = 1'b0;
+  end
+  
+  if(mux_sel)
+    a_readdataout = dma_busy;
+  else
+    a_readdataout = _a_readdataout;
+end
 
 `ifdef USE_INHOUSE_LOGIC
         ram_wrapper reg_file1(
@@ -49,7 +93,7 @@ output reg [3*`MAT_MUL_SIZE-1:0] matmul_masks;
 	    .data_a(c_writedatain),
 	    .data_b(0),
 	    .out_a(),
-	    .out_b(a_readdataout)
+	    .out_b(_a_readdataout)
       );
       defparam
             reg_file1.AWIDTH=LOG2NUMREGS,
@@ -119,6 +163,12 @@ output reg [3*`MAT_MUL_SIZE-1:0] matmul_masks;
     if (!resetn) begin
       vl<=0;
       matmul_masks<=32'hffffffff;
+      dma_en <= 0;
+      mem_addr <= 0;
+      num_bytes[WIDTH-1:2] <= 0;
+      lane_addr <= 0;
+      dma_we <= 0;
+      temp <= 0;
     end
     else begin
       if (c_we) begin
@@ -127,13 +177,23 @@ output reg [3*`MAT_MUL_SIZE-1:0] matmul_masks;
         end 
         else if (c_reg==31) begin //a_rows
           matmul_masks[1*`MAT_MUL_SIZE-1:0*`MAT_MUL_SIZE] <= c_writedatain[`MAT_MUL_SIZE-1:0];
+          matmul_masks[2*`MAT_MUL_SIZE-1:1*`MAT_MUL_SIZE] <= c_writedatain[2*`MAT_MUL_SIZE-1:1*`MAT_MUL_SIZE];
+          matmul_masks[3*`MAT_MUL_SIZE-1:2*`MAT_MUL_SIZE] <= c_writedatain[3*`MAT_MUL_SIZE-1:2*`MAT_MUL_SIZE];
         end
-        else if (c_reg==30) begin //a_cols, b_rows
-          matmul_masks[2*`MAT_MUL_SIZE-1:1*`MAT_MUL_SIZE] <= c_writedatain[`MAT_MUL_SIZE-1:0];
+        else if (c_reg==30) begin 
+          dma_en <= c_writedatain[0];
+          dma_we <= c_writedatain[1];
+          num_bytes[WIDTH-1:2] <= c_writedatain[WIDTH-1:2];
         end
-        else if (c_reg==29) begin //b_cols
-          matmul_masks[3*`MAT_MUL_SIZE-1:2*`MAT_MUL_SIZE] <= c_writedatain[`MAT_MUL_SIZE-1:0];
+        else if (c_reg==29) begin // Address to the main memory
+          mem_addr<=c_writedatain;
         end
+        else if (c_reg==28) begin
+          lane_addr<=c_writedatain;
+        end 
+        else if (c_reg==20) begin
+          temp<=c_writedatain;
+        end 
       end  
     end
   end

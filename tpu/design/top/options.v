@@ -30,7 +30,7 @@
 
 // DATA CACHE
 `define LGDD 15
-`define LGDW 6
+`define LGDW 4
 
 // DATA CACHE PREFETCHER - dcache needs to have 64 byte lines
 `define LGDWB 7

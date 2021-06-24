@@ -41,7 +41,12 @@ module vlanes (
     vstride_in,
     vs_in,
     matmul_masks_in,
-
+    dma_en,
+    mem_addr,
+    lane_addr,
+    dma_we,
+    num_bytes,
+    dma_busy,
     // vs Writeback
     vs_writedata,
     vs_we,       // Actually issues write command for vs (after done stalling)
@@ -58,8 +63,17 @@ module vlanes (
     dbus_cachematch,
     dbus_cachemiss,
     dbus_prefetch,    //Prefetch hint
-    dbus_wait
+    dbus_wait,
 
+    dma_dbus_address,   
+    dma_dbus_readdata,  
+    dma_dbus_writedata, 
+    dma_dbus_byteen,
+    dma_dbus_en,        
+    dma_dbus_wren,      
+    dma_dbus_prefetch,  
+    dma_dbus_wait,      
+    dma_dbus_data_valid   
     );
 
 parameter NUMLANES=4;
@@ -124,6 +138,7 @@ output instr_wait;   // if high says vpu is not ready to receive
 input [3:0] stall_in;  
 output [`MAX_PIPE_STAGES-1:0] is_stalled;
 output has_memop;
+output dma_busy;
 
 // Control register values
 input  [ VCWIDTH-1 : 0 ]   vc_in;
@@ -133,6 +148,11 @@ input  [ VCWIDTH-1 : 0 ]   vinc_in;
 input  [ VCWIDTH-1 : 0 ]   vstride_in;
 input  [ VSWIDTH-1 : 0 ]   vs_in;
 input  [3*`MAT_MUL_SIZE-1 : 0]  matmul_masks_in;
+input  dma_en;
+input  [VCWIDTH-1:0] mem_addr;
+input  [VCWIDTH-1:0] lane_addr;
+input  dma_we;
+input  [VCWIDTH-1:0] num_bytes;
 
 // vs Writeback
 output       [ VSWIDTH-1 : 0 ]   vs_writedata;
@@ -151,6 +171,17 @@ input               dbus_cachematch;
 input               dbus_cachemiss;
 input               dbus_wait;
 output  [ 31 : 0 ]  dbus_prefetch;
+
+//DMA signals
+output [31:0]                 dma_dbus_address;   
+input [DMEM_READWIDTH-1:0]    dma_dbus_readdata;  
+output [DMEM_WRITEWIDTH-1:0]  dma_dbus_writedata; 
+output [DMEM_WRITEWIDTH/8-1:0]dma_dbus_byteen;
+output                        dma_dbus_en;        
+output                        dma_dbus_wren;      
+output                        dma_dbus_prefetch;  
+input                         dma_dbus_wait;      
+input                         dma_dbus_data_valid;
 
 
 `include "visa.v"
@@ -2352,6 +2383,55 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
       .q(ctrl5_mem_en ));
 
   //============== Memory Unit =============
+
+  vmem_local inst_vmem_local(
+   .clk(clk),
+   .resetn(resetn),
+   .en(pipe_advance[4]),
+   .op(ctrl4_memunit_op),
+   .address_a(vbase_s4),
+   .stride_val_a(vstrideoffset_s4),
+   .offset_a(vr_src1[FU_MEM]),
+   .data_a(vr_src2[FU_MEM]),
+   .out_a(load_mem_result_s5),
+   .address_b(dma_lane_addr),
+   .rden_b(dma_lane_rden),
+   .wren_b(dma_lane_wren),
+   .data_b(dma_lane_wrdata),
+   .out_b(dma_lane_rddata)
+  );
+
+  dma #(
+    .NUMLANES(NUMLANES),
+    .WIDTH(LANEWIDTH),
+    .ADDRWIDTH(8),
+    .DMEM_ADDRWIDTH(32)
+  )inst_dma(
+   .clk(clk),
+   .resetn(resetn),
+   .mem_addr(mem_addr),
+   .num_bytes(num_bytes),
+   .dma_en(dma_en),
+   .lane_addr(lane_addr),
+   .we(dma_we),
+  
+   .local_addr(dma_lane_addr),
+   .local_wren(dma_lane_wren),
+   .local_rden(dma_lane_rden),
+   .local_wrdata(dma_lane_wrdata),
+   .local_rddata(dma_lane_rddata),
+  
+   .dma_busy(dma_busy),
+   .dbus_address   (dma_dbus_address   ),
+   .dbus_readdata  (dma_dbus_readdata  ), 
+   .dbus_writedata (dma_dbus_writedata ),
+   .dbus_byteen    (dma_dbus_byteen    ),
+   .dbus_en        (dma_dbus_en        ),
+   .dbus_wren      (dma_dbus_wren      ),
+   .dbus_prefetch  (dma_dbus_prefetch  ),
+   .dbus_wait      (dma_dbus_wait      ),
+   .dbus_data_valid(dma_dbus_data_valid)
+  );
 
   vmem_unit vmem_unit(
     .clk(clk),

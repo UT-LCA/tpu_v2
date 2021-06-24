@@ -25,6 +25,8 @@ LOCAL_SRC= ../design/local/local_add_sub.v \
            ../design/local/local_mult.v \
            ../design/local/local_fifo.v \
            ../design/local/dpram1.v \
+           ../design/vector/dma.v \
+           ../design/vector/vmem_local.v \
            ../design/local/local_shifter.v
 compile: plifs.sl virtualtype.do filesystem_standalone compilelib compilework
 

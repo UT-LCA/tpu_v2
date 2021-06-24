@@ -239,6 +239,7 @@ wire                        t_mem_fillwe;
  dpram1 data0 (
     .clk(bus_clk),
     .address_a(bus_address[28:7]),
+ //   .address_a(bus_address[31:4]),
     .address_b(mem_dcache_address),
     .wren_a(bus_wren),
     .wren_b(mem_dcache_wren),
@@ -250,9 +251,10 @@ wire                        t_mem_fillwe;
     .out_b(mem_dcache_out)
  );
  defparam 
+ //   data0.AWIDTH=28,
     data0.AWIDTH=22,
     data0.NUM_WORDS = 67108864,
-    data0.DWIDTH= 512;
+    data0.DWIDTH= 128;
 
 `else
   altsyncram data

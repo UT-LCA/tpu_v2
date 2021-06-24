@@ -33,8 +33,17 @@ module core (
     dbus_cachematch,
     dbus_cachemiss,
     dbus_prefetch,
-    dbus_wait
+    dbus_wait,
 
+    dma_dbus_address,   
+    dma_dbus_readdata,  
+    dma_dbus_writedata, 
+    dma_dbus_byteen,
+    dma_dbus_en,        
+    dma_dbus_wren,      
+    dma_dbus_prefetch,  
+    dma_dbus_wait,      
+    dma_dbus_data_valid   
     );
 
 parameter LOG2DCACHEWIDTHBITS=`LOG2DCACHEWIDTHBITS;
@@ -69,6 +78,17 @@ output  [ 31 : 0 ]  trc_data;
 output              trc_we;
 input               trc_stall;
 output              trc_pipestall;
+
+//DMA changes
+output [31:0]                 dma_dbus_address;   
+input  [DCACHEWIDTHBITS-1:0]    dma_dbus_readdata;  
+output [DCACHEWIDTHBITS-1:0]  dma_dbus_writedata; 
+output [DCACHEWIDTHBITS/8-1:0]dma_dbus_byteen;
+output                        dma_dbus_en;        
+output                        dma_dbus_wren;      
+output                        dma_dbus_prefetch;  
+input                         dma_dbus_wait;      
+input                         dma_dbus_data_valid;
 
 `include "isa.v"
 `include "visa.v"
@@ -314,7 +334,17 @@ output              trc_pipestall;
       .dbus_cachematch(dbus_cachematch),
       .dbus_cachemiss(dbus_cachemiss),
       .dbus_prefetch(v_dbus_prefetch),
-      .dbus_wait(v_dbus_wait)
+      .dbus_wait(v_dbus_wait),
+
+      .dma_dbus_address	(dma_dbus_address), 
+      .dma_dbus_readdata	(dma_dbus_readdata), 
+      .dma_dbus_writedata	(dma_dbus_writedata),
+      .dma_dbus_byteen	(dma_dbus_byteen),
+      .dma_dbus_en	(dma_dbus_en),       
+      .dma_dbus_wren	(dma_dbus_wren),     
+      .dma_dbus_prefetch	(dma_dbus_prefetch), 
+      .dma_dbus_wait	(dma_dbus_wait),     
+      .dma_dbus_data_valid(dma_dbus_data_valid)
     );
     defparam v.LOG2DMEM_WRITEWIDTH=LOG2DCACHEWIDTHBITS,
              v.LOG2DMEM_READWIDTH=LOG2DCACHEWIDTHBITS;

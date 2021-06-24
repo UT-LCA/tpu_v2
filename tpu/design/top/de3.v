@@ -348,6 +348,16 @@ module de3 (
         traceactivate_state=traceactivate_next_state;
 
   /*********** processor instantiation ************/
+  wire [31:0]                   dma_dbus_address;   
+  wire [DCACHEWIDTHBITS-1:0]    dma_dbus_readdata;  
+  wire [DCACHEWIDTHBITS-1:0]    dma_dbus_writedata; 
+  wire [DCACHEWIDTHBITS/8-1:0]  dma_dbus_byteen;
+  wire                          dma_dbus_en;        
+  wire                          dma_dbus_wren;      
+  wire                          dma_dbus_prefetch;  
+  wire                          dma_dbus_wait;      
+  wire                          dma_dbus_data_valid;
+
   processor p (
     .clk(clk),
     .mem_clk(memclk),
@@ -397,7 +407,17 @@ module de3 (
     .mem_icache_data(0),
     .mem_icache_out(),
     .mem_icache_byteen(0),
-    .mem_icache_wren(0)
+    .mem_icache_wren(0),
+    
+    .dma_dbus_address	(dma_dbus_address), 
+    .dma_dbus_readdata	(dma_dbus_readdata), 
+    .dma_dbus_writedata	(dma_dbus_writedata),
+    .dma_dbus_byteen	(dma_dbus_byteen),
+    .dma_dbus_en	(dma_dbus_en),       
+    .dma_dbus_wren	(dma_dbus_wren),     
+    .dma_dbus_prefetch	(dma_dbus_prefetch), 
+    .dma_dbus_wait	(dma_dbus_wait),     
+    .dma_dbus_data_valid (dma_dbus_data_valid)
     );
 
   /*********** Trace circuit ************
@@ -665,19 +685,32 @@ module de3 (
     .resetn(procresetn|bootloadresetn),
 
     // From CPU data bus
-    .dbus_address(dbus_address),
-    .dbus_en(ddr_en), 
-    .dbus_wait(ddr_wait), 
-    .dbus_prefetch(dbus_prefetch),
+    //.dbus_address(dbus_address),
+    //.dbus_en(ddr_en), 
+    //.dbus_wait(ddr_wait), 
+    //.dbus_prefetch(dbus_prefetch),
 
+    .dbus_address(dma_dbus_address),
+    .dbus_en(dma_dbus_en), 
+    .dbus_wait(dma_dbus_wait), 
+    .dbus_prefetch(dbus_prefetch),
     .clk133(memclk),
-    .dmem_filladdr(dmem_filladdr),
-    .dmem_filldata(dmem_filldata),
-    .dmem_fillwe(dmem_fillwe),
+   // .dmem_filladdr(dmem_filladdr),
+   // .dmem_filldata(dmem_filldata),
+   // .dmem_fillwe(dmem_fillwe),
+   // .dmem_fillrddirty(dmem_fillrddirty),
+   // .dmem_wbaddr(dmem_wbaddr),
+   // .dmem_wbdata(dmem_wbdata),
+   // .dmem_wbwe(dmem_wbwe),
+   // .dmem_wback(dmem_wback),
+
+    .dmem_filladdr(),
+    .dmem_filldata(dma_dbus_readdata),
+    .dmem_fillwe(dma_dbus_data_valid),
     .dmem_fillrddirty(dmem_fillrddirty),
-    .dmem_wbaddr(dmem_wbaddr),
-    .dmem_wbdata(dmem_wbdata),
-    .dmem_wbwe(dmem_wbwe),
+    .dmem_wbaddr(dmem_dbus_address),
+    .dmem_wbdata(dma_dbus_writedata),
+    .dmem_wbwe(dma_dbus_wren & dma_dbus_en),
     .dmem_wback(dmem_wback),
 
     .ibus_en(ibus_en),

@@ -532,10 +532,10 @@ integer p;
                   *CONTROLWIDTH +: CONTROLWIDTH];
     //Fetch next cache line if partial match on initial cache access
     //else if (parhits_some && ~cachedata_stillvalid)
-    else if (addr_advance)
-      dmem_address<=dmem_address_next;
-    else if (addr_rewind)
-      dmem_address<=dmem_address_prev;
+    //else if (addr_advance)
+    //  dmem_address<=dmem_address_next;
+    //else if (addr_rewind)
+    //  dmem_address<=dmem_address_prev;
 
   always@(posedge clk)
     if (!resetn)
