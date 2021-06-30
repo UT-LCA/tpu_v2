@@ -2383,14 +2383,20 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
       .q(ctrl5_mem_en ));
 
   //============== Memory Unit =============
+ 
+ wire [127:0] dma_lane_wrdata,dma_lane_rddata;
+// wire [NUMLANES-1:0] vmem_local_en;
+ wire [11*NUMLANES-1:0] dma_lane_addr;
 
-  vmem_local inst_vmem_local(
+// assign vmem_local_en = {NUMLANES{pipe_advance[4]}};
+ 
+ vmem_local inst_vmem_local(
    .clk(clk),
    .resetn(resetn),
    .en(pipe_advance[4]),
    .op(ctrl4_memunit_op),
-   .address_a(vbase_s4),
-   .stride_val_a(vstrideoffset_s4),
+   .address_a(vbase_s4[10:0]),
+   .stride_val_a(vstrideoffset_s4[VCWIDTH-1:0]),
    .offset_a(vr_src1[FU_MEM]),
    .data_a(vr_src2[FU_MEM]),
    .out_a(load_mem_result_s5),
@@ -2404,7 +2410,7 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
   dma #(
     .NUMLANES(NUMLANES),
     .WIDTH(LANEWIDTH),
-    .ADDRWIDTH(8),
+    .ADDRWIDTH(11),
     .DMEM_ADDRWIDTH(32)
   )inst_dma(
    .clk(clk),

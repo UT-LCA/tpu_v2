@@ -44,7 +44,7 @@ parameter UPDATE_WR_COUNT = 3'b111;
 
 reg [15:0] count, next_count;
 reg [2:0] pstate,nstate;
-reg [NUMLANES*ADDRWIDTH-1:0] data_to_dbus, data_to_mem;
+reg [NUMLANES*WIDTH-1:0] data_to_dbus, data_to_mem;
 reg[31:0]i;
 always@(posedge clk)begin
   if(!resetn)begin
@@ -54,7 +54,7 @@ always@(posedge clk)begin
   else begin 
     if(pstate == STORE_REQ_STATE)
       data_to_dbus <= local_rddata;
-    if((pstate == LOAD_DATA_STATE) && dbus_data_valid )
+    if(pstate == LOAD_DATA_STATE)
       data_to_mem <= dbus_readdata; 
   end
 end
@@ -158,12 +158,10 @@ always@(*)begin
                      next_count = count;
                end
     LOAD_DATA_STATE:begin
-                       for(i=0; i<NUMLANES;i=i+1)begin
-                         local_addr[i*ADDRWIDTH +: ADDRWIDTH] =  lane_addr  + count + i;
-                         local_wren[i] = 1'b1;
-                         local_rden[i] = 1'b0;
-                         local_wrdata[i*WIDTH+:WIDTH] = data_to_mem; 
-                       end
+                     dbus_byteen = 0;
+                     dbus_en = 0; 
+                     dbus_wren = 0;
+                     next_count = count;
                     end
     WRITE_STATE:begin
                        dbus_address = mem_addr + count;
@@ -181,6 +179,12 @@ always@(*)begin
                        next_count = count + (NUMLANES*WIDTH/8);
                      end
     UPDATE_RD_COUNT: begin
+                       for(i=0; i<NUMLANES;i=i+1)begin
+                         local_addr[i*ADDRWIDTH +: ADDRWIDTH] =  lane_addr  + count + i;
+                         local_wren[i] = 1'b1;
+                         local_rden[i] = 1'b0;
+                       end
+                       local_wrdata = data_to_mem; 
                        dbus_address = mem_addr + count;
                        dbus_byteen = {NUMLANES{2'b00}};
                        dbus_en = 0; 
