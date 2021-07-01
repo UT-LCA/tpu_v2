@@ -2372,15 +2372,24 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
   // If mem_unit is stalled, pipeline can still go on if both
   //    i) it's a store hence requiring no writeback bank, AND
   //    ii) another memory instruction isn't waiting on the memunit
-  assign stall_memunit=_stall_memunit && (dst_we[FU_MEM][5] || (ctrl4_memunit_en && ~stall_mulunit && ~stall_matmul));
+  //assign stall_memunit=_stall_memunit && (dst_we[FU_MEM][5] || (ctrl4_memunit_en && ~stall_mulunit && ~stall_matmul));
+  assign stall_memunit= 1'b0;
+
+//  pipereg #(1) memen5pipereg (
+//      .d( ctrl4_mem_en ),
+//      .clk(clk),
+//      .resetn(resetn),
+//      .en( pipe_advance[4] && ~_stall_memunit ),
+//      .squashn( ~pipe_squash[4] | _stall_memunit ),
+//      .q(ctrl5_mem_en ));
 
   pipereg #(1) memen5pipereg (
       .d( ctrl4_mem_en ),
       .clk(clk),
       .resetn(resetn),
-      .en( pipe_advance[4] && ~_stall_memunit ),
-      .squashn( ~pipe_squash[4] | _stall_memunit ),
-      .q(ctrl5_mem_en ));
+      .en( pipe_advance[4]),
+      .squashn( ~pipe_squash[4]),
+      .q( ctrl5_mem_en ));
 
   //============== Memory Unit =============
  
@@ -2389,7 +2398,36 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
  wire [11*NUMLANES-1:0] dma_lane_addr;
 
 // assign vmem_local_en = {NUMLANES{pipe_advance[4]}};
- 
+
+ wire squash_per_lane_mem_dstpipe_NC;
+ wire squash_per_lane_mem_dstmask_NC;
+
+pipe #(REGIDWIDTH,3) lane_mem_dstpipe (
+  .d( dst_s4[FU_MEM] ),  
+  .clk(clk),
+  .resetn(resetn),
+  .en( pipe_advance[6:4] ),
+  .squash(squash_per_lane_mem_dstpipe_NC),
+  .q({dst[FU_MEM][7],dst[FU_MEM][6],dst[FU_MEM][5],dst[FU_MEM][4]}));
+
+pipe #(1,3) lane_mem_dstwepipe (
+  .d( dst_we_s4[FU_MEM]),  
+  .clk(clk),
+  .resetn(resetn),
+  .en( pipe_advance[6:4] ),
+  .squash( pipe_squash[6:4] ),
+  .q({dst_we[FU_MEM][7],dst_we[FU_MEM][6],dst_we[FU_MEM][5],dst_we[FU_MEM][4]}));
+
+pipe #(NUMLANES,3) lane_mem_dstmaskpipe (
+  .d( vmask[FU_MEM]),  
+  .clk(clk),
+  .resetn(resetn),
+  .en( pipe_advance[4] ),
+  .squash(squash_per_lane_mem_dstmask_NC),
+  .q({dst_mask[FU_MEM][7],dst_mask[FU_MEM][6],dst_mask[FU_MEM][5],dst_mask[FU_MEM][4]}));
+
+wire     [ LANEWIDTH*NUMLANES-1 : 0 ]   load_mem_result_s5;
+
  vmem_local inst_vmem_local(
    .clk(clk),
    .resetn(resetn),
@@ -2462,8 +2500,10 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
     // Writeback ports
     .in_dst(dst_s4[FU_MEM]),
     .in_dst_we(dst_we_s4[FU_MEM]),
-    .out_dst(dst[FU_MEM][5]),
-    .out_dst_we(dst_we[FU_MEM][5]),
+    //.out_dst(dst[FU_MEM][5]),
+    .out_dst(),
+    //.out_dst_we(dst_we[FU_MEM][5]),
+    .out_dst_we(),
     .in_vs_dst_we(ctrl_vs_we[4]),
     .out_vs_dst_we(ctrl_vs_we[5]),
     // Vector operations ports
@@ -2668,9 +2708,8 @@ trp_unit #(REGIDWIDTH) u_trp (
 .read(),
 .busy(),
 .valid(),
-.out(trp_out)
-);
- 
+.out(trp_out));
+
 ///////////////////////////
 // Bfloat unit
 ///////////////////////////
@@ -2739,7 +2778,7 @@ pipe #(REGIDWIDTH,3) bfmultdstpipe (
   .clk(clk),
   .resetn(resetn),
   .en( pipe_advance[6:4] ),
-  .squash(squash_bfmult_dstpipe_NC),
+  .squash(squash_per_lane_mem_NC),
   .q({dst[FU_BFMULT+g_func][7],dst[FU_BFMULT+g_func][6],dst[FU_BFMULT+g_func][5],dst[FU_BFMULT+g_func][4]}));
 
 pipe #(1,3) bfmultdstwepipe (
@@ -2812,7 +2851,7 @@ pipe #(NUMLANES,3) bfmultdstmaskpipe (
 
   assign wb_dst[FU_MEM]=dst[FU_MEM][5];
   assign wb_dst_we[FU_MEM]=dst_we[FU_MEM][5] && (~pipe_advance[5]|~pipe_squash[5]);
-  assign wb_dst_mask[FU_MEM]=load_result_mask_s5;
+  assign wb_dst_mask[FU_MEM]=dst_mask[FU_MEM][5];
   assign D_wb_last_subvector[FU_MEM]=D_last_subvector_s5[FU_MEM];
 
   assign wb_dst[FU_MUL]=dst[FU_MUL][5];
@@ -2923,7 +2962,7 @@ pipe #(NUMLANES,3) bfmultdstmaskpipe (
         vmask_final[bw]=wb_dst_mask[FU_MEM];
         _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_MEM]>>LOG2NUMBANKS;
         vr_c_reg[bw]= wb_dst[FU_MEM];
-        vr_c_writedatain[bw]= load_result_s5;
+        vr_c_writedatain[bw]= load_mem_result_s5;
         D_last_subvector_done[bw]=D_wb_last_subvector[FU_MEM];
       end
       else
@@ -2938,9 +2977,6 @@ pipe #(NUMLANES,3) bfmultdstmaskpipe (
           (D_wb_last_subvector[FU_ALU+bw*ALUPERBANK] && `LO(wb_dst[FU_ALU+bw*ALUPERBANK],LOG2NUMBANKS)==bw) |
           (D_wb_last_subvector[FU_FALU+bw*ALUPERBANK] && `LO(dst[FU_FALU+bw*ALUPERBANK][5],LOG2NUMBANKS)==bw);
       end
-
-
-      //Generate byte enable from mask
       for (j=0; j<NUMLANES; j=j+1)
         vr_c_byteen[bw*VPW*NUMLANES + j*VPW +: VPW ]={VPW{vmask_final[bw][j]}};
 
