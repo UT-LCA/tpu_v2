@@ -100,10 +100,10 @@ target: cfc2 t4,dma_busy
   # vc31 - a_rows
   # vc30 - a_cols, b_rows
   # vc29 - b_cols
-  li t3, 0xf0
+  li t3, 0xffffff
   ctc2 t3, $vc31
-  ctc2 t3, $vc30
-  ctc2 t3, $vc29
+  #ctc2 t3, $vc30
+  #ctc2 t3, $vc29
 
 	#vadd.vv		c_v, a_v, b_v		# c = a + b
 	#vmullo.vv		c_v, a_v, b_v		# c = a * b

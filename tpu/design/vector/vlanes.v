@@ -2438,6 +2438,7 @@ wire     [ LANEWIDTH*NUMLANES-1 : 0 ]   load_mem_result_s5;
    .offset_a(vr_src1[FU_MEM]),
    .data_a(vr_src2[FU_MEM]),
    .out_a(load_mem_result_s5),
+   .last_subvector(mem_last_subvector_s4),
    .address_b(dma_lane_addr),
    .rden_b(dma_lane_rden),
    .wren_b(dma_lane_wren),

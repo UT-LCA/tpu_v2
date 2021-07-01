@@ -9,6 +9,7 @@ stride_val_a,
 offset_a,
 data_a,
 out_a,
+last_subvector,
 
 address_b,
 rden_b,
@@ -35,6 +36,7 @@ input en;
 input [6:0] op;
 input rden_b;
 input wren_b;
+input last_subvector;
 input [NUMLANES*DATAWORDSIZE-1:0] data_a;
 input [NUMLANES*DATAWORDSIZE-1:0] data_b;
 output [NUMLANES*DATAWORDSIZE-1:0] out_a;
@@ -70,14 +72,26 @@ assign index_req_a =  (op_pattern[1] & op_memop)? 1'b1: 1'b0;
 
 //Lane 0 Memory address space : 0,8,16,24,...,(MEMDEPTH*8-1)
 //Lane 1 Memory address space : 0+1,8+1,16+1,24+1,...,(MEMDEPTH*8-1+1)
- 
+
+reg last_subvector_q;
+
+always@(posedge clk)begin 
+  if(!resetn)
+    last_subvector_q <= 1'b0;
+  else
+    last_subvector_q <= last_subvector;
+end
+
+wire mem_op_valid;
+assign mem_op_valid = ~(last_subvector & last_subvector_q); 
+
 always@(*)begin
   if(op_memop & (~op_we))
     rden_a = 1'b1;
   else
     rden_a = 1'b0;
 
-  if(op_memop & op_we)
+  if(op_memop & op_we & mem_op_valid)
     wren_a = 1'b1;
   else
     wren_a = 1'b0;
