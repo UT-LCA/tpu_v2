@@ -98,7 +98,7 @@ end
 
 generate 
     for(g_mem =0; g_mem < NUMLANES ; g_mem = g_mem+1 )begin:gen_memperlane
-        ram_wrapper #(.AWIDTH(LOGMEMDEPTH),.NUM_WORDS(MEMDEPTH), .DWIDTH(DATAWORDSIZE)) inst_mem(
+        per_lane_mem_wrapper #(.AWIDTH(LOGMEMDEPTH),.NUM_WORDS(MEMDEPTH), .DWIDTH(DATAWORDSIZE)) inst_mem(
 	    .clk(clk),
             .resetn(resetn),
 	    .address_a(reg_address_a[g_mem*LOGMEMDEPTH +: LOGMEMDEPTH]),

@@ -131,6 +131,10 @@ module de3 (
   wire [31:0] dbus_prefetch;
   wire dbus_wait;
 
+  wire [31:0] scalar_dbus_writedata;
+  wire [31:0] scalar_dbus_address;
+  wire scalar_dbus_en;
+
   wire ddr_en;
   wire ddr_wait;
 
@@ -222,7 +226,7 @@ module de3 (
     if (!procresetn)
       dead<=1'b0;
     else if (!dead)
-      dead<=dead_select && (dbus_writedata==32'hdeaddead);
+      dead<=dead_select && (scalar_dbus_writedata==32'hdeaddead);
 
   /*************** Performance counter ***************/
   always@(posedge clk)
@@ -358,6 +362,7 @@ module de3 (
   wire                          dma_dbus_wait;      
   wire                          dma_dbus_data_valid;
 
+
   processor p (
     .clk(clk),
     .mem_clk(memclk),
@@ -371,6 +376,10 @@ module de3 (
     .imem_filladdr(imem_filladdr),
     .imem_filldata(imem_filldata),
     .imem_fillwe(imem_fillwe),
+   
+    .scalar_dbus_writedata(scalar_dbus_writedata),
+    .scalar_dbus_en(scalar_dbus_en),
+    .scalar_dbus_address(scalar_dbus_address),
 
     .dbus_address(dbus_address),
     .dbus_readdata(dbus_readdata),
@@ -639,7 +648,7 @@ module de3 (
     // File system mapped to address 0x80000000-0x8000000f
     // DDR mapped to address         0x00000000-0x7fffffff
 
-  assign dead_select =  dbus_en&({dbus_address[31:2],2'b0}==32'h80000104);
+  assign dead_select =  scalar_dbus_en&({scalar_dbus_address[31:2],2'b0}==32'h80000104);
   assign count_select = dbus_en&({dbus_address[31:2],2'b0}==32'h80000100);
   assign fs_select =    dbus_en&({dbus_address[31:4],4'b0}==32'h80000000);
   assign ddr_select =   ({dbus_address[31:31],31'b0}==32'h00000000);

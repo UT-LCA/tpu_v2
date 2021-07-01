@@ -2192,7 +2192,7 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
             ctrl4_memunit_op=ctrl3_memunit_op[b3];
             //Load base on first subvector or if INDEXED memory operation
             vbase_s4=(|(first_subvector&ctrl3_mem_en) || ctrl_memunit_op[3][5])?
-              vbase[3] : vbase_s4 + ((((ctrl_memunit_op[3][4])? vstride[3]: 1)
+              vbase[3] : vbase_s4 + ((((ctrl_memunit_op[3][4])? vstride[3]: 2)
                       <<ctrl_memunit_op[3][3:2])<<LOG2NUMLANES);
             // Partial Address Gen for each lane - just do multiplication part
             for (m=0; m<NUMLANES; m=m+1)

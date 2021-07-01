@@ -157,7 +157,7 @@ reg  [LOG2CACHEDEPTH-1:0] count;
  dpram1 data1 (
     .clk(bus_clk),
     .address_a(bus_address[27:2]),
-    .address_b(mem_icache_address),
+    .address_b(mem_icache_address[27:2]),
     .wren_a(1'b0),
     .wren_b(mem_icache_wren),
     .data_a(0),
@@ -165,7 +165,7 @@ reg  [LOG2CACHEDEPTH-1:0] count;
     .byteen_a(-1),
     .byteen_b(mem_icache_byteen),
     .out_a(cache_dataout),
-    .out_b(meme_icache_out)
+    .out_b(mem_icache_out)
  );
  defparam 
     data1.AWIDTH=26,

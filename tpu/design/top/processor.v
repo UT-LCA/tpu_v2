@@ -18,7 +18,11 @@ module processor (
     imem_filladdr,
     imem_filldata,
     imem_fillwe,
-
+    
+    scalar_dbus_address,
+    scalar_dbus_en,
+    scalar_dbus_writedata,
+    
     dbus_address,
     dbus_readdata,
     dbus_writedata,
@@ -86,6 +90,9 @@ parameter DRAMWIDTHBITS=2**LOG2DRAMWIDTHBITS;
 
 
 //
+output [31:0] scalar_dbus_writedata;
+output scalar_dbus_en;
+output [31:0] scalar_dbus_address;
 
 input              clk;
 input              mem_clk;
@@ -196,10 +203,21 @@ input                           dma_dbus_data_valid;
   reg [4-1:0]  icache_timeout;
   reg [4-1:0]  dcache_timeout;
 
+ 
+
 /*************************  AXI interface  **************************/
 
 
 /*************************  Processor Core **************************/
+
+  wire [31:0]    scalar_dbus_address; 
+  wire [31:0]    scalar_dbus_readdata; 
+  wire [31:0]    scalar_dbus_writedata;
+  wire [3:0]    scalar_dbus_byteen; 
+  wire     scalar_dbus_en;       
+  wire     scalar_dbus_wren;    
+
+ 
 
   core c (
     .clk(clk),
@@ -216,6 +234,13 @@ input                           dma_dbus_data_valid;
     .trc_we(trc_we),
     .trc_stall(trc_stall),
     .trc_pipestall(trc_pipestall),
+    
+    .scalar_dbus_address  (scalar_dbus_address  ),
+    .scalar_dbus_readdata (scalar_dbus_readdata ),
+    .scalar_dbus_writedata(scalar_dbus_writedata),
+    .scalar_dbus_byteen   (scalar_dbus_byteen   ),
+    .scalar_dbus_en       (scalar_dbus_en       ),
+    .scalar_dbus_wren     (scalar_dbus_wren     ),
 
     .dbus_address(dcpu_address),
     .dbus_readdata(dcpu_readdata),
@@ -270,11 +295,11 @@ input                           dma_dbus_data_valid;
     .cache_hit(icache_hit),
     .cache_miss(icache_miss),
 
-    .mem_icache_address  (mem_icache_address),
-    .mem_icache_data     (mem_icache_data   ),
-    .mem_icache_out      (mem_icache_out    ),
-    .mem_icache_byteen   (mem_icache_byteen ),
-    .mem_icache_wren     (mem_icache_wren   )
+    .mem_icache_address  (scalar_dbus_address),
+    .mem_icache_data     (scalar_dbus_writedata),
+    .mem_icache_out      (scalar_dbus_readdata),
+    .mem_icache_byteen   (scalar_dbus_byteen),
+    .mem_icache_wren     (scalar_dbus_wren)
     );
     defparam icache1.LOG2CACHEDEPTH=LOG2ICACHEDEPTH,
       icache1.LOG2CACHELINESIZE=LOG2ICACHEWIDTHBITS;
