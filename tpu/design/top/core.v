@@ -21,6 +21,84 @@ module core (
   trc_stall,
   trc_pipestall,
 
+  // AXI interface
+   M_AWID    ,
+    M_AWADDR  ,
+    M_AWLEN   ,
+    M_AWSIZE  ,
+    M_AWBURST ,
+    M_AWLOCK  ,
+    M_AWCACHE ,
+    M_AWPROT  ,
+    M_AWQOS   ,
+    M_AWVALID ,
+    M_AWREADY ,
+    M_WDATA   ,
+    M_WSTRB   ,
+    M_WLAST   ,
+    M_WVALID  ,
+    M_WREADY  ,
+    M_ARID    ,
+    M_ARADDR  ,
+    M_ARLEN   ,
+    M_ARSIZE  ,
+    M_ARBURST ,
+    M_ARLOCK  ,
+    M_ARCACHE ,
+    M_ARPROT  ,
+    M_ARQOS   ,
+    M_ARVALID ,
+    M_ARREADY ,
+    M_RID     ,
+    M_RDATA   ,
+    M_RRESP   ,
+    M_RLAST   ,
+    M_RVALID  ,
+    M_RREADY  ,
+    M_BREADY  ,
+    M_BVALID  ,
+    M_BRESP   ,
+    M_BID     ,
+
+    S_AWID   , 
+    S_AWADDR , 
+    S_AWLEN  , 
+    S_AWSIZE , 
+    S_AWBURST, 
+    S_AWLOCK , 
+    S_AWCACHE, 
+    S_AWPROT , 
+    S_AWQOS  , 
+    S_AWVALID, 
+    S_AWREADY, 
+    S_WDATA  , 
+    S_WSTRB  , 
+    S_WLAST  , 
+    S_WVALID , 
+    S_WREADY , 
+    S_ARID   , 
+    S_ARADDR , 
+    S_ARLEN  , 
+    S_ARSIZE , 
+    S_ARBURST, 
+    S_ARLOCK , 
+    S_ARCACHE, 
+    S_ARPROT , 
+    S_ARQOS  , 
+    S_ARVALID, 
+    S_ARREADY, 
+    S_RID    , 
+    S_RDATA  , 
+    S_RRESP  , 
+    S_RLAST  , 
+    S_RVALID , 
+    S_RREADY , 
+    S_BREADY , 
+    S_BVALID , 
+    S_BRESP  , 
+    S_BID ,    
+  
+  // Databus interface
     dbus_address,
     dbus_readdata,
     dbus_writedata,
@@ -92,6 +170,89 @@ output  [ 31 : 0 ]  trc_data;
 output              trc_we;
 input               trc_stall;
 output              trc_pipestall;
+
+// AXI interface
+
+ output  [6 - 1:0]     M_AWID;                                                 
+ output  [16- 1:0]     M_AWADDR;                                    
+ output  [7:0]         M_AWLEN;                                                    
+ output  [2:0]         M_AWSIZE;                                                   
+ output  [1:0]         M_AWBURST;                                                  
+ output                M_AWLOCK;                                                         
+ output  [3:0]         M_AWCACHE;                                                  
+ output  [2:0]         M_AWPROT;                                                   
+ output  [3:0]         M_AWQOS;                                                    
+ output                M_AWVALID;                                                        
+ input                 M_AWREADY;                                                        
+ output  [128-1 : 0]   M_WDATA;                                     
+ output  [128/8-1 : 0] M_WSTRB;                                   
+ output                M_WLAST;                                                          
+ output                M_WVALID;                                                         
+ input                 M_WREADY;                                                         
+
+ output  [6-1 : 0]     M_ARID;                                                 
+ output  [16-1 : 0]    M_ARADDR;                                    
+ output  [7 : 0]       M_ARLEN;                                                  
+ output  [2 : 0]       M_ARSIZE;                                                 
+ output  [1 : 0]       M_ARBURST;                                                
+ output                M_ARLOCK;                                                         
+ output  [3 : 0]       M_ARCACHE;                                                
+ output  [2 : 0]       M_ARPROT;                                                 
+ output  [3 : 0]       M_ARQOS;                                                  
+ output                M_ARVALID;                                                        
+ input                 M_ARREADY;                                                        
+ input   [6-1 : 0]     M_RID;                                         	    
+ input   [128-1 : 0]   M_RDATA;                                     
+ input   [1 : 0]       M_RRESP;                                                  
+ input                 M_RLAST;                                                          
+ input                 M_RVALID;                                                         
+ output                M_RREADY;                                                         
+
+ output                M_BREADY;                                                         
+ input                 M_BVALID;                                                         
+ input   [1 : 0]       M_BRESP;                                                  
+ input   [6-1 : 0]     M_BID;                                                   
+
+ input  [6 - 1:0]       S_AWID;                                                 
+ input  [16- 1:0]       S_AWADDR;                                    
+ input  [7:0]           S_AWLEN;                                                    
+ input  [2:0]           S_AWSIZE;                                                   
+ input  [1:0]           S_AWBURST;                                                  
+ input                  S_AWLOCK;                                                         
+ input  [3:0]           S_AWCACHE;                                                  
+ input  [2:0]           S_AWPROT;                                                   
+ input  [3:0]           S_AWQOS;                                                    
+ input                  S_AWVALID;                                                        
+ output                 S_AWREADY;                                                        
+ input  [128-1 : 0]     S_WDATA;                                     
+ input  [128/8-1 : 0]   S_WSTRB;                                   
+ input                  S_WLAST;                                                          
+ input                  S_WVALID;                                                         
+ output                 S_WREADY;                                                         
+
+ input  [6-1 : 0]       S_ARID;                                                 
+ input  [16-1 : 0]      S_ARADDR;                                    
+ input  [7 : 0]         S_ARLEN;                                                  
+ input  [2 : 0]         S_ARSIZE;                                                 
+ input  [1 : 0]         S_ARBURST;                                                
+ input                  S_ARLOCK;                                                         
+ input  [3 : 0]         S_ARCACHE;                                                
+ input  [2 : 0]         S_ARPROT;                                                 
+ input  [3 : 0]         S_ARQOS;                                                  
+ input                  S_ARVALID;                                                        
+ output                 S_ARREADY;                                                        
+ output   [6-1 : 0]     S_RID;                                         	    
+ output   [128-1 : 0]   S_RDATA;                                     
+ output   [1 : 0]       S_RRESP;                                                  
+ output                 S_RLAST;                                                          
+ output                 S_RVALID;                                                         
+ input                  S_RREADY;                                                         
+
+ input                  S_BREADY;                                                         
+ output                 S_BVALID;                                                         
+ output   [1 : 0]       S_BRESP;                                                  
+ output   [6-1 : 0]     S_BID;                                                  
+
 
 //DMA changes
 output [31:0]                 dma_dbus_address;   
@@ -363,6 +524,81 @@ input                         dma_dbus_data_valid;
       .scalar_out_en(cop2_fromcop2_en),
       .scalar_out_wait(cop2_fromcop2_wait),
 
+      // AXI interface
+      .M_AWID    (M_AWID    ),
+      .M_AWADDR  (M_AWADDR  ),
+      .M_AWLEN   (M_AWLEN   ),
+      .M_AWSIZE  (M_AWSIZE  ),
+      .M_AWBURST (M_AWBURST ),
+      .M_AWLOCK  (M_AWLOCK  ),
+      .M_AWCACHE (M_AWCACHE ),
+      .M_AWPROT  (M_AWPROT  ),
+      .M_AWQOS   (M_AWQOS   ),
+      .M_AWVALID (M_AWVALID ),
+      .M_AWREADY (M_AWREADY ),
+      .M_WDATA   (M_WDATA   ),
+      .M_WSTRB   (M_WSTRB   ),
+      .M_WLAST   (M_WLAST   ),
+      .M_WVALID  (M_WVALID  ),
+      .M_WREADY  (M_WREADY  ),
+      .M_ARID    (M_ARID    ),
+      .M_ARADDR  (M_ARADDR  ),
+      .M_ARLEN   (M_ARLEN   ),
+      .M_ARSIZE  (M_ARSIZE  ),
+      .M_ARBURST (M_ARBURST ),
+      .M_ARLOCK  (M_ARLOCK  ),
+      .M_ARCACHE (M_ARCACHE ),
+      .M_ARPROT  (M_ARPROT  ),
+      .M_ARQOS   (M_ARQOS   ),
+      .M_ARVALID (M_ARVALID ),
+      .M_ARREADY (M_ARREADY ),
+      .M_RID     (M_RID     ),
+      .M_RDATA   (M_RDATA   ),
+      .M_RRESP   (M_RRESP   ),
+      .M_RLAST   (M_RLAST   ),
+      .M_RVALID  (M_RVALID  ),
+      .M_RREADY  (M_RREADY  ),
+      .M_BREADY  (M_BREADY  ),
+      .M_BVALID  (M_BVALID  ),
+      .M_BRESP   (M_BRESP   ),
+      .M_BID     (M_BID     ),
+      .S_AWID    (S_AWID   ), 
+      .S_AWADDR  (S_AWADDR ), 
+      .S_AWLEN   (S_AWLEN  ), 
+      .S_AWSIZE  (S_AWSIZE ), 
+      .S_AWBURST (S_AWBURST), 
+      .S_AWLOCK  (S_AWLOCK ), 
+      .S_AWCACHE (S_AWCACHE), 
+      .S_AWPROT  (S_AWPROT ), 
+      .S_AWQOS   (S_AWQOS  ), 
+      .S_AWVALID (S_AWVALID), 
+      .S_AWREADY (S_AWREADY), 
+      .S_WDATA   (S_WDATA  ), 
+      .S_WSTRB   (S_WSTRB  ), 
+      .S_WLAST   (S_WLAST  ), 
+      .S_WVALID  (S_WVALID ), 
+      .S_WREADY  (S_WREADY ), 
+      .S_ARID    (S_ARID   ), 
+      .S_ARADDR  (S_ARADDR ), 
+      .S_ARLEN   (S_ARLEN  ), 
+      .S_ARSIZE  (S_ARSIZE ), 
+      .S_ARBURST (S_ARBURST), 
+      .S_ARLOCK  (S_ARLOCK ), 
+      .S_ARCACHE (S_ARCACHE), 
+      .S_ARPROT  (S_ARPROT ), 
+      .S_ARQOS   (S_ARQOS  ), 
+      .S_ARVALID (S_ARVALID), 
+      .S_ARREADY (S_ARREADY), 
+      .S_RID     (S_RID    ), 
+      .S_RDATA   (S_RDATA  ), 
+      .S_RRESP   (S_RRESP  ), 
+      .S_RLAST   (S_RLAST  ), 
+      .S_RVALID  (S_RVALID ), 
+      .S_RREADY  (S_RREADY ), 
+      .S_BREADY  (S_BREADY ), 
+      .S_BVALID  (S_BVALID ), 
+      .S_BRESP   (S_BRESP  ), 
+      .S_BID     (S_BID    ),
       // Data memory interface
 
       .dbus_address(v_dbus_address),

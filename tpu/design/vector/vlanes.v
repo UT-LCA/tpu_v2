@@ -53,6 +53,84 @@ module vlanes (
     vs_wetrack,  // says there exist a scalar write operation in pipe
     vs_dst,
 
+    //AXI interface
+    M_AWID    ,
+    M_AWADDR  ,
+    M_AWLEN   ,
+    M_AWSIZE  ,
+    M_AWBURST ,
+    M_AWLOCK  ,
+    M_AWCACHE ,
+    M_AWPROT  ,
+    M_AWQOS   ,
+    M_AWVALID ,
+    M_AWREADY ,
+    M_WDATA   ,
+    M_WSTRB   ,
+    M_WLAST   ,
+    M_WVALID  ,
+    M_WREADY  ,
+    M_ARID    ,
+    M_ARADDR  ,
+    M_ARLEN   ,
+    M_ARSIZE  ,
+    M_ARBURST ,
+    M_ARLOCK  ,
+    M_ARCACHE ,
+    M_ARPROT  ,
+    M_ARQOS   ,
+    M_ARVALID ,
+    M_ARREADY ,
+    M_RID     ,
+    M_RDATA   ,
+    M_RRESP   ,
+    M_RLAST   ,
+    M_RVALID  ,
+    M_RREADY  ,
+    M_BREADY  ,
+    M_BVALID  ,
+    M_BRESP   ,
+    M_BID     ,
+
+    S_AWID   , 
+    S_AWADDR , 
+    S_AWLEN  , 
+    S_AWSIZE , 
+    S_AWBURST, 
+    S_AWLOCK , 
+    S_AWCACHE, 
+    S_AWPROT , 
+    S_AWQOS  , 
+    S_AWVALID, 
+    S_AWREADY, 
+    S_WDATA  , 
+    S_WSTRB  , 
+    S_WLAST  , 
+    S_WVALID , 
+    S_WREADY , 
+    S_ARID   , 
+    S_ARADDR , 
+    S_ARLEN  , 
+    S_ARSIZE , 
+    S_ARBURST, 
+    S_ARLOCK , 
+    S_ARCACHE, 
+    S_ARPROT , 
+    S_ARQOS  , 
+    S_ARVALID, 
+    S_ARREADY, 
+    S_RID    , 
+    S_RDATA  , 
+    S_RRESP  , 
+    S_RLAST  , 
+    S_RVALID , 
+    S_RREADY , 
+    S_BREADY , 
+    S_BVALID , 
+    S_BRESP  , 
+    S_BID    ,  
+
+
     // Data memory interface
     dbus_address,
     dbus_en,
@@ -183,6 +261,90 @@ output                        dma_dbus_prefetch;
 input                         dma_dbus_wait;      
 input                         dma_dbus_data_valid;
 
+
+// AXI interface
+//
+output  [6 - 1:0]                    M_AWID;                                                 
+output  [LANEWIDTH- 1:0]             M_AWADDR;                                    
+output  [7:0]                        M_AWLEN;                                                    
+output  [2:0]                        M_AWSIZE;                                                   
+output  [1:0]                        M_AWBURST;                                                  
+output                               M_AWLOCK;                                                         
+output  [3:0]                        M_AWCACHE;                                                  
+output  [2:0]                        M_AWPROT;                                                   
+output  [3:0]                        M_AWQOS;                                                    
+output                               M_AWVALID;                                                        
+input                                M_AWREADY;                                                        
+output  [NUMLANES*LANEWIDTH-1 : 0]   M_WDATA;                                     
+output  [(NUMLANES*LANEWIDTH)/8-1 : 0] M_WSTRB;                                   
+output                               M_WLAST;                                                          
+output                               M_WVALID;                                                         
+input                                M_WREADY;                                                         
+
+output  [6-1 : 0]                    M_ARID;                                                 
+output  [LANEWIDTH-1 : 0]            M_ARADDR;                                    
+output  [7 : 0]                      M_ARLEN;                                                  
+output  [2 : 0]                      M_ARSIZE;                                                 
+output  [1 : 0]                      M_ARBURST;                                                
+output                               M_ARLOCK;                                                         
+output  [3 : 0]                      M_ARCACHE;                                                
+output  [2 : 0]                      M_ARPROT;                                                 
+output  [3 : 0]                      M_ARQOS;                                                  
+output                               M_ARVALID;                                                        
+input                                M_ARREADY;                                                        
+input   [6-1 : 0]                    M_RID;                                         	    
+input   [NUMLANES*LANEWIDTH-1 : 0]   M_RDATA;                                     
+input   [1 : 0]                      M_RRESP;                                                  
+input                                M_RLAST;                                                          
+input                                M_RVALID;                                                         
+output                               M_RREADY;                                                         
+
+output                               M_BREADY;                                                         
+input                                M_BVALID;                                                         
+input   [1 : 0]                      M_BRESP;                                                  
+input   [6-1 : 0]                    M_BID;                                                   
+
+input  [6 - 1:0]                    S_AWID;                                                 
+input  [LANEWIDTH- 1:0]             S_AWADDR;                                    
+input  [7:0]                        S_AWLEN;                                                    
+input  [2:0]                        S_AWSIZE;                                                   
+input  [1:0]                        S_AWBURST;                                                  
+input                               S_AWLOCK;                                                         
+input  [3:0]                        S_AWCACHE;                                                  
+input  [2:0]                        S_AWPROT;                                                   
+input  [3:0]                        S_AWQOS;                                                    
+input                               S_AWVALID;                                                        
+output                                S_AWREADY;                                                        
+input  [NUMLANES*LANEWIDTH-1 : 0]   S_WDATA;                                     
+input  [(NUMLANES*LANEWIDTH)/8-1 : 0] S_WSTRB;                                   
+input                               S_WLAST;                                                          
+input                               S_WVALID;                                                         
+output                                S_WREADY;                                                         
+
+input  [6-1 : 0]                    S_ARID;                                                 
+input  [LANEWIDTH-1 : 0]            S_ARADDR;                                    
+input  [7 : 0]                      S_ARLEN;                                                  
+input  [2 : 0]                      S_ARSIZE;                                                 
+input  [1 : 0]                      S_ARBURST;                                                
+input                               S_ARLOCK;                                                         
+input  [3 : 0]                      S_ARCACHE;                                                
+input  [2 : 0]                      S_ARPROT;                                                 
+input  [3 : 0]                      S_ARQOS;                                                  
+input                               S_ARVALID;                                                        
+output                                S_ARREADY;                                                        
+output   [6-1 : 0]                    S_RID;                                         	    
+output   [NUMLANES*LANEWIDTH-1 : 0]   S_RDATA;                                     
+output   [1 : 0]                      S_RRESP;                                                  
+output                                S_RLAST;                                                          
+output                                S_RVALID;                                                         
+input                               S_RREADY;                                                         
+
+input                               S_BREADY;                                                         
+output                                S_BVALID;                                                         
+output   [1 : 0]                      S_BRESP;                                                  
+output   [6-1 : 0]                    S_BID;     
+
+//
 
 `include "visa.v"
 
@@ -408,6 +570,14 @@ wire [ LANEWIDTH*NUMLANES-1 : 0 ] mulshift_result_s5;
 
 //Support 1 Lane processor
 wire [((LOG2NUMLANES>0) ? LOG2NUMLANES : 1)-1:0] elmshamt[`MAX_PIPE_STAGES-1:2];
+
+//control for TRP unit
+
+wire [1:0] trp_mode_s1,trp_mode_s;
+reg [1:0] trp_mode_s3, trp_mode_s4;
+wire trp_busy;
+wire trp_valid;
+wire trp_read;
 
 reg ctrl1_vr_a_en; // SRC1
 reg ctrl1_vr_b_en; // SRC2
@@ -931,6 +1101,8 @@ assign internal_pipe_advance[7:6] = 2'b11;
       COP2_VLDX_B,
       COP2_VLDX_H,
       COP2_VTRP,
+      COP2_VRED,
+      COP2_VPER,
       COP2_VLDX_L,
       COP2_VLDX_U_B,
       COP2_VLDX_U_H,
@@ -942,11 +1114,9 @@ assign internal_pipe_advance[7:6] = 2'b11;
       //COP2_VFST:
       COP2_VST_B,
       COP2_VST_H,
-      COP2_VRED,
       COP2_VST_L,
       COP2_VSTS_B,
       COP2_VSTS_H,
-      COP2_VPER,
       COP2_VSTS_L:
         begin
           ctrl1_vf_a_en=1;
@@ -1006,6 +1176,13 @@ assign internal_pipe_advance[7:6] = 2'b11;
           ctrl1_vr_d_we=1;
           ctrl1_ismasked=1;
         end
+      COP2_VTRP,
+      COP2_VPER,
+      COP2_VRED:
+         begin
+          ctrl1_vr_d_we=1;
+          ctrl1_ismasked=1;
+         end
       COP2_VCMP_EQ,
       COP2_VCMP_NE,
       COP2_VCMP_LT,
@@ -1225,7 +1402,7 @@ assign internal_pipe_advance[7:6] = 2'b11;
         end
       COP2_VLDX_B,
       COP2_VLDX_H,
-      COP2_VTRP,
+     // COP2_VTRP,
       COP2_VLDX_L,
       COP2_VLDX_U_B,
       COP2_VLDX_U_H,
@@ -1240,11 +1417,11 @@ assign internal_pipe_advance[7:6] = 2'b11;
       //COP2_VFST:
       COP2_VST_B,
       COP2_VST_H,
-      COP2_VRED,
+      //COP2_VRED,
       COP2_VST_L,
       COP2_VSTS_B,
       COP2_VSTS_H,
-      COP2_VPER,
+      //COP2_VPER,
       COP2_VSTS_L,
       COP2_VSTX_B,
       COP2_VSTX_H,
@@ -1305,6 +1482,8 @@ assign internal_pipe_advance[7:6] = 2'b11;
       COP2_VBFMULT:   ctrl1_bfmult_en = 1'b1;
       COP2_VACT:      ctrl1_act_en = 1'b1;
       COP2_VTRP:      ctrl1_trp_en = 1'b1;
+      COP2_VRED:      ctrl1_trp_en = 1'b1;
+      COP2_VPER:      ctrl1_trp_en = 1'b1;
       //COP2_VDIV_U,
       //COP2_VMOD,
       //COP2_VMOD_U,
@@ -1412,7 +1591,7 @@ assign internal_pipe_advance[7:6] = 2'b11;
       COP2_VBFMULT: ctrl1_memunit_op=MEMOP_LDSUW;
       COP2_VLDX_B: ctrl1_memunit_op=MEMOP_LDXB;
       COP2_VLDX_H: ctrl1_memunit_op=MEMOP_LDXH;
-      COP2_VTRP: ctrl1_memunit_op=MEMOP_LDXW;
+      //COP2_VTRP: ctrl1_memunit_op=MEMOP_LDXW;
       //COP2_VLDX_L:
       COP2_VLDX_U_B: ctrl1_memunit_op=MEMOP_LDXUB;
       COP2_VLDX_U_H: ctrl1_memunit_op=MEMOP_LDXUH;
@@ -1420,11 +1599,11 @@ assign internal_pipe_advance[7:6] = 2'b11;
       //COP2_VFST:
       COP2_VST_B: ctrl1_memunit_op=MEMOP_STB;
       COP2_VST_H: ctrl1_memunit_op=MEMOP_STH;
-      COP2_VRED: ctrl1_memunit_op=MEMOP_STW;
+      //COP2_VRED: ctrl1_memunit_op=MEMOP_STW;
       //COP2_VST_L:
       COP2_VSTS_B: ctrl1_memunit_op=MEMOP_STSB;
       COP2_VSTS_H: ctrl1_memunit_op=MEMOP_STSH;
-      COP2_VPER: ctrl1_memunit_op=MEMOP_STSW;
+      //COP2_VPER: ctrl1_memunit_op=MEMOP_STSW;
       //COP2_VSTS_L:
       COP2_VSTX_B: ctrl1_memunit_op=MEMOP_STXB;
       COP2_VSTX_H: ctrl1_memunit_op=MEMOP_STXH;
@@ -1553,9 +1732,10 @@ assign internal_pipe_advance[7:6] = 2'b11;
       3+
       1+
       1+
-      1
+      1+
+      2 // Sangram added 1 for TRP unit en signal
     ) pipe1reg (
-      .d( {
+      .d({
         {(ctrl1_vrdest_sel) ? ir_src2 : ir_dst, regid_pad},
         {(ctrl1_vr_c_en ) ? ir_dst : ir_src1, regid_pad},
         {ir_src2,regid_pad},
@@ -1573,7 +1753,8 @@ assign internal_pipe_advance[7:6] = 2'b11;
         ctrl1_ismasked,
         ctrl1_flagalu_op,
         ctrl1_vf_wbsel,
-        ctrl1_volatiledest
+        ctrl1_volatiledest,
+        trp_mode_s1
       }),
       .clk(clk),
       .resetn(resetn),
@@ -1597,7 +1778,8 @@ assign internal_pipe_advance[7:6] = 2'b11;
         ctrl2_ismasked,
         ctrl2_flagalu_op,
         ctrl2_vf_wbsel,
-        ctrl2_volatiledest
+        ctrl2_volatiledest,
+        trp_mode_s2
       }));
   
   wire [6:1] squash_ctrlmemoppipe_NC;
@@ -1785,7 +1967,8 @@ assign internal_pipe_advance[7:6] = 2'b11;
     1+ \
     VCWIDTH+ \
     VSWIDTH+ \
-    8
+    8+ \
+    2
 wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
   vdispatcher #(NUMBANKS, `DISPATCHWIDTH,LOG2MVL,LOG2MVL,LOG2MVL-LOG2NUMLANES+1)
     vdispatcher(
@@ -1832,7 +2015,8 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
           ctrl2_volatiledest,
           (!pipe_advance_s2_r) ? vc_in_saved : vc_in,
           (!pipe_advance_s2_r) ? vs_in_saved : vs_in,
-          (pipe_squash[2]) ? 8'b0 : D_instr[2]
+          (pipe_squash[2]) ? 8'b0 : D_instr[2],
+          trp_mode_s2
           }),
       .inshift_first(ctrl2_useslanes),
       .inshift_rdelm(src_start),
@@ -1983,7 +2167,8 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
         ctrl3_volatiledest[bi],
         vc_s3[bi],
         vs_s3[bi],
-        D_instr_s3[bi]
+        D_instr_s3[bi],
+        trp_mode_s3[bi]
       } = dispatcher_instr>>(bi*(`DISPATCHWIDTH));
 
       last_subvector[bi]=~|count[bi*(LOG2MVL-LOG2NUMLANES+1)+:LOG2MVL-LOG2NUMLANES];
@@ -2129,7 +2314,8 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
           begin
             D_instr_s4[FU_TRP]=D_instr_s3[b3];
             D_last_subvector_s4[FU_TRP]=last_subvector[b3];
-            ctrl4_act_en = ctrl3_act_en[b3];
+            ctrl4_trp_en = ctrl3_trp_en[b3];
+            trp_mode_s4 = trp_mode_s3[b3];
             banksel_s4[FU_TRP]=b3;
             vs_s4[FU_TRP]=vs_s3[b3];
             vc_s4[FU_TRP]=vc_s3[b3];
@@ -2331,6 +2517,8 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
                                     vr_a_readdataout[banksel_s4[FU_BFMULT]];
     vr_src2[FU_BFMULT] =(src2scalar_s4[FU_BFMULT]) ? {NUMLANES{vs_s4[FU_BFMULT][LANEWIDTH-1:0]}} : 
                                     vr_b_readdataout[banksel_s4[FU_BFMULT]];
+    vr_src1[FU_TRP] =(src1scalar_s4[FU_TRP]) ? {NUMLANES{vs_s4[FU_TRP][LANEWIDTH-1:0]}} : 
+                                    vr_a_readdataout[banksel_s4[FU_TRP]];
     vmask[FU_MATMUL] =  vlane_en[FU_MATMUL] &
            ((ctrl4_ismasked[FU_MATMUL]) ?  
              vf_a_readdataout[banksel_s4[FU_MATMUL]*NUMLANES +: NUMLANES] :
@@ -2344,6 +2532,11 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
     vmask[FU_BFMULT] =  vlane_en[FU_BFMULT] &
            ((ctrl4_ismasked[FU_BFMULT]) ?  
              vf_a_readdataout[banksel_s4[FU_BFMULT]*NUMLANES +: NUMLANES] :
+             {NUMLANES{1'b1}}) ;
+
+    vmask[FU_TRP] =  vlane_en[FU_TRP] &
+           ((ctrl4_ismasked[FU_TRP]) ?  
+             vf_a_readdataout[banksel_s4[FU_TRP]*NUMLANES +: NUMLANES] :
              {NUMLANES{1'b1}}) ;
 
     for (fn2=FU_FALU; fn2<=FU_FALU+(NUMBANKS-1)*ALUPERBANK; fn2=fn2+1)
@@ -2390,6 +2583,121 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
       .en( pipe_advance[4]),
       .squashn( ~pipe_squash[4]),
       .q( ctrl5_mem_en ));
+
+// AXI interface logic
+//
+axi4_master #(
+    .P_TARGET_SLAVE_BASE_ADDR(0),                           
+    .P_ADDR_WIDTH(32),                                      
+    .P_DATA_WIDTH(128)                                      
+)inst_axi_master
+(
+    .req_addr      (),
+    .req_data      (),
+    .req_en        (),
+    .req_type      (),
+    .req_read_data (),
+    .axi_busy      (),
+    .CLOCK         (M_CLOCK    ),                                                          
+    .RESET         (M_RESET    ),                                                          
+    .AWID          (M_AWID     ),                                                           
+    .AWADDR        (M_AWADDR   ),                                                         
+    .AWLEN         (M_AWLEN    ),                                                          
+    .AWSIZE        (M_AWSIZE   ),                                                         
+    .AWBURST       (M_AWBURST  ),                                                        
+    .AWLOCK        (M_AWLOCK   ),                                                         
+    .AWCACHE       (M_AWCACHE  ),                                                        
+    .AWPROT        (M_AWPROT   ),                                                         
+    .AWQOS         (M_AWQOS    ),                                                          
+    .AWVALID       (M_AWVALID  ),                                                        
+    .AWREADY       (M_AWREADY  ),                                                        
+    .WDATA         (M_WDATA    ),                                                          
+    .WSTRB         (M_WSTRB    ),                                                          
+    .WLAST         (M_WLAST    ),                                                          
+    .WVALID        (M_WVALID   ),                                                         
+    .WREADY        (M_WREADY   ),                                                         
+    .ARID          (M_ARID     ),                                                           
+    .ARADDR        (M_ARADDR   ),                                                         
+    .ARLEN         (M_ARLEN    ),                                                          
+    .ARSIZE        (M_ARSIZE   ),                                                         
+    .ARBURST       (M_ARBURST  ),                                                        
+    .ARLOCK        (M_ARLOCK   ),                                                         
+    .ARCACHE       (M_ARCACHE  ),                                                        
+    .ARPROT        (M_ARPROT   ),                                                         
+    .ARQOS         (M_ARQOS    ),                                                          
+    .ARVALID       (M_ARVALID  ),                                                        
+    .ARREADY       (M_ARREADY  ),                                                        
+    .RID           (M_RID      ),                                                            
+    .RDATA         (M_RDATA    ),                                                          
+    .RRESP         (M_RRESP    ),                                                          
+    .RLAST         (M_RLAST    ),                                                          
+    .RVALID        (M_RVALID   ),                                                         
+    .RREADY        (M_RREADY   ),                                                         
+    .BREADY        (M_BREADY   ),                                                         
+    .BVALID        (M_BVALID   ),                                                         
+    .BRESP         (M_BRESP    ),                                                          
+    .BID           (M_BID      )                                                             
+);
+
+axi4_slave #(
+    .P_ADDR_WIDTH(16),
+    .P_DATA_WIDTH(128)
+)
+inst_axi_slave
+(
+    .req_addr      (),
+    .req_data      (),
+    .req_en        (),
+    .req_type      (),
+    .req_read_data (),
+    .axi_busy      (),
+    .CLOCK         (S_CLOCK    ),                                                          
+    .RESET         (S_RESET    ),                                                          
+    .AWID          (S_AWID     ),                                                           
+    .AWADDR        (S_AWADDR   ),                                                         
+    .AWLEN         (S_AWLEN    ),                                                          
+    .AWSIZE        (S_AWSIZE   ),                                                         
+    .AWBURST       (S_AWBURST  ),                                                        
+    .AWLOCK        (S_AWLOCK   ),                                                         
+    .AWCACHE       (S_AWCACHE  ),                                                        
+    .AWPROT        (S_AWPROT   ),                                                         
+    .AWQOS         (S_AWQOS    ),                                                          
+    .AWVALID       (S_AWVALID  ),                                                        
+    .AWREADY       (S_AWREADY  ),                                                        
+    .WDATA         (S_WDATA    ),                                                          
+    .WSTRB         (S_WSTRB    ),                                                          
+    .WLAST         (S_WLAST    ),                                                          
+    .WVALID        (S_WVALID   ),                                                         
+    .WREADY        (S_WREADY   ),                                                         
+    .ARID          (S_ARID     ),                                                           
+    .ARADDR        (S_ARADDR   ),                                                         
+    .ARLEN         (S_ARLEN    ),                                                          
+    .ARSIZE        (S_ARSIZE   ),                                                         
+    .ARBURST       (S_ARBURST  ),                                                        
+    .ARLOCK        (S_ARLOCK   ),                                                         
+    .ARCACHE       (S_ARCACHE  ),                                                        
+    .ARPROT        (S_ARPROT   ),                                                         
+    .ARQOS         (S_ARQOS    ),                                                          
+    .ARVALID       (S_ARVALID  ),                                                        
+    .ARREADY       (S_ARREADY  ),                                                        
+    .RID           (S_RID      ),                                                            
+    .RDATA         (S_RDATA    ),                                                          
+    .RRESP         (S_RRESP    ),                                                          
+    .RLAST         (S_RLAST    ),                                                          
+    .RVALID        (S_RVALID   ),                                                         
+    .RREADY        (S_RREADY   ),                                                         
+    .BREADY        (S_BREADY   ),                                                         
+    .BVALID        (S_BVALID   ),                                                         
+    .BRESP         (S_BRESP    ),                                                          
+    .BID           (S_BID      )                                                             
+);
+
+  //
+  //  ///---------------------------------------
+
+
+// ----------------------------------------
+
 
   //============== Memory Unit =============
  
@@ -2705,11 +3013,38 @@ trp_unit #(REGIDWIDTH) u_trp (
 .resetn(resetn),
 .en(ctrl4_trp_en),
 .a(vr_src1[FU_TRP][NUMLANES*LANEWIDTH-1:0]),
-.mode(),
-.read(),
-.busy(),
-.valid(),
+.mode(trp_mode_s4),
+.read(trp_read),
+.busy(trp_busy),
+.valid(trp_valid),
 .out(trp_out));
+
+ wire squash_trp_dstpipe_NC;
+ wire squash_trp_dstmask_NC;
+
+pipe #(REGIDWIDTH,3) trp_dstpipe (
+  .d( dst_s4[FU_TRP] ),  
+  .clk(clk),
+  .resetn(resetn),
+  .en( pipe_advance[6:4] ),
+  .squash(squash_trp_dstpipe_NC),
+  .q({dst[FU_TRP][7],dst[FU_TRP][6],dst[FU_TRP][5],dst[FU_TRP][4]}));
+
+pipe #(1,3) trp_dstwepipe (
+  .d( dst_we_s4[FU_TRP]),  
+  .clk(clk),
+  .resetn(resetn),
+  .en( pipe_advance[6:4] ),
+  .squash( pipe_squash[6:4] ),
+  .q({dst_we[FU_TRP][7],dst_we[FU_TRP][6],dst_we[FU_TRP][5],dst_we[FU_TRP][4]}));
+
+pipe #(NUMLANES,3) trp_dstmaskpipe (
+  .d( vmask[FU_TRP]),  
+  .clk(clk),
+  .resetn(resetn),
+  .en( pipe_advance[4] ),
+  .squash(squash_trp_dstmask_NC),
+  .q({dst_mask[FU_TRP][7],dst_mask[FU_TRP][6],dst_mask[FU_TRP][5],dst_mask[FU_TRP][4]}));
 
 ///////////////////////////
 // Bfloat unit
@@ -2921,58 +3256,6 @@ pipe #(NUMLANES,3) bfmultdstmaskpipe (
         _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_TRP]>>LOG2NUMBANKS;
         vr_c_reg[bw]= wb_dst[FU_TRP];
         vr_c_writedatain[bw]= bfadder_result_s5;
-        D_last_subvector_done[bw]=D_wb_last_subvector[FU_TRP];
-      end
-      //Take bfadder output
-      else if (wb_dst_we[FU_BFADDER] && `LO(wb_dst[FU_BFADDER],LOG2NUMBANKS)==bw)
-      begin
-        vmask_final[bw]=wb_dst_mask[FU_BFADDER];
-        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_BFADDER]>>LOG2NUMBANKS;
-        vr_c_reg[bw]= wb_dst[FU_BFADDER];
-        vr_c_writedatain[bw]= bfadder_result_s5;
-        D_last_subvector_done[bw]=D_wb_last_subvector[FU_BFADDER];
-      end
-      else if (wb_dst_we[FU_BFMULT] && `LO(wb_dst[FU_BFMULT],LOG2NUMBANKS)==bw)
-      begin
-        vmask_final[bw]=wb_dst_mask[FU_BFMULT];
-        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_BFMULT]>>LOG2NUMBANKS;
-        vr_c_reg[bw]= wb_dst[FU_BFMULT];
-        vr_c_writedatain[bw]= bfmult_result_s5;
-        D_last_subvector_done[bw]=D_wb_last_subvector[FU_BFMULT];
-      end
-      else if (wb_dst_we[FU_ACT] && `LO(wb_dst[FU_ACT],LOG2NUMBANKS)==bw)
-      begin
-        vmask_final[bw]=wb_dst_mask[FU_ACT];
-        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_ACT]>>LOG2NUMBANKS;
-        vr_c_reg[bw]= wb_dst[FU_ACT];
-        vr_c_writedatain[bw]= act_result_s5;
-        D_last_subvector_done[bw]=D_wb_last_subvector[FU_ACT];
-      end
-      //Take multiplier output
-      else if (wb_dst_we[FU_MUL] && `LO(wb_dst[FU_MUL],LOG2NUMBANKS)==bw)
-      begin
-        vmask_final[bw]=wb_dst_mask[FU_MUL];
-        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_MUL]>>LOG2NUMBANKS;
-        vr_c_reg[bw]= wb_dst[FU_MUL];
-        vr_c_writedatain[bw]= mulshift_result_s5;
-        D_last_subvector_done[bw]=D_wb_last_subvector[FU_MUL];
-      end
-      //Take Memory unit output
-      else if (wb_dst_we[FU_MEM] && `LO(wb_dst[FU_MEM],LOG2NUMBANKS)==bw)
-      begin
-        vmask_final[bw]=wb_dst_mask[FU_MEM];
-        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_MEM]>>LOG2NUMBANKS;
-        vr_c_reg[bw]= wb_dst[FU_MEM];
-        vr_c_writedatain[bw]= load_mem_result_s5;
-        D_last_subvector_done[bw]=D_wb_last_subvector[FU_MEM];
-      end
-      else
-      //Take ALU output
-      begin
-        vmask_final[bw]=wb_dst_mask[FU_ALU+bw*ALUPERBANK];
-        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_ALU+bw*ALUPERBANK]>>LOG2NUMBANKS;
-        vr_c_reg[bw]= wb_dst[FU_ALU+bw*ALUPERBANK];
-        vr_c_writedatain[bw]= alu_result_s5[bw*ALUPERBANK];
         //Do ALU and FALU for last subvector
         D_last_subvector_done[bw]=
           (D_wb_last_subvector[FU_ALU+bw*ALUPERBANK] && `LO(wb_dst[FU_ALU+bw*ALUPERBANK],LOG2NUMBANKS)==bw) |
