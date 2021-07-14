@@ -60,6 +60,8 @@ compilework: work vregfile_control.dat
 	vlog ${VLOG_ARGS} ../design/local/rams.v
 	vlog ${VLOG_ARGS} ../design/local/ram_wrapper.v
 	vlog ${VLOG_ARGS} ../design/local/per_lane_mem_wrapper.v
+	vlog ${VLOG_ARGS} ../design/interface/axi4_master.v
+	vlog ${VLOG_ARGS} ../design/interface/axi4_slave.v
 	vlog ${VLOG_ARGS} ${LOCAL_SRC}
 	vlog ${VLOG_ARGS} +incdir+.. +incdir+../design/top +incdir+../design/vector +incdir+../design/scalar +incdir+../design/ddr ${BFLOAT_SRC}
 	vlog ${VLOG_ARGS} +incdir+.. +incdir+../design/top +incdir+../design/vector +incdir+../design/scalar +incdir+../design/ddr ${SPREE_SRC}

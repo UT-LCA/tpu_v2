@@ -36,7 +36,8 @@ parameter COP2_VSRL           = 'b10zz011101;
 parameter COP2_VSRA           = 'b10zz011110;
 parameter COP2_VSAT_B         = 'b1000011111;
 parameter COP2_VSAT_H         = 'b1001011111;
-parameter COP2_VSAT_W         = 'b1010011111;
+//parameter COP2_VSAT_W         = 'b1010011111;
+parameter COP2_VACT         = 'b1010011111;  // Using activation instruction: vsat.w vrdest,vrsrc
 parameter COP2_VSAT_SU_B      = 'b1000100000;
 parameter COP2_VSAT_SU_H      = 'b1001100000;
 parameter COP2_VSAT_SU_W      = 'b1010100000;
@@ -133,7 +134,7 @@ parameter COP2_VLDX_U_B       = 'b1100100110;
 parameter COP2_VLDX_U_H       = 'b1101100110;
 
 //parameter COP2_VLDX_U_W       = 'b1110100110;
-parameter COP2_VACT       = 'b1110100110;        //adding activation Instr: vldx.u.w 
+//parameter COP2_VACT       = 'b1110100110;        //adding activation Instr: vldx.u.w 
 
 parameter COP2_VFST           = 'b1100101000;
 parameter COP2_VST_B          = 'b1100101001;

@@ -12,7 +12,7 @@ always@(posedge clk)begin
     out <= 'h0;
   else
     if(en)
-      if(a>0)
+      if(a[WIDTH-1] == 1'b0)
         out <= a;
       else
         out <= 0;
