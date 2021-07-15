@@ -691,7 +691,8 @@ reg is_cop2_s1;
           ctrl_vl_a_en=1;
       COP2_VSAT_SU_H:
           ctrl_vl_a_en=1;
-      COP2_VSAT_SU_W:
+      //COP2_VSAT_SU_W:
+      COP2_VRED:
           ctrl_vl_a_en=1;
       COP2_VSAT_SU_L:
           ctrl_vl_a_en=1;

@@ -771,6 +771,7 @@ wire  [NUMFUS-1:0] D_wb_last_subvector;
 reg   [NUMBANKS-1:0] D_last_subvector_done;
 reg   [NUMBANKS-1:0] D_wb_instrdone;
 
+assign trp_mode_s1 = 2'b00;
   pipe #(8,1) debuginstrpipe (
       .d( {instr[25:24],instr[5:0]} ),
       .clk(clk),
@@ -962,7 +963,8 @@ assign internal_pipe_advance[7:6] = 2'b11;
       COP2_VACT,
       COP2_VSAT_SU_B,
       COP2_VSAT_SU_H,
-      COP2_VSAT_SU_W,
+      //COP2_VSAT_SU_W,
+      COP2_VRED,
       COP2_VSAT_SU_L,
       COP2_VSAT_U_B,
       COP2_VSAT_U_H,
@@ -1103,7 +1105,7 @@ assign internal_pipe_advance[7:6] = 2'b11;
       COP2_VLDX_B,
       COP2_VLDX_H,
       COP2_VTRP,
-      COP2_VRED,
+      //COP2_VRED,
       COP2_VPER,
       COP2_VLDX_L,
       COP2_VLDX_U_B,
@@ -1216,7 +1218,8 @@ assign internal_pipe_advance[7:6] = 2'b11;
       COP2_VACT,
       COP2_VSAT_SU_B,
       COP2_VSAT_SU_H,
-      COP2_VSAT_SU_W,
+      //COP2_VSAT_SU_W,
+      COP2_VRED,
       COP2_VSAT_SU_L,
       COP2_VSAT_U_B,
       COP2_VSAT_U_H,
@@ -1515,7 +1518,7 @@ assign internal_pipe_advance[7:6] = 2'b11;
      // COP2_VSAT_W: ctrl1_satsize_op=SATSIZEOP_VSATW;
       COP2_VSAT_SU_B: ctrl1_satsize_op=SATSIZEOP_VSATSUB;
       COP2_VSAT_SU_H: ctrl1_satsize_op=SATSIZEOP_VSATSUH;
-      COP2_VSAT_SU_W: ctrl1_satsize_op=SATSIZEOP_VSATSUW;
+      //COP2_VSAT_SU_W: ctrl1_satsize_op=SATSIZEOP_VSATSUW;
       //COP2_VSAT_SU_L:
       COP2_VSAT_U_B: ctrl1_satsize_op=SATSIZEOP_VSATUB;
       COP2_VSAT_U_H: ctrl1_satsize_op=SATSIZEOP_VSATUH;
@@ -3019,7 +3022,7 @@ matmul_unit #(REGIDWIDTH,`MATMUL_STAGES,NUMLANES) u_matmul(
 .out_dst_mask(dst_mask_matmul)
 );
 
-trp_unit #(REGIDWIDTH) u_trp (
+trp_unit #(LANEWIDTH) u_trp (
 .clk(clk),
 .resetn(resetn),
 .en(ctrl4_trp_en),
@@ -3033,29 +3036,29 @@ trp_unit #(REGIDWIDTH) u_trp (
  wire squash_trp_dstpipe_NC;
  wire squash_trp_dstmask_NC;
 
-pipe #(REGIDWIDTH,3) trp_dstpipe (
+pipe #(REGIDWIDTH,1) trp_dstpipe (
   .d( dst_s4[FU_TRP] ),  
   .clk(clk),
   .resetn(resetn),
-  .en( pipe_advance[6:4] ),
+  .en(~trp_busy ),
   .squash(squash_trp_dstpipe_NC),
-  .q({dst[FU_TRP][7],dst[FU_TRP][6],dst[FU_TRP][5],dst[FU_TRP][4]}));
+  .q({dst[FU_TRP][5],dst[FU_TRP][4]}));
 
-pipe #(1,3) trp_dstwepipe (
+pipe #(1,1) trp_dstwepipe (
   .d( dst_we_s4[FU_TRP]),  
   .clk(clk),
   .resetn(resetn),
-  .en( pipe_advance[6:4] ),
-  .squash( pipe_squash[6:4] ),
-  .q({dst_we[FU_TRP][7],dst_we[FU_TRP][6],dst_we[FU_TRP][5],dst_we[FU_TRP][4]}));
+  .en(~trp_busy ),
+  .squash( pipe_squash[4] ),
+  .q({dst_we[FU_TRP][5],dst_we[FU_TRP][4]}));
 
-pipe #(NUMLANES,3) trp_dstmaskpipe (
+pipe #(NUMLANES,1) trp_dstmaskpipe (
   .d( vmask[FU_TRP]),  
   .clk(clk),
   .resetn(resetn),
-  .en( pipe_advance[4] ),
+  .en(~trp_busy),
   .squash(squash_trp_dstmask_NC),
-  .q({dst_mask[FU_TRP][7],dst_mask[FU_TRP][6],dst_mask[FU_TRP][5],dst_mask[FU_TRP][4]}));
+  .q({dst_mask[FU_TRP][5],dst_mask[FU_TRP][4]}));
 
 ///////////////////////////
 // Bfloat unit
@@ -3249,6 +3252,11 @@ pipe #(NUMLANES,3) bfmultdstmaskpipe (
   assign wb_dst_mask[FU_ACT] = dst_mask[FU_ACT][5];
   assign D_wb_last_subvector[FU_ACT] = D_last_subvector_s5[FU_ACT];
 
+  assign wb_dst[FU_TRP] = dst[FU_TRP][5];
+  assign wb_dst_we[FU_TRP] = dst_we[FU_TRP][5] && trp_valid;
+  assign wb_dst_mask[FU_TRP] = dst_mask[FU_TRP][5];
+  assign D_wb_last_subvector[FU_TRP] = D_last_subvector_s5[FU_TRP];
+
   assign wb_dst[FU_MATMUL]=dst[FU_MATMUL][4];
   assign wb_dst_we[FU_MATMUL]=dst_we[FU_MATMUL][4] && out_data_avail;
   assign wb_dst_mask[FU_MATMUL]=dst_mask[FU_MATMUL][4];
@@ -3293,18 +3301,8 @@ pipe #(NUMLANES,3) bfmultdstmaskpipe (
         vmask_final[bw]=wb_dst_mask[FU_TRP];
         _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_TRP]>>LOG2NUMBANKS;
         vr_c_reg[bw]= wb_dst[FU_TRP];
-        vr_c_writedatain[bw]= bfadder_result_s5;
+        vr_c_writedatain[bw]= trp_out;
         //Do ALU and FALU for last subvector
-        D_last_subvector_done[bw]=
-          (D_wb_last_subvector[FU_ALU+bw*ALUPERBANK] && `LO(wb_dst[FU_ALU+bw*ALUPERBANK],LOG2NUMBANKS)==bw) |
-          (D_wb_last_subvector[FU_FALU+bw*ALUPERBANK] && `LO(dst[FU_FALU+bw*ALUPERBANK][5],LOG2NUMBANKS)==bw);
-      end
-      else if (wb_dst_we[FU_ACT] && `LO(wb_dst[FU_ACT],LOG2NUMBANKS)==bw)
-      begin
-        vmask_final[bw]=wb_dst_mask[FU_ACT];
-        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_ACT]>>LOG2NUMBANKS;
-        vr_c_reg[bw]= wb_dst[FU_ACT];
-        vr_c_writedatain[bw]= bfadder_result_s5;
         D_last_subvector_done[bw]=D_wb_last_subvector[FU_TRP];
       end
       //Take bfadder output

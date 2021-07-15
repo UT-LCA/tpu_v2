@@ -45,11 +45,12 @@ module reduction_layer#(
   input resetn, //resets the processing elements
   input en, //indicates valid reduction operation
   input  [1:0] reduction_type, //can have 3 values: 0 (Add), 1 (Max), 2 (Min)
-  input read,
+  //input read,
   input  [8 * DWIDTH -1:0] a, // input data to reduction logic
   output [8 * DWIDTH -1:0] reduced_out, //output
   output reg done, //output is valid when done is 1
-  output reg busy
+  output reg busy,
+  output reg valid
 );
 
 wire [DWIDTH + LOGDWIDTH-1:0] reduced_out_unrounded;
@@ -86,17 +87,22 @@ reg[2:0] count;
 always@(posedge clk)begin
   if(!resetn)begin
     count <= 3'b0;
+    valid <= 1'b0;
   end
   else begin
     if(en)
-        count <= count + 1;
-    if(read)
+        count <= 4;
+    if( ~en & (count != 0))
         count <= count - 1;
+    if(~en & (count == 1))
+        valid <= 1'b1;
+    else
+        valid <= 1'b1;
   end
 end
 
 always@(*)begin
-  if(count == 8)begin
+  if(count != 0)begin
     busy = 1'b1;
   end
   else begin

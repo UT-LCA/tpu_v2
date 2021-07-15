@@ -40,7 +40,8 @@ parameter COP2_VSAT_H         = 'b1001011111;
 parameter COP2_VACT         = 'b1010011111;  // Using activation instruction: vsat.w vrdest,vrsrc
 parameter COP2_VSAT_SU_B      = 'b1000100000;
 parameter COP2_VSAT_SU_H      = 'b1001100000;
-parameter COP2_VSAT_SU_W      = 'b1010100000;
+//parameter COP2_VSAT_SU_W      = 'b1010100000;
+parameter COP2_VRED     = 'b1010100000;   // Using reduction instruction: vsat.su vrdest,vrsrc
 parameter COP2_VSAT_SU_L      = 'b1011100000;
 parameter COP2_VSAT_U_B       = 'b1000100001;
 parameter COP2_VSAT_U_H       = 'b1001100001;
@@ -141,7 +142,7 @@ parameter COP2_VST_B          = 'b1100101001;
 parameter COP2_VST_H          = 'b1101101001;
 
 //parameter COP2_VST_W        = 'b1110101001;  // adding reduction Instr: vst.w
-parameter COP2_VRED           = 'b1110101001;  // adding reduction Instr: vst.w
+//parameter COP2_VRED           = 'b1110101001;  // adding reduction Instr: vst.w
 
 parameter COP2_VST_L          = 'b1111101001;
 parameter COP2_VSTS_B         = 'b1100101010;
