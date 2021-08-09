@@ -700,7 +700,8 @@ reg is_cop2_s1;
           ctrl_vl_a_en=1;
       COP2_VSAT_U_H:
           ctrl_vl_a_en=1;
-      COP2_VSAT_U_W:
+      //COP2_VSAT_U_W:
+      COP2_VTRP:
           ctrl_vl_a_en=1;
       COP2_VSADD:
         begin
@@ -946,7 +947,8 @@ reg is_cop2_s1;
           ctrl_vbase_a_en=1;
           ctrl_vinc_a_en=1;
         end
-      COP2_VLD_U_W:
+      //COP2_VLD_U_W:
+      COP2_VAXIRD:
         begin
           ctrl_vbase_a_en=1;
           ctrl_vinc_a_en=1;
@@ -1060,15 +1062,21 @@ reg is_cop2_s1;
           ctrl_vbase_a_en=1;
       COP2_VSTX_H:
           ctrl_vbase_a_en=1;
-      COP2_VSTX_W:
-          ctrl_vbase_a_en=1;
+     //COP2_VSTX_W:
+      COP2_VPER_STR:
+          ctrl_vl_a_en=1;
+      COP2_VPER:
+          ctrl_vl_a_en=1;
+      COP2_VPER_LD:
+          ctrl_vl_a_en=1;
       COP2_VSTX_L:
           ctrl_vbase_a_en=1;
       COP2_VSTXO_B:
           ctrl_vbase_a_en=1;
       COP2_VSTXO_H:
           ctrl_vbase_a_en=1;
-      COP2_VSTXO_W:
+      //COP2_VSTXO_W:
+      COP2_VAXIWR:
           ctrl_vbase_a_en=1;
       COP2_VSTXO_L:
           ctrl_vbase_a_en=1;
@@ -1285,7 +1293,8 @@ reg is_cop2_s1;
       COP2_VLD_L,
       COP2_VLD_U_B,
       COP2_VLD_U_H,
-      COP2_VLD_U_W,
+     // COP2_VLD_U_W,
+      COP2_VAXIRD,
       COP2_VLDS_B,
       COP2_VLDS_H,
     //  COP2_VLDS_W,

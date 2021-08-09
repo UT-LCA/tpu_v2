@@ -57,19 +57,32 @@ module axi4_master #
     input  wire [6-1 : 0] BID                                          //Master Interface Write Response.
 );
 
-//Function called clogb2 that returns an integer which has the value of the ceiling of the log base 2
-//function integer clogb2 (input integer bit_depth);
-//begin
-//    for(clogb2=0; bit_depth>0; clogb2=clogb2+1)
-//        bit_depth = bit_depth >> 1;
-//    end
-//endfunction
+//Function called clogb2 that returns an integer which has the value of the
+//ceiling of the log base 2
+////function integer clogb2 (input integer bit_depth);
+////begin
+////    for(clogb2=0; bit_depth>0; clogb2=clogb2+1)
+////        bit_depth = bit_depth >> 1;
+////    end
+////endfunction
+//
+////P_WRITE_TRANSACTIONS_NUM is the width of the index counter for number of
+//write or read transaction.
+////localparam integer P_WRITE_TRANSACTIONS_NUM = clogb2(P_WRITE_BURSTS - 1);
+//
+////Burst length for transactions, in P_DATA_WIDTHs. Non-2^n lengths will
+//eventually cause bursts across 4K address boundaries.
+//localparam integer C_MASTER_LENGTH = 12;
+//
+////Total number of burst transfers is master length divided by burst length
+//and burst size
+localparam integer C_NO_BURSTS_REQ = 12;
 
-//P_WRITE_TRANSACTIONS_NUM is the width of the index counter for number of write or read transaction.
-//localparam integer P_WRITE_TRANSACTIONS_NUM = clogb2(P_WRITE_BURSTS - 1);
-
-//Burst length for transactions, in P_DATA_WIDTHs. Non-2^n lengths will eventually cause bursts across 4K address boundaries.
-localparam integer C_MASTER_LENGTH = 12;
+//= C_MASTER_LENGTH-clogb2((P_WRITE_BURSTS*P_DATA_WIDTH/8)-1);
+//
+//// Example State machine to initialize counter, initialize write
+//transactions, initialize read transactions and comparison of read data with
+//the written data words.
 
 //Total number of burst transfers is master length divided by burst length and burst size
 //localparam integer C_NO_BURSTS_REQ = C_MASTER_LENGTH-clogb2((P_WRITE_BURSTS*P_DATA_WIDTH/8)-1);
@@ -98,6 +111,7 @@ reg m_arvalid;
 reg m_rready;
 reg [P_ADDR_WIDTH - 1:0] q_req_addr;
 reg [P_DATA_WIDTH - 1:0] q_req_data;
+reg [P_DATA_WIDTH - 1:0] q2_req_data;
 reg q_req_type;
 //reg [P_WRITE_TRANSACTIONS_NUM:0] write_index;                                   //write beat count in a burst
 //reg [P_WRITE_TRANSACTIONS_NUM:0] read_index;                                    //read beat count in a burst
@@ -180,7 +194,7 @@ assign RREADY = m_rready;
 always @(posedge CLOCK) begin
     if (RESET == 0) begin
         m_awvalid <= 0;
-    end else if (REQ_STATE & q_req_type) begin
+    end else if ((master_state == IDLE) & req_en & req_type) begin
         m_awvalid <= 1;
         //m_writer_counter <= m_writer_counter + 1;
     end else if (AWREADY && m_awvalid) begin                                    //Once asserted, VALIDs cannot be de-asserted, so m_awvalid must wait until transaction is accepted
@@ -194,8 +208,8 @@ end
 always @(posedge CLOCK) begin
     if (RESET == 0) begin
         m_awaddr <= 0;
-    end else if (REQ_STATE & q_req_type) begin
-        m_awaddr <= q_req_addr;
+    end else if ((master_state ==IDLE) & req_en & q_req_type) begin
+        m_awaddr <= req_addr;
     end else if (AWREADY && m_awvalid) begin
         m_awaddr <= 0;
     end else begin
@@ -206,7 +220,7 @@ end
 always @(posedge CLOCK) begin
     if (RESET == 0) begin
         m_wvalid <= 0;
-    end else if (WRDATA_STATE) begin
+    end else if ((master_state == REQ_STATE) & q_req_type) begin
         m_wvalid <= 1;
     end else if (WREADY && m_wvalid) begin
         m_wvalid <= 0;
@@ -218,7 +232,7 @@ end
 always @(posedge CLOCK) begin
     if (RESET == 0) begin
         m_wlast <= 0;
-    end else if (WRDATA_STATE) begin
+    end else if ((master_state == WRDATA_STATE)) begin
         m_wlast <= 1;
     end else if (WREADY && m_wvalid) begin
         m_wlast <= 0;
@@ -231,10 +245,8 @@ end
 always @(posedge CLOCK) begin
     if (RESET == 0) begin
         m_wdata <= 0;
-    end else if (WRDATA_STATE) begin
-        m_wdata <= q_req_data;
-    end else if (WREADY && m_wvalid) begin
-        m_wdata <= 0;
+    end else if (master_state == WRDATA_STATE) begin
+        m_wdata <= q2_req_data;
     end else begin 
         m_wdata <= m_wdata;
     end
@@ -286,25 +298,30 @@ end
 
 always@(posedge CLOCK)begin
   if(!RESET)begin
-    q_req_type = 1'b0;
-    q_req_addr = 32'h0;
-    q_req_data = 128'h0;
+    q_req_type <= 1'b0;
+    q_req_addr <= 32'h0;
+    q_req_data <= 128'h0;
+    q2_req_data <= 128'h0;
   end
   else begin
     if((master_state == IDLE) & req_en)begin
-      q_req_type = req_type;
-      q_req_addr = req_addr;
-      q_req_data = req_data;
+      q_req_type <= req_type;
+      q_req_addr <= req_addr;
+      q_req_data <= req_data;
+      q2_req_data <= q_req_data;
     end
   end
 end
 
 assign axi_busy = (master_state == IDLE)? 1'b1:1'b0;
 
+reg [2:0] count;
+
 //implement master command interface state machine
 always @ (posedge CLOCK) begin
     if (RESET == 0) begin
         master_state <= IDLE;
+        count <= 0;
     end else begin
         case (master_state)
             IDLE: begin
@@ -313,25 +330,36 @@ always @ (posedge CLOCK) begin
                 end else begin
                     master_state <= IDLE;
                 end
+                count <= 0;
             end
             REQ_STATE: begin
                 if ((q_req_type == 1'b1) &&(AWVALID & AWREADY))
                     master_state <= WRDATA_STATE;
                 else if ((q_req_type == 1'b0) &&(ARVALID & ARREADY))
                     master_state <= RDATA_STATE;
+                count <= 0;
             end
             WRDATA_STATE: begin
                 if (WREADY) begin
-                    master_state <= IDLE;
+                    if(count == 3'h7)
+                        master_state <= IDLE;
+                    else
+                        master_state <= WRDATA_STATE;
+                    count <= count + 3'h1 ;
                 end
             end
             RDATA_STATE: begin
                 if (RREADY) begin
-                    master_state <= IDLE;
+                    if(count == 3'h7)
+                        master_state <= IDLE;
+                    else
+                        master_state <= RDATA_STATE;
                 end
+                    count <= count + 3'h1 ;
             end
             default: begin
                 master_state <= IDLE;
+                count <= 0;
             end
         endcase
     end

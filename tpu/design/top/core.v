@@ -339,7 +339,7 @@ input                         dma_dbus_data_valid;
             COP2_VLD_L,
             COP2_VLD_U_B,
             COP2_VLD_U_H,
-            COP2_VLD_U_W,
+            //COP2_VLD_U_W,
             COP2_VLDS_B,
             COP2_VLDS_H,
             COP2_VBFSUB,
@@ -365,11 +365,11 @@ input                         dma_dbus_data_valid;
             COP2_VSTS_L,
             COP2_VSTX_B,
             COP2_VSTX_H,
-            COP2_VSTX_W,
+            //COP2_VSTX_W,
             COP2_VSTX_L,
             COP2_VSTXO_B,
             COP2_VSTXO_H,
-            COP2_VSTXO_W,
+            //COP2_VSTXO_W,
             COP2_VSTXO_L: is_vec_memop=1;
           endcase
         end

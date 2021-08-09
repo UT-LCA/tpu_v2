@@ -77,6 +77,7 @@
 `define LOG2NUMBANKS `LGB
 `define ALUPERBANK `APB
 
+`define MAX_STAGES 14
 /****************************** OTHER PARAMS *********************************/
 
 // DRAM

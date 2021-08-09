@@ -41,11 +41,12 @@ parameter COP2_VACT         = 'b1010011111;  // Using activation instruction: vs
 parameter COP2_VSAT_SU_B      = 'b1000100000;
 parameter COP2_VSAT_SU_H      = 'b1001100000;
 //parameter COP2_VSAT_SU_W      = 'b1010100000;
-parameter COP2_VRED     = 'b1010100000;   // Using reduction instruction: vsat.su vrdest,vrsrc
+parameter COP2_VRED     = 'b1010100000;   // Using reduction instruction: vsat.su.w vrdest,vrsrc
 parameter COP2_VSAT_SU_L      = 'b1011100000;
 parameter COP2_VSAT_U_B       = 'b1000100001;
 parameter COP2_VSAT_U_H       = 'b1001100001;
-parameter COP2_VSAT_U_W       = 'b1010100001;
+//parameter COP2_VSAT_U_W       = 'b1010100001;
+parameter COP2_VTRP       = 'b1010100001;   // Using transpose instruction: vsat.u.w vrdest, vrsrc 
 parameter COP2_VSADD          = 'b10z0100010;
 parameter COP2_VSADD_U        = 'b10z0100011;
 parameter COP2_VSSUB          = 'b10zz100100;
@@ -109,7 +110,8 @@ parameter COP2_VLD_L          = 'b1111100001;
 parameter COP2_VLD_U_B        = 'b1100100010;
 parameter COP2_VLD_U_H        = 'b1101100010;
 
-parameter COP2_VLD_U_W        = 'b1110100010;
+//parameter COP2_VLD_U_W        = 'b1110100010;
+parameter COP2_VAXIRD	        = 'b1110100010;  // adding an instruction for AXI Load;
 
 parameter COP2_VLDS_B         = 'b1100100011;
 parameter COP2_VLDS_H         = 'b1101100011;
@@ -128,14 +130,14 @@ parameter COP2_VLDX_B         = 'b1100100101;
 parameter COP2_VLDX_H         = 'b1101100101;
 
 //parameter COP2_VLDX_W         = 'b1110100101;
-parameter COP2_VTRP         = 'b1110100101;     // adding transpose instruction: vldx.w
+parameter COP2_VPER_STR         = 'b1110100101;     // adding transpose instruction: vldx.w
 
 parameter COP2_VLDX_L         = 'b1111100101;
 parameter COP2_VLDX_U_B       = 'b1100100110;
 parameter COP2_VLDX_U_H       = 'b1101100110;
 
 //parameter COP2_VLDX_U_W       = 'b1110100110;
-//parameter COP2_VACT       = 'b1110100110;        //adding activation Instr: vldx.u.w 
+//parameter COP2_VPER     = 'b1110100110;        //adding activation Instr: vldx.u.w 
 
 parameter COP2_VFST           = 'b1100101000;
 parameter COP2_VST_B          = 'b1100101001;
@@ -149,16 +151,18 @@ parameter COP2_VSTS_B         = 'b1100101010;
 parameter COP2_VSTS_H         = 'b1101101010;
 
 //parameter COP2_VSTS_W         = 'b1110101010;
-parameter COP2_VPER           = 'b1110101010;  // adding permute Instr: vsts.w
+parameter COP2_VPER_LD           = 'b1110101010;  // adding permute Instr: vsts.w
 
 parameter COP2_VSTS_L         = 'b1111101010;
 parameter COP2_VSTX_B         = 'b1100101011;
 parameter COP2_VSTX_H         = 'b1101101011;
-parameter COP2_VSTX_W         = 'b1110101011;
+//parameter COP2_VSTX_W         = 'b1110101011;
+parameter COP2_VPER         = 'b1110101011;  // adding permute operation: vstx.w Vsrc,Vbase, 
 parameter COP2_VSTX_L         = 'b1111101011;
 parameter COP2_VSTXO_B        = 'b1100101100;
 parameter COP2_VSTXO_H        = 'b1101101100;
-parameter COP2_VSTXO_W        = 'b1110101100;
+//parameter COP2_VSTXO_W        = 'b1110101100;  
+parameter COP2_VAXIWR        = 'b1110101100;  // adding an instruction for axi write
 parameter COP2_VSTXO_L        = 'b1111101100;
 parameter COP2_VMCTS          = 'b1101110000;
 parameter COP2_VMSTC          = 'b1101110001;

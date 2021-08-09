@@ -1,20 +1,27 @@
-module permute#(
+module permute #(
   parameter WIDTH = 16,
   parameter NUMSTAGES = 8,
+  parameter REGIDWIDTH = 8,
   parameter LOGNUMSTAGES = $clog2(NUMSTAGES)
 )(
  input clk,
  input resetn,
  input read,
  input en,
- input rw_col_op,
- input [NUMSTAGES*LOGNUMSTAGES-1:0] row_num,
- input [NUMSTAGES*LOGNUMSTAGES-1:0] col_num,
+ input row_col_op,
+ input [NUMSTAGES*LOGNUMSTAGES-1:0] row_col_num,
 
- input [NUMSTAGE * WIDTH-1:0]a,
- output reg [NUMSTAGES * WIDTH-1 : 0] out,
- output reg busy,
- output reg valid
+ input load,
+ input [NUMSTAGES * WIDTH-1:0]a,
+
+ input [REGIDWIDTH-1:0] in_dst,
+ input in_dst_we,
+ input [NUMSTAGES-1:0] in_dst_mask,
+
+ output reg [REGIDWIDTH-1:0] out_dst,
+ output reg [NUMSTAGES-1:0] out_dst_mask,
+ output reg out_dst_we,
+ output reg [NUMSTAGES * WIDTH-1 : 0] out
 );
 
 parameter READ_STATE = 2'b00;
@@ -27,13 +34,28 @@ wire [NUMSTAGES * NUMSTAGES * WIDTH - 1:0] data;
 reg [NUMSTAGES * LOGNUMSTAGES-1:0 ] rowsel;
 reg [NUMSTAGES * LOGNUMSTAGES-1:0 ] colsel;
 
-reg [LOGNUMSTAGE:0] count;
+reg [LOGNUMSTAGES:0] count;
 reg [31:0] i;
 
 reg [1:0] p_state, n_state;
 reg opsel;
 reg [NUMSTAGES-1:0] load_en;
 reg shuffle;
+reg [NUMSTAGES * NUMSTAGES * WIDTH -1: 0] data_in;
+
+always@(posedge clk)begin
+  if(!resetn)begin
+    out_dst <= 0;
+    out_dst_we <= 0;
+    out_dst_mask <= 0;
+  end
+  else begin
+    out_dst <= in_dst;
+    out_dst_we <= in_dst_we;
+    out_dst_mask <= in_dst_mask;
+  end
+end
+
 
 genvar g_i,g_j;
 
@@ -46,117 +68,96 @@ generate
          .row_sel(rowsel[g_i * LOGNUMSTAGES +: LOGNUMSTAGES]),
          .col_sel(colsel[g_j * LOGNUMSTAGES +: LOGNUMSTAGES]),
          .row_col_op(opsel),
-         .in_col_data(data[(g_i * NUMSTAGES * WIDTH) +: NUMSTAGES * WIDTH]),
-         .in_row_data({data[(( 0 * NUMSTAGES * WIDTH) + g_j * WIDTH) +: WIDTH ],
+         .in_row_data(data[((g_i+1) * NUMSTAGES * WIDTH)-1 : g_i * (NUMSTAGES * WIDTH)]),
+         .in_col_data({data[(( 0 * NUMSTAGES * WIDTH) + g_j * WIDTH) +: WIDTH ],
                        data[(( 1 * NUMSTAGES * WIDTH) + g_j * WIDTH) +: WIDTH ],
                        data[(( 2 * NUMSTAGES * WIDTH) + g_j * WIDTH) +: WIDTH ],
                        data[(( 3 * NUMSTAGES * WIDTH) + g_j * WIDTH) +: WIDTH ],
                        data[(( 4 * NUMSTAGES * WIDTH) + g_j * WIDTH) +: WIDTH ],
                        data[(( 5 * NUMSTAGES * WIDTH) + g_j * WIDTH) +: WIDTH ],
                        data[(( 6 * NUMSTAGES * WIDTH) + g_j * WIDTH) +: WIDTH ],
-                       data[(( 7 * NUMSTAGES * WIDTH) + g_j * WIDTH) +: WIDTH ],
+                       data[(( 7 * NUMSTAGES * WIDTH) + g_j * WIDTH) +: WIDTH ]
                       }),
          .en(shuffle),
-         .load(load_en[g_j]),
-         .out_data(data[(g_i * NUMSTAGES * WIDTH) + (g_j * WIDTH) +: WIDTH]);
+         .load(load_en[g_i]),
+         .data_in(data_in[g_i * (NUMSTAGES * WIDTH) + g_j * WIDTH +: WIDTH]),
+         .out_data(data[(g_i * NUMSTAGES * WIDTH) + (g_j * WIDTH) +: WIDTH])
        );
     end
   end
 endgenerate
 
+always@(*) begin
+  data_in = 'h0;
+  case(count)
+    4'h0:data_in[1 * (NUMSTAGES * WIDTH)-1: 0 * (NUMSTAGES*WIDTH)] = a;
+    4'h1:data_in[2 * (NUMSTAGES * WIDTH)-1: 1 * (NUMSTAGES*WIDTH)] = a;
+    4'h2:data_in[3 * (NUMSTAGES * WIDTH)-1: 2 * (NUMSTAGES*WIDTH)] = a;
+    4'h3:data_in[4 * (NUMSTAGES * WIDTH)-1: 3 * (NUMSTAGES*WIDTH)] = a;
+    4'h4:data_in[5 * (NUMSTAGES * WIDTH)-1: 4 * (NUMSTAGES*WIDTH)] = a;
+    4'h5:data_in[6 * (NUMSTAGES * WIDTH)-1: 5 * (NUMSTAGES*WIDTH)] = a;
+    4'h6:data_in[7 * (NUMSTAGES * WIDTH)-1: 6 * (NUMSTAGES*WIDTH)] = a;
+    4'h7:data_in[8 * (NUMSTAGES * WIDTH)-1: 7 * (NUMSTAGES*WIDTH)] = a;
+  endcase
+end
+
+always@(*) begin
+  out = 0;
+  case(count)
+    4'h1: out = data[8*(NUMSTAGES * WIDTH) - 1 : 7 * (NUMSTAGES* WIDTH)];
+    4'h2: out = data[7*(NUMSTAGES * WIDTH) - 1 : 6 * (NUMSTAGES* WIDTH)];
+    4'h3: out = data[6*(NUMSTAGES * WIDTH) - 1 : 5 * (NUMSTAGES* WIDTH)];
+    4'h4: out = data[5*(NUMSTAGES * WIDTH) - 1 : 4 * (NUMSTAGES* WIDTH)];
+    4'h5: out = data[4*(NUMSTAGES * WIDTH) - 1 : 3 * (NUMSTAGES* WIDTH)];
+    4'h6: out = data[3*(NUMSTAGES * WIDTH) - 1 : 2 * (NUMSTAGES* WIDTH)];
+    4'h7: out = data[2*(NUMSTAGES * WIDTH) - 1 : 1 * (NUMSTAGES* WIDTH)];
+    4'h8: out = data[1*(NUMSTAGES * WIDTH) - 1 : 0 * (NUMSTAGES* WIDTH)];
+  endcase
+end
+
 
 always@(posedge clk)begin
   if(!resetn)
     count <= 'h0;
-    p_state <= READ_STATE;
   else begin
-    p_state <= n_state;
-    if(en)
+    if(en & load)begin
       count <= count + 1;
-    else if(read)
+    end
+    else if(en & read)
       count <= count - 1 ;
   end
 end
 
 always@(*)begin
-  case(p_state)begin
-    READ_STATE:begin
-                 if(en & (count == NUMSTAGES))begin
-                   if(row_col_op)
-                     n_state = ROWOP_STATE;
-                   else
-                     n_state = COLOP_STATE;
-                 end
-                 else
-                     n_state = READ_STATE;
-               end
-    ROWOP_STATE:begin
-                 n_state = WRITE_STATE;
-               end
-    COLOP_STATE:begin
-                 n_state = WRITE_STATE;
-               end
-    WRITE_STATE:begin
-                 if(read & (count == 1))
-                   n_state = READ_STATE;
-                 else
-                   n_state = WRITE_STATE;
-               end
-  endcase
+  load_en = 8'h0;
+  if(en & load)begin
+      case(count)
+        3'h0: load_en = 8'h1;
+        3'h1: load_en = 8'h2;
+        3'h2: load_en = 8'h4;
+        3'h3: load_en = 8'h8;
+        3'h4: load_en = 8'h10;
+        3'h5: load_en = 8'h20;
+        3'h6: load_en = 8'h40;
+        3'h7: load_en = 8'h80;
+      endcase
+  end
 end
+
 
 always@(*)begin
-  case(p_state)begin
-    READ_STATE:begin
-                    if(en)begin
-                      case(count)begin
-                        3'h0: load_en = 8'h1;
-                        3'h1: load_en = 8'h2;
-                        3'h2: load_en = 8'h4;
-                        3'h3: load_en = 8'h8;
-                        3'h4: load_en = 8'h10;
-                        3'h5: load_en = 8'h20;
-                        3'h6: load_en = 8'h40;
-                        3'h7: load_en = 8'h80;
-                      end
-                    end
-                    else
-                       load_en = 0;
-                    shuffle = 1'b0;
-                    rowsel = {3'h7,3'h6,3'h5,3'h4,3'h3,3'h2,3'h1,3'h0};
-                    colsel = {3'h7,3'h6,3'h5,3'h4,3'h3,3'h2,3'h1,3'h0};
-               end
-    ROWOP_STATE:begin
-                    shuffle = 1'b1;
-                    opsel = 1'b1; 
-                    rowsel = row_num; 
-                    colsel = col_num;
-                    load_en = 0;
-               end
-    COLOP_STATE:begin
-                    shuffle = 1'b1;
-                    opsel = 1'b0; 
-                    rowsel = row_num;
-                    colsel = col_num;
-                    load_en = 0;
-               end
-    WRITE_STATE:begin
-                    shuffle = 1'b0;
-                    rowsel = {3'h7,3'h6,3'h5,3'h4,3'h3,3'h2,3'h1,3'h0};
-                    colsel = {3'h7,3'h6,3'h5,3'h4,3'h3,3'h2,3'h1,3'h0};
-                    load_en = 0;
-               end
-  endcase
-end
-
-always@(posedge clk)begin
-  if(!resetn)
-     busy <= 1'b0;
-  else
-    if((count == NUMSTAGES-1) && en)
-       busy <= 1'b1;
-    else if((count == 'h1) && read)
-       busy <= 1'b0; 
+    shuffle = 1'b0;
+    rowsel = {3'h7,3'h6,3'h5,3'h4,3'h3,3'h2,3'h1,3'h0};
+    colsel = {3'h7,3'h6,3'h5,3'h4,3'h3,3'h2,3'h1,3'h0};
+    if(en & ~load & ~read)begin
+        shuffle = 1'b1;
+        rowsel = row_col_num; 
+        colsel = row_col_num;
+        if(row_col_op)
+            opsel = 1'b1; 
+        else
+            opsel = 1'b0; 
+    end
 end
 
 endmodule
@@ -174,19 +175,20 @@ module permute_elm #(
   input row_col_op,
   input [MUXWIDTH*WIDTH-1:0] in_row_data,  
   input [MUXWIDTH*WIDTH-1:0] in_col_data,  
+
   input load,
   input en,
   input [WIDTH-1:0] data_in,
 
-  output reg [WIDTH-1:0] out_data,
-)
+  output reg [WIDTH-1:0] out_data
+);
 
 reg [WIDTH-1:0] row_data;
 reg [WIDTH-1:0] col_data;
 reg [WIDTH-1:0] n_data;
 
 always@(*)begin
-  case(row_sel)begin
+  case(row_sel)
     3'h0:begin row_data = in_row_data[1 * WIDTH -1: 0 * WIDTH]; end
     3'h1:begin row_data = in_row_data[2 * WIDTH -1: 1 * WIDTH]; end
     3'h2:begin row_data = in_row_data[3 * WIDTH -1: 2 * WIDTH]; end
@@ -195,8 +197,8 @@ always@(*)begin
     3'h5:begin row_data = in_row_data[6 * WIDTH -1: 5 * WIDTH]; end
     3'h6:begin row_data = in_row_data[7 * WIDTH -1: 6 * WIDTH]; end
     3'h7:begin row_data = in_row_data[8 * WIDTH -1: 7 * WIDTH]; end
-  end
-  case(col_sel)begin
+  endcase
+  case(col_sel)
     3'h0:begin col_data = in_col_data[1 * WIDTH -1: 0 * WIDTH]; end
     3'h1:begin col_data = in_col_data[2 * WIDTH -1: 1 * WIDTH]; end
     3'h2:begin col_data = in_col_data[3 * WIDTH -1: 2 * WIDTH]; end
@@ -205,7 +207,7 @@ always@(*)begin
     3'h5:begin col_data = in_col_data[6 * WIDTH -1: 5 * WIDTH]; end
     3'h6:begin col_data = in_col_data[7 * WIDTH -1: 6 * WIDTH]; end
     3'h7:begin col_data = in_col_data[8 * WIDTH -1: 7 * WIDTH]; end
-  end
+  endcase
   
   if(row_col_op)
     n_data = row_data;

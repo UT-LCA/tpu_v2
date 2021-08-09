@@ -1,0 +1,207 @@
+
+permute:     file format elf32-bigmips
+
+Disassembly of section .text:
+
+04000000 <_start>:
+ 4000000:	00000000 	nop
+ 4000004:	3c1c8000 	lui	gp,0x8000
+ 4000008:	379c0100 	ori	gp,gp,0x100
+ 400000c:	af800000 	sw	zero,0(gp)
+ 4000010:	3c1c1001 	lui	gp,0x1001
+ 4000014:	279c80f0 	addiu	gp,gp,-32528
+ 4000018:	3c1d8000 	lui	sp,0x8000
+ 400001c:	27bdfebc 	addiu	sp,sp,-324
+ 4000020:	34040000 	li	a0,0x0
+ 4000024:	34050000 	li	a1,0x0
+ 4000028:	0d000021 	jal	4000084 <main>
+ 400002c:	00000000 	nop
+ 4000030:	0900000e 	j	4000038 <_exit>
+ 4000034:	00000000 	nop
+
+04000038 <_exit>:
+ 4000038:	3c1c8000 	lui	gp,0x8000
+ 400003c:	379c0104 	ori	gp,gp,0x104
+ 4000040:	3c02dead 	lui	v0,0xdead
+ 4000044:	3442dead 	ori	v0,v0,0xdead
+ 4000048:	af820000 	sw	v0,0(gp)
+ 400004c:	3c020000 	lui	v0,0x0
+ 4000050:	34100000 	li	s0,0x0
+ 4000054:	34110000 	li	s1,0x0
+ 4000058:	34120000 	li	s2,0x0
+ 400005c:	34130000 	li	s3,0x0
+ 4000060:	34140000 	li	s4,0x0
+ 4000064:	34150000 	li	s5,0x0
+ 4000068:	34160000 	li	s6,0x0
+ 400006c:	34170000 	li	s7,0x0
+ 4000070:	341e0000 	li	s8,0x0
+ 4000074:	0900000e 	j	4000038 <_exit>
+ 4000078:	00000000 	nop
+	...
+
+04000084 <main>:
+ 4000084:	27bdffe8 	addiu	sp,sp,-24
+ 4000088:	afb00010 	sw	s0,16(sp)
+ 400008c:	3c051000 	lui	a1,0x1000
+ 4000090:	3c108000 	lui	s0,0x8000
+ 4000094:	3c061000 	lui	a2,0x1000
+ 4000098:	3c071000 	lui	a3,0x1000
+ 400009c:	36100100 	ori	s0,s0,0x100
+ 40000a0:	24a50000 	addiu	a1,a1,0
+ 40000a4:	24c60080 	addiu	a2,a2,128
+ 40000a8:	24e70100 	addiu	a3,a3,256
+ 40000ac:	24040080 	li	a0,128
+ 40000b0:	afbf0014 	sw	ra,20(sp)
+ 40000b4:	8e020000 	lw	v0,0(s0)
+ 40000b8:	0d000036 	jal	40000d8 <vector_permute>
+ 40000bc:	00000000 	nop
+ 40000c0:	8e030000 	lw	v1,0(s0)
+ 40000c4:	8fbf0014 	lw	ra,20(sp)
+ 40000c8:	8fb00010 	lw	s0,16(sp)
+ 40000cc:	00001021 	move	v0,zero
+ 40000d0:	03e00008 	jr	ra
+ 40000d4:	27bd0018 	addiu	sp,sp,24
+
+040000d8 <vector_permute>:
+ 40000d8:	27bdffe0 	addiu	sp,sp,-32
+ 40000dc:	afbf0008 	sw	ra,8(sp)
+ 40000e0:	3c0b1000 	lui	t3,0x1000
+ 40000e4:	480b743a 	ctc2	t3,vc29
+ 40000e8:	240b0000 	li	t3,0
+ 40000ec:	480b703a 	ctc2	t3,vc28
+ 40000f0:	240b0101 	li	t3,257
+ 40000f4:	480b783a 	ctc2	t3,vc30
+ 40000f8:	240b0100 	li	t3,256
+ 40000fc:	480b783a 	ctc2	t3,vc30
+ 4000100:	240b0001 	li	t3,1
+
+04000104 <target>:
+ 4000104:	480c6c38 	cfc2	t4,vc27
+ 4000108:	118bfffe 	beq	t4,t3,4000104 <target>
+ 400010c:	240b0001 	li	t3,1
+ 4000110:	480b043a 	ctc2	t3,vc1
+ 4000114:	48096038 	cfc2	t1,vc24
+ 4000118:	4809003a 	ctc2	t1,vc0
+ 400011c:	4b000013 	vfset	vf0
+ 4000120:	4805843a 	ctc2	a1,vc33
+ 4000124:	4806883a 	ctc2	a2,vc34
+ 4000128:	48078c3a 	ctc2	a3,vc35
+ 400012c:	4809c43a 	ctc2	t1,vc49
+ 4000130:	4804003a 	ctc2	a0,vc0
+ 4000134:	4b00000d 	vsatvl
+ 4000138:	4b001222 	vld.u.b	vr0,vbase1,vinc1
+ 400013c:	4b012222 	vld.u.b	vr1,vbase2,vinc1
+	...
+ 400014c:	4b80126a 	vsts.w	vr0,vbase1,vstride1,vinc1
+	...
+ 400015c:	4b81206b 	vstx.w	vr1,vr1,vbase2
+	...
+ 400016c:	4b842065 	vldx.w	vr4,vr1,vbase2
+ 4000170:	4b043229 	vst.b	vr4,vbase3,vinc1
+ 4000174:	8fbf0008 	lw	ra,8(sp)
+ 4000178:	03e00008 	jr	ra
+ 400017c:	27bd0020 	addiu	sp,sp,32
+Disassembly of section .data:
+
+10000000 <_fdata>:
+10000000:	00070006 	srlv	zero,a3,zero
+10000004:	00050004 	sllv	zero,a1,zero
+10000008:	00030002 	srl	zero,v1,0x0
+1000000c:	00010000 	sll	zero,at,0x0
+10000010:	00070006 	srlv	zero,a3,zero
+10000014:	00050004 	sllv	zero,a1,zero
+10000018:	00030002 	srl	zero,v1,0x0
+1000001c:	00010000 	sll	zero,at,0x0
+10000020:	00070006 	srlv	zero,a3,zero
+10000024:	00050004 	sllv	zero,a1,zero
+10000028:	00030002 	srl	zero,v1,0x0
+1000002c:	00010000 	sll	zero,at,0x0
+10000030:	00070006 	srlv	zero,a3,zero
+10000034:	00050004 	sllv	zero,a1,zero
+10000038:	00030002 	srl	zero,v1,0x0
+1000003c:	00010000 	sll	zero,at,0x0
+10000040:	00070006 	srlv	zero,a3,zero
+10000044:	00050004 	sllv	zero,a1,zero
+10000048:	00030002 	srl	zero,v1,0x0
+1000004c:	00010000 	sll	zero,at,0x0
+10000050:	00070006 	srlv	zero,a3,zero
+10000054:	00050004 	sllv	zero,a1,zero
+10000058:	00030002 	srl	zero,v1,0x0
+1000005c:	00010000 	sll	zero,at,0x0
+10000060:	00070006 	srlv	zero,a3,zero
+10000064:	00050004 	sllv	zero,a1,zero
+10000068:	00030002 	srl	zero,v1,0x0
+1000006c:	00010000 	sll	zero,at,0x0
+10000070:	00070006 	srlv	zero,a3,zero
+10000074:	00050004 	sllv	zero,a1,zero
+10000078:	00030002 	srl	zero,v1,0x0
+1000007c:	00010000 	sll	zero,at,0x0
+
+10000080 <frame2>:
+10000080:	00040005 	0x40005
+10000084:	00060007 	srav	zero,a2,zero
+10000088:	00000001 	0x1
+1000008c:	00020003 	sra	zero,v0,0x0
+10000090:	00040005 	0x40005
+10000094:	00060007 	srav	zero,a2,zero
+10000098:	00000001 	0x1
+1000009c:	00020003 	sra	zero,v0,0x0
+100000a0:	00040005 	0x40005
+100000a4:	00060007 	srav	zero,a2,zero
+100000a8:	00000001 	0x1
+100000ac:	00020003 	sra	zero,v0,0x0
+100000b0:	00040005 	0x40005
+100000b4:	00060007 	srav	zero,a2,zero
+100000b8:	00000001 	0x1
+100000bc:	00020003 	sra	zero,v0,0x0
+100000c0:	00040005 	0x40005
+100000c4:	00060007 	srav	zero,a2,zero
+100000c8:	00000001 	0x1
+100000cc:	00020003 	sra	zero,v0,0x0
+100000d0:	00040005 	0x40005
+100000d4:	00060007 	srav	zero,a2,zero
+100000d8:	00000001 	0x1
+100000dc:	00020003 	sra	zero,v0,0x0
+100000e0:	00040005 	0x40005
+100000e4:	00060007 	srav	zero,a2,zero
+100000e8:	00000001 	0x1
+100000ec:	00020003 	sra	zero,v0,0x0
+100000f0:	00040005 	0x40005
+100000f4:	00060007 	srav	zero,a2,zero
+100000f8:	00000001 	0x1
+100000fc:	00020003 	sra	zero,v0,0x0
+Disassembly of section .bss:
+
+10000100 <out>:
+	...
+Disassembly of section .reginfo:
+
+10000180 <.reginfo>:
+10000180:	f0ff0034 	0xf0ff0034
+	...
+10000194:	100080f0 	b	ffe0558 <target+0xbfe0454>
+Disassembly of section .comment:
+
+00000000 <.comment>:
+   0:	00474343 	0x474343
+   4:	3a202847 	xori	zero,s1,0x2847
+   8:	4e552920 	c3	0x552920
+   c:	342e322e 	ori	t6,at,0x322e
+  10:	Address 0x0000000000000010 is out of bounds.
+
+Disassembly of section .pdr:
+
+00000000 <.pdr>:
+   0:	04000000 	bltz	zero,4 <_start-0x3fffffc>
+   4:	00000000 	nop
+	...
+  20:	04000084 	bltz	zero,234 <_start-0x3fffdcc>
+  24:	80010000 	lb	at,0(zero)
+  28:	fffffffc 	0xfffffffc
+	...
+  34:	00000018 	mult	zero,zero
+  38:	0000001d 	0x1d
+  3c:	0000001f 	0x1f
+  40:	040000d8 	bltz	zero,3a4 <_start-0x3fffc5c>
+  44:	00000000 	nop
+	...

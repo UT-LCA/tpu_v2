@@ -2,12 +2,12 @@ module trp_unit #(parameter WIDTH=4)(
  input clk,
  input resetn,
  input en,
- input [WIDTH-1:0] a,
+ input [8*WIDTH-1:0] a,
  input [1:0] mode,
  input read,
  output busy,
  output reg valid,
- output reg[WIDTH-1:0] out
+ output reg[8*WIDTH-1:0] out
 );
 
 reg en_reduction;
@@ -17,8 +17,8 @@ reg read_reduction;
 wire transpose_busy;
 wire reduction_busy;
 wire reduction_done;
-wire [WIDTH-1:0] reduction_out;
-wire [WIDTH-1:0] transpose_out;
+wire [8*WIDTH-1:0] reduction_out;
+wire [8*WIDTH-1:0] transpose_out;
 wire reduction_valid; 
  
 //assign busy = transpose_busy || reduction_busy;
@@ -54,7 +54,9 @@ always@(*)begin
  // end
 end
 
-reduction_layer u_reduction_layer(
+reduction_layer #(
+  .DWIDTH(WIDTH)
+) u_reduction_layer(
   .clk(clk),
   .resetn(resetn),
   .en(en_reduction),
@@ -66,14 +68,14 @@ reduction_layer u_reduction_layer(
   .valid(reduction_valid)
 );
 
-transpose u_transpose(
-  .clk(clk),
-  .resetn(resetn),
-  .read(),
-  .en(en_transpose), 
-  .a(a),
-  .out(transpose_out),
-  .busy(transpose_busy)
-);
+//transpose u_transpose(
+//  .clk(clk),
+//  .resetn(resetn),
+//  .read(),
+//  .en(en_transpose), 
+//  .a(a),
+//  .out(transpose_out),
+//  .busy(transpose_busy)
+//);
 
 endmodule

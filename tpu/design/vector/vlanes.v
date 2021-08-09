@@ -188,8 +188,8 @@ parameter BANKREGIDWIDTH=VRIDWIDTH+LOG2MVL-LOG2NUMLANES-LOG2NUMBANKS;
 `define VRELM_RANGE REGIDWIDTH-VRIDWIDTH-1:0
 
 // NUMFUS = ALU*NUMBANKS + MUL + MEM + FALU*MEMBANKS + MATMUL(1) + BFLOAT
-// UNITS(2) + ACTIVATION + TRP
-parameter NUMFUS=4+2*(NUMBANKS-1)*ALUPERBANK+1+4; //Adding 1 for matmul FU
+// UNITS(2) + ACTIVATION + TRP + TRANSPOSE + PERMUTE
+parameter NUMFUS=4+2*(NUMBANKS-1)*ALUPERBANK+1+4+2 + 1; //Adding 1 for matmul FU + 6 for BFLOTs, ACTIVATION, TRP, PERMUTE and TRANSPOSE and AXI
 parameter FU_ALU=0;
 parameter FU_MUL=FU_ALU+(NUMBANKS-1)*ALUPERBANK+1;
 parameter FU_MEM=FU_MUL+1;
@@ -199,6 +199,9 @@ parameter FU_BFADDER = FU_MATMUL + 1;
 parameter FU_BFMULT = FU_BFADDER + 1;
 parameter FU_ACT = FU_BFMULT + 1;
 parameter FU_TRP = FU_ACT + 1;
+parameter FU_TRANSPOSE = FU_TRP + 1;
+parameter FU_PERMUTE = FU_TRANSPOSE + 1;
+parameter FU_AXI = FU_PERMUTE + 1;
 
 input clk;
 input resetn;
@@ -503,9 +506,9 @@ wire             [ REGIDWIDTH-1 : 0 ]   wb_dst[NUMFUS-1:0];
 wire                     [NUMFUS-1:0]   wb_dst_we;
 wire               [ NUMLANES-1 : 0 ]   wb_dst_mask[NUMFUS-1:0];
 
-wire                        [ `MAX_PIPE_STAGES-1 : 4 ]   dst_we[NUMFUS-1:0];
-wire             [ REGIDWIDTH-1 : 0 ]   dst[NUMFUS-1:0][`MAX_PIPE_STAGES-1:4];
-wire               [ NUMLANES-1 : 0 ]   dst_mask[NUMFUS-1:0][`MAX_PIPE_STAGES-1:4];
+wire                        [`MAX_STAGES-1 : 4 ]   dst_we[NUMFUS-1:0];
+wire             [ REGIDWIDTH-1 : 0 ]   dst[NUMFUS-1:0][`MAX_STAGES-1:4];
+wire               [ NUMLANES-1 : 0 ]   dst_mask[NUMFUS-1:0][`MAX_STAGES-1:4];
 wire             [ REGIDWIDTH-1 : 0 ]   dst_s2;
 reg              [ REGIDWIDTH-1 : 0 ]   _dst_s3[NUMBANKS-1:0];
 reg              [ REGIDWIDTH-1 : 0 ]   dst_s3[NUMBANKS-1:0];
@@ -553,6 +556,8 @@ wire         [ LANEWIDTH*NUMLANES-1 : 0 ]   bfadder_result_s5;
 wire         [ LANEWIDTH*NUMLANES-1 : 0 ]   bfmult_result_s5;
 wire         [ LANEWIDTH*NUMLANES-1 : 0 ]   act_result_s5;
 wire         [ LANEWIDTH*NUMLANES-1 : 0 ]   trp_out;
+wire         [ LANEWIDTH*NUMLANES-1 : 0 ]   permute_out;
+wire         [ LANEWIDTH*NUMLANES-1 : 0 ]   transpose_out;
 reg                [ NUMLANES-1 : 0 ]   vf_src1[NUMFUS-1:0];
 reg                [ NUMLANES-1 : 0 ]   vf_src2[NUMFUS-1:0];
 reg                [ NUMLANES-1 : 0 ]   vmask[NUMFUS-1:0];
@@ -580,6 +585,13 @@ wire trp_busy;
 wire trp_valid;
 wire trp_read;
 
+wire transpose_valid;
+wire transpose_busy;
+
+//reg permute_read;
+//reg permute_store;
+//reg permute_op;
+
 reg ctrl1_vr_a_en; // SRC1
 reg ctrl1_vr_b_en; // SRC2
 reg ctrl1_vr_c_en; // SRC3
@@ -605,6 +617,13 @@ reg ctrl1_bfadder_en;
 reg ctrl1_bfmult_en;
 reg ctrl1_act_en;
 reg ctrl1_trp_en;
+reg ctrl1_permute_en;
+reg ctrl1_permute_op;
+reg ctrl1_permute_store;
+reg ctrl1_permute_read;
+reg ctrl1_transpose_en;
+reg ctrl1_axi_en;
+reg ctrl1_axi_req_type;
 reg ctrl1_memunit_en;
 reg ctrl1_mem_en;
 reg [6:0] ctrl1_memunit_op;
@@ -652,6 +671,13 @@ wire ctrl2_bfadder_en;
 wire ctrl2_bfmult_en;
 wire ctrl2_act_en;
 wire ctrl2_trp_en;
+wire ctrl2_transpose_en;
+wire ctrl2_permute_en;
+wire ctrl2_permute_op;
+wire ctrl2_permute_store;
+wire ctrl2_permute_read;
+wire ctrl2_axi_en;
+wire ctrl2_axi_req_type;
 wire ctrl2_alufalu_en;
 
 reg [NUMBANKS-1:0] ctrl3_vr_a_en; // SRC1
@@ -679,6 +705,13 @@ reg [NUMBANKS-1:0] ctrl3_vf_a_sel; //0-0/1 from instr, 1-src1
 reg [NUMBANKS-1:0] ctrl3_mulshift_en;
 reg [NUMBANKS-1:0] ctrl3_matmul_en;
 reg [NUMBANKS-1:0] ctrl3_trp_en;
+reg [NUMBANKS-1:0] ctrl3_transpose_en;
+reg [NUMBANKS-1:0] ctrl3_permute_en;
+reg [NUMBANKS-1:0] ctrl3_permute_op;
+reg [NUMBANKS-1:0] ctrl3_permute_read;
+reg [NUMBANKS-1:0] ctrl3_permute_store;
+reg [NUMBANKS-1:0] ctrl3_axi_en;
+reg [NUMBANKS-1:0] ctrl3_axi_req_type;
 reg [NUMBANKS-1:0] ctrl3_bfadder_en;
 reg [NUMBANKS-1:0] ctrl3_bfmult_en;
 reg [NUMBANKS-1:0] ctrl3_act_en;
@@ -703,8 +736,15 @@ reg [(NUMBANKS-1)*ALUPERBANK:0] ctrl4_vf_a_sel; //0-0/1 from instr, 1-src1
 reg ctrl4_mulshift_en;
 reg ctrl4_matmul_en;
 reg ctrl4_trp_en;
+reg ctrl4_transpose_en;
+reg ctrl4_permute_en;
+reg ctrl4_permute_op;
+reg ctrl4_permute_store;
+reg ctrl4_permute_read;
 reg ctrl4_bfadder_en;
 reg ctrl4_bfmult_en;
+reg ctrl4_axi_en;
+reg ctrl4_axi_req_type;
 reg ctrl4_act_en;
 
 wire ctrl5_mem_en;
@@ -741,9 +781,9 @@ reg  [NUMBANKS-1:0] banksel_s4[NUMFUS-1:0];
 wire dispatcher_shift;
 wire dispatcher_rotate;
 
-wire [`MAX_PIPE_STAGES-1:0] internal_pipe_advance;
-wire [`MAX_PIPE_STAGES-1:0] pipe_advance;
-wire [`MAX_PIPE_STAGES-1:0] pipe_squash;
+wire [`MAX_STAGES-1:0] internal_pipe_advance;
+wire [`MAX_STAGES-1:0] pipe_advance;
+wire [`MAX_STAGES-1:0] pipe_squash;
 wire stall_srcstart;
 wire stall_dispatcher;
 wire stall_hazsrc1;
@@ -855,8 +895,10 @@ assign pipe_squash[3]=pipe_advance[4]&~pipe_advance[3];
 assign pipe_squash[4]=pipe_advance[5]&~pipe_advance[4];
 assign pipe_squash[5]=pipe_advance[6]&~pipe_advance[5];
 assign pipe_squash[6]=1'b0;
-assign pipe_squash[7]=1'b0;
-assign internal_pipe_advance[7:6] = 2'b11;
+assign pipe_squash[13:7]= 'h0;
+assign internal_pipe_advance[13:6] = {(14-5){1'b1}};
+//assign pipe_squash[`MAX_STAGES:7]= 'h0;
+//assign internal_pipe_advance[`MAX_STAGES:6] = {(`MAX_STAGES-5){1'b1}};
 //assign pipe_squash[6]=1'b0;
 
 /******************************************************************************/
@@ -968,7 +1010,8 @@ assign internal_pipe_advance[7:6] = 2'b11;
       COP2_VSAT_SU_L,
       COP2_VSAT_U_B,
       COP2_VSAT_U_H,
-      COP2_VSAT_U_W:
+      //COP2_VSAT_U_W:
+      COP2_VTRP:
         begin
           ctrl1_vr_a_en=1;
           ctrl1_vf_a_en=1;
@@ -1091,7 +1134,7 @@ assign internal_pipe_advance[7:6] = 2'b11;
       COP2_VLD_L,
       COP2_VLD_U_B,
       COP2_VLD_U_H,
-      COP2_VLD_U_W,
+      //COP2_VLD_U_W,
       COP2_VLDS_B,
       COP2_VLDS_H,
       COP2_VBFSUB,
@@ -1104,9 +1147,9 @@ assign internal_pipe_advance[7:6] = 2'b11;
         end
       COP2_VLDX_B,
       COP2_VLDX_H,
-      COP2_VTRP,
+      //COP2_VTRP,
       //COP2_VRED,
-      COP2_VPER,
+      COP2_VPER_STR,
       COP2_VLDX_L,
       COP2_VLDX_U_B,
       COP2_VLDX_U_H:
@@ -1126,13 +1169,22 @@ assign internal_pipe_advance[7:6] = 2'b11;
           ctrl1_vf_a_en=1;
           ctrl1_vr_b_en=1;
         end
+      COP2_VPER,
+      COP2_VPER_LD:
+         begin
+          ctrl1_vr_b_en=1;
+         end
+      COP2_VAXIWR:
+         begin
+           ctrl1_vr_b_en=1;
+         end
       COP2_VSTX_B,
       COP2_VSTX_H,
-      COP2_VSTX_W,
+      //COP2_VSTX_W,
       COP2_VSTX_L,
       COP2_VSTXO_B,
       COP2_VSTXO_H,
-      COP2_VSTXO_W,
+      //COP2_VSTXO_W,  AXI Write
       COP2_VSTXO_L:
         begin
           ctrl1_vr_b_en=1;
@@ -1164,6 +1216,8 @@ assign internal_pipe_advance[7:6] = 2'b11;
     ctrl1_setvlto1=0;
     ctrl1_vf_wbsel=0;
     ctrl1_volatiledest=0;
+    ctrl1_permute_store = 1'b0;  // Loading data into the permute block
+    ctrl1_permute_op = 1'b0; // processing the permute op
     casez(ir_op)
       COP2_VADD,
       COP2_VADD_U,
@@ -1182,7 +1236,7 @@ assign internal_pipe_advance[7:6] = 2'b11;
         end
      // COP2_VACT,
       COP2_VTRP,
-      COP2_VPER,
+      COP2_VPER_STR,
       COP2_VRED:
          begin
           ctrl1_vr_d_we=1;
@@ -1223,7 +1277,7 @@ assign internal_pipe_advance[7:6] = 2'b11;
       COP2_VSAT_SU_L,
       COP2_VSAT_U_B,
       COP2_VSAT_U_H,
-      COP2_VSAT_U_W,
+      //COP2_VSAT_U_W,
       COP2_VSADD,
       COP2_VSADD_U,
       COP2_VSSUB,
@@ -1392,7 +1446,7 @@ assign internal_pipe_advance[7:6] = 2'b11;
       COP2_VLD_L,
       COP2_VLD_U_B,
       COP2_VLD_U_H,
-      COP2_VLD_U_W,
+      //COP2_VLD_U_W,
       COP2_VLDS_B,
       COP2_VLDS_H,
       COP2_VBFSUB,
@@ -1432,17 +1486,35 @@ assign internal_pipe_advance[7:6] = 2'b11;
       COP2_VSTS_L,
       COP2_VSTX_B,
       COP2_VSTX_H,
-      COP2_VSTX_W,
+      //COP2_VSTX_W,
       COP2_VSTX_L,
       COP2_VSTXO_B,
       COP2_VSTXO_H,
-      COP2_VSTXO_W,
+      //COP2_VSTXO_W,  AXI write
       COP2_VSTXO_L:
         begin
           ctrl1_memunit_en=1;
           ctrl1_mem_en=1;
           ctrl1_ismasked=1;
         end
+      COP2_VPER_STR:
+         begin
+           ctrl1_ismasked = 1'b1;
+         end
+      COP2_VPER:
+         begin
+           ctrl1_permute_op = 1'b1;
+           ctrl1_ismasked = 1'b1;
+         end
+      COP2_VPER_LD:
+         begin
+           ctrl1_permute_store = 1'b1;
+           ctrl1_ismasked = 1'b1;
+         end
+      COP2_VAXIWR:
+         begin
+           ctrl1_ismasked = 1'b1;
+         end
       //COP2_VMCTS:
       //COP2_VMSTC:
       //COP2_CFC2:
@@ -1458,11 +1530,16 @@ assign internal_pipe_advance[7:6] = 2'b11;
     ctrl1_mulshift_op=MULOP_ZERO;
     ctrl1_matmul_en=0;
     ctrl1_trp_en = 1'b0;
+    ctrl1_permute_en = 1'b0;
+    ctrl1_transpose_en = 1'b0;
     ctrl1_bfadder_en = 1'b0;
     ctrl1_bfmult_en = 1'b0;
     ctrl1_act_en = 1'b0;
+    ctrl1_axi_en = 1'b0;
+    ctrl1_axi_req_type = 1'b0;
     ctrl1_memunit_op=0;
     ctrl1_flagalu_op=FLAGOP_CLR;
+    ctrl1_permute_read = 1'b0;
   end
   always@*
   begin
@@ -1476,6 +1553,11 @@ assign internal_pipe_advance[7:6] = 2'b11;
     ctrl1_bfmult_en = 1'b0;
     ctrl1_act_en = 1'b0;
     ctrl1_trp_en = 1'b0;
+    ctrl1_transpose_en = 1'b0;
+    ctrl1_permute_en = 1'b0;
+    ctrl1_permute_read = 1'b0;
+    ctrl1_axi_en = 1'b0;
+    ctrl1_axi_req_type = 1'b0;
     ctrl1_flagalu_op=FLAGOP_CLR;
     casez(ir_op)
       COP2_VADD:      ctrl1_alu_op=ALUOP_ADD^ALUOP_ZERO;
@@ -1488,9 +1570,9 @@ assign internal_pipe_advance[7:6] = 2'b11;
       COP2_VBFADD:    ctrl1_bfadder_en = 1'b1;
       COP2_VBFMULT:   ctrl1_bfmult_en = 1'b1;
       COP2_VACT:      ctrl1_act_en = 1'b1;
-      COP2_VTRP:      ctrl1_trp_en = 1'b1;
+      COP2_VTRP:      ctrl1_transpose_en = 1'b1;
       COP2_VRED:      ctrl1_trp_en = 1'b1;
-      COP2_VPER:      ctrl1_trp_en = 1'b1;
+      //COP2_VPER:      ctrl1_permute_en = 1'b1;
       //COP2_VDIV_U,
       //COP2_VMOD,
       //COP2_VMOD_U,
@@ -1522,7 +1604,7 @@ assign internal_pipe_advance[7:6] = 2'b11;
       //COP2_VSAT_SU_L:
       COP2_VSAT_U_B: ctrl1_satsize_op=SATSIZEOP_VSATUB;
       COP2_VSAT_U_H: ctrl1_satsize_op=SATSIZEOP_VSATUH;
-      COP2_VSAT_U_W: ctrl1_satsize_op=SATSIZEOP_VSATUW;
+      //COP2_VSAT_U_W: ctrl1_satsize_op=SATSIZEOP_VSATUW;
       COP2_VSADD: begin ctrl1_alu_op=ALUOP_ADD^ALUOP_ZERO; ctrl1_satsum_op=SATSUMOP_VS; end
       COP2_VSADD_U: begin 
           ctrl1_alu_op=ALUOP_ADDU^ALUOP_ZERO; 
@@ -1588,7 +1670,7 @@ assign internal_pipe_advance[7:6] = 2'b11;
       //COP2_VLD_L,
       COP2_VLD_U_B: ctrl1_memunit_op=MEMOP_LDUB;
       COP2_VLD_U_H: ctrl1_memunit_op=MEMOP_LDUH;
-      COP2_VLD_U_W: ctrl1_memunit_op=MEMOP_LDUW;
+      //COP2_VLD_U_W: ctrl1_memunit_op=MEMOP_LDUW;
       COP2_VLDS_B: ctrl1_memunit_op=MEMOP_LDSB;
       COP2_VLDS_H: ctrl1_memunit_op=MEMOP_LDSH;
       COP2_VBFSUB: ctrl1_memunit_op=MEMOP_LDSW;
@@ -1611,14 +1693,27 @@ assign internal_pipe_advance[7:6] = 2'b11;
       COP2_VSTS_B: ctrl1_memunit_op=MEMOP_STSB;
       COP2_VSTS_H: ctrl1_memunit_op=MEMOP_STSH;
       //COP2_VPER: ctrl1_memunit_op=MEMOP_STSW;
+      COP2_VPER_STR:
+        begin
+           ctrl1_permute_read = 1'b1;
+           ctrl1_permute_en = 1'b1;
+        end
+      COP2_VPER: ctrl1_permute_en = 1'b1;
+      COP2_VPER_LD: ctrl1_permute_en = 1'b1;
       //COP2_VSTS_L:
       COP2_VSTX_B: ctrl1_memunit_op=MEMOP_STXB;
       COP2_VSTX_H: ctrl1_memunit_op=MEMOP_STXH;
-      COP2_VSTX_W: ctrl1_memunit_op=MEMOP_STXW;
+      //COP2_VSTX_W: ctrl1_memunit_op=MEMOP_STXW;
       //COP2_VSTX_L:
       COP2_VSTXO_B: ctrl1_memunit_op=MEMOP_STXB;
       COP2_VSTXO_H: ctrl1_memunit_op=MEMOP_STXH;
-      COP2_VSTXO_W: ctrl1_memunit_op=MEMOP_STXW;
+      //COP2_VSTXO_W: ctrl1_memunit_op=MEMOP_STXW; AXI Write
+      COP2_VAXIWR:
+             begin 
+                ctrl1_axi_en = 1'b1; 
+                ctrl1_axi_req_type=1'b1;
+             end
+      COP2_VAXIRD:begin ctrl1_axi_en = 1'b1; ctrl1_axi_req_type=1'b0; end
       //COP2_VSTXO_L:
       //COP2_VMCTS:
       //COP2_VMSTC:
@@ -1672,7 +1767,9 @@ assign internal_pipe_advance[7:6] = 2'b11;
       1+
       3+
       1+
-      1
+      1+
+      2+ // For permute and transpose enable
+      3+1+1  // For Permute store,read and op signals + 1 for axi en + 1 axi req tyoe
     ) pipe1regwsquash (
       .d( {
         ctrl1_vr_d_we,
@@ -1691,6 +1788,13 @@ assign internal_pipe_advance[7:6] = 2'b11;
         ctrl1_bfmult_en,
         ctrl1_act_en,
         ctrl1_trp_en,
+        ctrl1_transpose_en,
+        ctrl1_permute_en,
+        ctrl1_permute_op,
+        ctrl1_permute_store,
+        ctrl1_permute_read,
+        ctrl1_axi_en,
+        ctrl1_axi_req_type,
         (ctrl1_alu_op!=(ALUOP_ZERO^ALUOP_ZERO)) || ctrl1_vf_c_we
       }),
       .clk(clk),
@@ -1714,6 +1818,13 @@ assign internal_pipe_advance[7:6] = 2'b11;
         ctrl2_bfmult_en,
         ctrl2_act_en,
         ctrl2_trp_en,
+        ctrl2_transpose_en,
+        ctrl2_permute_en,
+        ctrl2_permute_op,
+        ctrl2_permute_store,
+        ctrl2_permute_read,
+        ctrl2_axi_en,
+        ctrl2_axi_req_type,
         ctrl2_alufalu_en
         })
       );
@@ -1927,6 +2038,9 @@ assign internal_pipe_advance[7:6] = 2'b11;
     (|(ctrl3_bfmult_en&~last_subvector) && ctrl2_bfmult_en) ||
     (|(ctrl3_act_en&~last_subvector) && ctrl2_act_en) ||
     (|(ctrl3_trp_en&~last_subvector) && ctrl2_trp_en) ||
+    (|(ctrl3_transpose_en&~last_subvector) && ctrl2_transpose_en) ||
+    (|(ctrl3_permute_en&~last_subvector) && ctrl2_permute_en) ||
+    (|(ctrl3_axi_en&~last_subvector) && ctrl2_axi_en) ||
     (|(ctrl3_alufalu_en&~last_subvector) && ctrl2_alufalu_en && ALUPERBANK==0)||
     //Entry 0 is taken
     (dispatcher_rotate && ctrl2_useslanes);
@@ -1975,7 +2089,9 @@ assign internal_pipe_advance[7:6] = 2'b11;
     VCWIDTH+ \
     VSWIDTH+ \
     8+ \
-    2
+    2+ \
+    2+3+2 // This is fro Permute and Transpose unit enable + 3 This is for Permute op. store and read signals and +2 for axi signal 
+
 wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
   vdispatcher #(NUMBANKS, `DISPATCHWIDTH,LOG2MVL,LOG2MVL,LOG2MVL-LOG2NUMLANES+1)
     vdispatcher(
@@ -2001,6 +2117,13 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
           (pipe_squash[2]) ? 1'b0 : ctrl2_bfmult_en,
           (pipe_squash[2]) ? 1'b0 : ctrl2_act_en,
           (pipe_squash[2]) ? 1'b0 : ctrl2_trp_en,
+          (pipe_squash[2]) ? 1'b0 : ctrl2_transpose_en,
+          (pipe_squash[2]) ? 1'b0 : ctrl2_permute_en,
+          (pipe_squash[2]) ? 1'b0 : ctrl2_axi_en,
+          ctrl2_axi_req_type,
+          ctrl2_permute_op,
+          ctrl2_permute_store,
+          ctrl2_permute_read,
           (pipe_squash[2]) ? 1'b0 : ctrl2_alufalu_en,
           dst_s2,
           src1_s2,
@@ -2153,6 +2276,13 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
         ctrl3_bfmult_en[bi],
         ctrl3_act_en[bi],
         ctrl3_trp_en[bi],
+        ctrl3_transpose_en[bi],
+        ctrl3_permute_en[bi],
+        ctrl3_axi_en[bi],
+        ctrl3_axi_req_type[bi],
+        ctrl3_permute_op[bi],
+        ctrl3_permute_store[bi],
+        ctrl3_permute_read[bi],
         ctrl3_alufalu_en[bi],
         _dst_s3[bi],
         _src1_s3[bi],
@@ -2225,6 +2355,13 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
       ctrl4_bfmult_en=0;
       ctrl4_act_en=0;
       ctrl4_trp_en=0;
+      ctrl4_transpose_en=0;
+      ctrl4_permute_en=0;
+      ctrl4_permute_op=0;
+      ctrl4_permute_store=0;
+      ctrl4_permute_read=0;
+      ctrl4_axi_en=0;
+      ctrl4_axi_req_type=0;
       ctrl4_memunit_en=0;
       ctrl4_mem_en=0;
       ctrl4_volatiledest=0;
@@ -2238,6 +2375,13 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
       ctrl4_bfmult_en=0;
       ctrl4_act_en=0;
       ctrl4_trp_en=0;
+      ctrl4_transpose_en=0;
+      ctrl4_permute_en=0;
+      ctrl4_permute_op=0;
+      ctrl4_permute_store=0;
+      ctrl4_permute_read=0;
+      ctrl4_axi_en=0;
+      ctrl4_axi_req_type=0;
       ctrl4_memunit_en=0;
       ctrl4_mem_en=|ctrl3_mem_en;
       ctrl4_volatiledest=0;
@@ -2317,6 +2461,39 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
             src2scalar_s4[FU_BFMULT]=src2scalar_s3[b3];
             ctrl4_ismasked[FU_BFMULT]=ctrl3_ismasked[b3];
           end
+          else if (ctrl3_transpose_en[b3])    //is bfloat addition
+          begin
+            D_instr_s4[FU_TRANSPOSE]=D_instr_s3[b3];
+            D_last_subvector_s4[FU_TRANSPOSE]=last_subvector[b3];
+            ctrl4_transpose_en = ctrl3_transpose_en[b3];
+            banksel_s4[FU_TRANSPOSE]=b3;
+            vs_s4[FU_TRANSPOSE]=vs_s3[b3];
+            vc_s4[FU_TRANSPOSE]=vc_s3[b3];
+            dst_s4[FU_TRANSPOSE]=dst_s3[b3];
+            dst_we_s4[FU_TRANSPOSE]=ctrl3_vr_c_we[b3];
+            vlane_en[FU_TRANSPOSE]=lane_en[b3];
+            src1scalar_s4[FU_TRANSPOSE]=src1scalar_s3[b3];
+            src2scalar_s4[FU_TRANSPOSE]=src2scalar_s3[b3];
+            ctrl4_ismasked[FU_TRANSPOSE]=ctrl3_ismasked[b3];
+          end
+          else if (ctrl3_permute_en[b3])    //is bfloat addition
+          begin
+            D_instr_s4[FU_PERMUTE]=D_instr_s3[b3];
+            D_last_subvector_s4[FU_PERMUTE]=last_subvector[b3];
+            ctrl4_permute_en = ctrl3_permute_en[b3];
+            ctrl4_permute_op = ctrl3_permute_op;
+            ctrl4_permute_store = ctrl3_permute_store;
+            ctrl4_permute_read = ctrl3_permute_read;
+            banksel_s4[FU_PERMUTE]=b3;
+            vs_s4[FU_PERMUTE]=vs_s3[b3];
+            vc_s4[FU_PERMUTE]=vc_s3[b3];
+            dst_s4[FU_PERMUTE]=dst_s3[b3];
+            dst_we_s4[FU_PERMUTE]=ctrl3_vr_c_we[b3];
+            vlane_en[FU_PERMUTE]=lane_en[b3];
+            src1scalar_s4[FU_PERMUTE]=src1scalar_s3[b3];
+            src2scalar_s4[FU_PERMUTE]=src2scalar_s3[b3];
+            ctrl4_ismasked[FU_PERMUTE]=ctrl3_ismasked[b3];
+          end
           else if (ctrl3_trp_en[b3])    //is bfloat addition
           begin
             D_instr_s4[FU_TRP]=D_instr_s3[b3];
@@ -2347,6 +2524,23 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
             src1scalar_s4[FU_ACT]=src1scalar_s3[b3];
             src2scalar_s4[FU_ACT]=src2scalar_s3[b3];
             ctrl4_ismasked[FU_ACT]=ctrl3_ismasked[b3];
+          end
+          else if (ctrl3_axi_en[b3])    //is axi operation
+          begin
+            D_instr_s4[FU_AXI]=D_instr_s3[b3];
+            D_last_subvector_s4[FU_AXI]=last_subvector[b3];
+            ctrl4_axi_en = ctrl3_axi_en[b3];
+            ctrl4_axi_req_type = ctrl3_axi_req_type[b3];
+            banksel_s4[FU_AXI]=b3;
+            vs_s4[FU_AXI]=vs_s3[b3];
+            vc_s4[FU_AXI]=vc_s3[b3];
+            dst_s4[FU_AXI]=dst_s3[b3];
+            dst_we_s4[FU_AXI]=ctrl3_vr_c_we[b3];
+            vlane_en[FU_AXI]=lane_en[b3];
+            src1scalar_s4[FU_AXI]=src1scalar_s3[b3];
+            src2scalar_s4[FU_AXI]=src2scalar_s3[b3];
+            ctrl4_ismasked[FU_AXI]=ctrl3_ismasked[b3];
+            vbase_s4=(first_subvector&ctrl3_axi_en)? vbase[3] : vbase_s4 + (2<<LOG2NUMLANES);
           end
           else if (ctrl3_memunit_en[b3] && !ctrl3_mem_en[b3]) //is memunit shift
           begin
@@ -2526,6 +2720,12 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
                                     vr_b_readdataout[banksel_s4[FU_BFMULT]];
     vr_src1[FU_TRP] =(src1scalar_s4[FU_TRP]) ? {NUMLANES{vs_s4[FU_TRP][LANEWIDTH-1:0]}} : 
                                     vr_a_readdataout[banksel_s4[FU_TRP]];
+    vr_src1[FU_TRANSPOSE] =(src1scalar_s4[FU_TRANSPOSE]) ? {NUMLANES{vs_s4[FU_TRANSPOSE][LANEWIDTH-1:0]}} : 
+                                    vr_a_readdataout[banksel_s4[FU_TRANSPOSE]];
+    vr_src1[FU_PERMUTE] =(src1scalar_s4[FU_PERMUTE]) ? {NUMLANES{vs_s4[FU_PERMUTE][LANEWIDTH-1:0]}} : 
+                                    vr_b_readdataout[banksel_s4[FU_PERMUTE]];
+    vr_src1[FU_AXI] =(src1scalar_s4[FU_AXI]) ? {NUMLANES{vs_s4[FU_AXI][LANEWIDTH-1:0]}} : 
+                                    vr_b_readdataout[banksel_s4[FU_AXI]];
     vr_src1[FU_ACT] =(src1scalar_s4[FU_ACT]) ? {NUMLANES{vs_s4[FU_ACT][LANEWIDTH-1:0]}} : 
                                     vr_a_readdataout[banksel_s4[FU_ACT]];
     vmask[FU_MATMUL] =  vlane_en[FU_MATMUL] &
@@ -2551,6 +2751,20 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
     vmask[FU_TRP] =  vlane_en[FU_TRP] &
            ((ctrl4_ismasked[FU_TRP]) ?  
              vf_a_readdataout[banksel_s4[FU_TRP]*NUMLANES +: NUMLANES] :
+             {NUMLANES{1'b1}}) ;
+
+    vmask[FU_TRANSPOSE] =  vlane_en[FU_TRANSPOSE] &
+           ((ctrl4_ismasked[FU_TRANSPOSE]) ?  
+             vf_a_readdataout[banksel_s4[FU_TRANSPOSE]*NUMLANES +: NUMLANES] :
+             {NUMLANES{1'b1}}) ;
+
+    vmask[FU_PERMUTE] =  vlane_en[FU_PERMUTE] &
+           ((ctrl4_ismasked[FU_PERMUTE]) ?  
+             vf_a_readdataout[banksel_s4[FU_PERMUTE]*NUMLANES +: NUMLANES] :
+             {NUMLANES{1'b1}}) ;
+    vmask[FU_AXI] =  vlane_en[FU_AXI] &
+           ((ctrl4_ismasked[FU_AXI]) ?  
+             vf_a_readdataout[banksel_s4[FU_AXI]*NUMLANES +: NUMLANES] :
              {NUMLANES{1'b1}}) ;
 
     for (fn2=FU_FALU; fn2<=FU_FALU+(NUMBANKS-1)*ALUPERBANK; fn2=fn2+1)
@@ -2600,18 +2814,29 @@ wire [NUMBANKS*(`DISPATCHWIDTH)-1:0] dispatcher_instr;
 
 // AXI interface logic
 //
+
+wire [REGIDWIDTH-1:0] axi_dst;
+wire [NUMLANES-1:0] axi_mask;
+wire axi_dst_we;
+
 axi4_master #(
     .P_TARGET_SLAVE_BASE_ADDR(0),                           
     .P_ADDR_WIDTH(32),                                      
     .P_DATA_WIDTH(128)                                      
 )inst_axi_master
 (
-    .req_addr      (),
-    .req_data      (),
-    .req_en        (),
-    .req_type      (),
-    .req_read_data (),
+    .req_addr      (vbase_s4[10:0]),
+    .req_data      (vr_src1[FU_AXI]),
+    .req_en        (ctrl4_axi_en),
+    .req_type      (ctrl4_axi_req_type),
+    .req_read_data (axi_out),
     .axi_busy      (),
+    .in_dst        (),
+    .in_dst_we     (),
+    .in_dst_mask   (),
+    .out_dst       (axi_dst),
+    .out_dst_we    (axi_dst_we),
+    .out_dst_mask  (axi_mask),
     .CLOCK         (M_CLOCK    ),                                                          
     .RESET         (M_RESET    ),                                                          
     .AWID          (M_AWID     ),                                                           
@@ -2653,17 +2878,22 @@ axi4_master #(
     .BID           (M_BID      )                                                             
 );
 
+wire [11:0] axi_addr;
+wire [NUMLANES*LANEWIDTH-1:0] axi_data,axi_readdata;
+wire axi_req_en;
+wire axi_req_type;
+
 axi4_slave #(
     .P_ADDR_WIDTH(16),
     .P_DATA_WIDTH(128)
 )
 inst_axi_slave
 (
-    .req_addr      (),
-    .req_data      (),
-    .req_en        (),
-    .req_type      (),
-    .req_read_data (),
+    .req_addr      (axi_addr),
+    .req_data      (axi_data),
+    .req_en        (axi_req_en),
+    .req_type      (axi_req_type),
+    .req_read_data (axi_readata),
     .axi_busy      (),
     .CLOCK         (S_CLOCK    ),                                                          
     .RESET         (S_RESET    ),                                                          
@@ -2750,6 +2980,34 @@ pipe #(NUMLANES,3) lane_mem_dstmaskpipe (
 
 wire     [ LANEWIDTH*NUMLANES-1 : 0 ]   load_mem_result_s5;
 
+wire [11* NUMLANES-1:0] mux_lane_addr;
+wire [NUMLANES*LANEWIDTH-1:0] mux_lane_data, mux_lane_rddata;
+wire [NUMLANES-1:0] mux_lane_rden, mux_lane_wren;
+wire [NUMLANES-1:0] dma_lane_rden,dma_lane_wren;
+
+
+ dma_axi_mux#(
+   .WIDTH(LANEWIDTH),
+   .NUMLANES(NUMLANES),
+   .ADDRWIDTH(11)
+ )inst_dma_axi_mux(
+    .dma_addr(dma_lane_addr),
+    .dma_data(dma_lane_wrdata),
+    .dma_rden(dma_lane_rden),
+    .dma_wren(dma_lane_wren),    
+    .dma_out(dma_lane_rddata),   
+    .axi_addr(axi_addr),   
+    .axi_data(axi_data),    
+    .axi_req_en(axi_req_en),  
+    .axi_req_type(axi_req_type),
+    .axi_read_data(axi_readata),
+    .mem_addr(mux_lane_addr),    
+    .mem_data(mux_lane_data),    
+    .mem_rden(mux_lane_rden),    
+    .mem_wren(mux_lane_wren),    
+    .mem_readdata(mux_lane_rddata)
+ );
+
  vmem_local inst_vmem_local(
    .clk(clk),
    .resetn(resetn),
@@ -2761,11 +3019,11 @@ wire     [ LANEWIDTH*NUMLANES-1 : 0 ]   load_mem_result_s5;
    .data_a(vr_src2[FU_MEM]),
    .out_a(load_mem_result_s5),
    .last_subvector(mem_last_subvector_s4),
-   .address_b(dma_lane_addr),
-   .rden_b(dma_lane_rden),
-   .wren_b(dma_lane_wren),
-   .data_b(dma_lane_wrdata),
-   .out_b(dma_lane_rddata)
+   .address_b(mux_lane_addr),
+   .rden_b(mux_lane_rden),
+   .wren_b(mux_lane_wren),
+   .data_b(mux_lane_data),
+   .out_b(mux_lane_rddata)
   );
 
   dma #(
@@ -2931,7 +3189,6 @@ wire     [ LANEWIDTH*NUMLANES-1 : 0 ]   load_mem_result_s5;
         .squashn( 1'b1 ),
         .q(flagalu_result_s5[bk][k])
         );
-
     end
 
     wire squash_aludstpipe_NC;
@@ -2979,6 +3236,7 @@ wire     [ LANEWIDTH*NUMLANES-1 : 0 ]   load_mem_result_s5;
   end
   endgenerate
 
+
  //This code is just for assigning from signals connected
  //to the matmul, which are linear multi bit signals, to the
  //multi-dimensional signals.
@@ -3022,7 +3280,147 @@ matmul_unit #(REGIDWIDTH,`MATMUL_STAGES,NUMLANES) u_matmul(
 .out_dst_mask(dst_mask_matmul)
 );
 
-trp_unit #(LANEWIDTH) u_trp (
+transpose #(
+  .WIDTH(LANEWIDTH),
+  .NUMSTAGES(NUMLANES)
+)u_transpose(
+  .clk(clk),
+  .resetn(resetn),
+  .en(ctrl4_transpose_en),
+  .a(vr_src1[FU_TRANSPOSE][NUMLANES*LANEWIDTH-1:0]),
+  .out(transpose_out),
+  .busy(transpose_busy),
+  .valid(transpose_valid)
+);
+ 
+ wire squash_transpose_dstpipe_NC;
+ wire squash_transpose_dstmask_NC;
+
+pipe #(REGIDWIDTH,9) transpose_dstpipe (
+  .d( dst_s4[FU_TRANSPOSE] ),  
+  .clk(clk),
+  .resetn(resetn),
+  .en(pipe_advance[12:4]),
+  .squash(squash_transpose_dstpipe_NC),
+  .q({dst[FU_TRANSPOSE][13],
+      dst[FU_TRANSPOSE][12],
+      dst[FU_TRANSPOSE][11],
+      dst[FU_TRANSPOSE][10],
+      dst[FU_TRANSPOSE][9],
+      dst[FU_TRANSPOSE][8],
+      dst[FU_TRANSPOSE][7],
+      dst[FU_TRANSPOSE][6],
+      dst[FU_TRANSPOSE][5],
+      dst[FU_TRANSPOSE][4]}));
+
+pipe #(1,9) transpose_dstwepipe (
+  .d( dst_we_s4[FU_TRANSPOSE]),  
+  .clk(clk),
+  .resetn(resetn),
+//  .en(pipe_advance[11:4]),
+  .en(9'hff),
+//  .squash( pipe_squash[11:4] ),
+  .squash(9'h00 ),
+  .q({dst_we[FU_TRANSPOSE][13],
+      dst_we[FU_TRANSPOSE][12],
+      dst_we[FU_TRANSPOSE][11],
+      dst_we[FU_TRANSPOSE][10],
+      dst_we[FU_TRANSPOSE][9],
+      dst_we[FU_TRANSPOSE][8],
+      dst_we[FU_TRANSPOSE][7],
+      dst_we[FU_TRANSPOSE][6],
+      dst_we[FU_TRANSPOSE][5],
+      dst_we[FU_TRANSPOSE][4]}));
+
+pipe #(NUMLANES,9) transpose_dstmaskpipe (
+  .d(vmask[FU_TRANSPOSE]),  
+  .clk(clk),
+  .resetn(resetn),
+  .en(pipe_advance[12:4]),
+  .squash(squash_transpose_dstmask_NC),
+  .q({dst_mask[FU_TRANSPOSE][13],
+      dst_mask[FU_TRANSPOSE][12],
+      dst_mask[FU_TRANSPOSE][11],
+      dst_mask[FU_TRANSPOSE][10],
+      dst_mask[FU_TRANSPOSE][9],
+      dst_mask[FU_TRANSPOSE][8],
+      dst_mask[FU_TRANSPOSE][7],
+      dst_mask[FU_TRANSPOSE][6],
+      dst_mask[FU_TRANSPOSE][5],
+      dst_mask[FU_TRANSPOSE][4]}));
+
+reg [3*NUMLANES-1:0] permute_row_col_vec;
+
+always@(*)begin
+  permute_row_col_vec[3*1-1:3*0] = vr_src1[FU_PERMUTE][0*LANEWIDTH+3 : 0*LANEWIDTH];
+  permute_row_col_vec[3*2-1:3*1] = vr_src1[FU_PERMUTE][1*LANEWIDTH+3 : 1*LANEWIDTH];
+  permute_row_col_vec[3*3-1:3*2] = vr_src1[FU_PERMUTE][2*LANEWIDTH+3 : 2*LANEWIDTH];
+  permute_row_col_vec[3*4-1:3*3] = vr_src1[FU_PERMUTE][3*LANEWIDTH+3 : 3*LANEWIDTH];
+  permute_row_col_vec[3*5-1:3*4] = vr_src1[FU_PERMUTE][4*LANEWIDTH+3 : 4*LANEWIDTH];
+  permute_row_col_vec[3*6-1:3*5] = vr_src1[FU_PERMUTE][5*LANEWIDTH+3 : 5*LANEWIDTH];
+  permute_row_col_vec[3*7-1:3*6] = vr_src1[FU_PERMUTE][6*LANEWIDTH+3 : 6*LANEWIDTH];
+  permute_row_col_vec[3*8-1:3*7] = vr_src1[FU_PERMUTE][7*LANEWIDTH+3 : 7*LANEWIDTH];
+end
+
+wire [REGIDWIDTH-1:0] permute_dst;
+wire [NUMLANES-1:0] permute_mask;
+wire permute_dst_we;
+
+permute #(
+  .WIDTH(LANEWIDTH),
+  .NUMSTAGES(NUMLANES),
+  .REGIDWIDTH(REGIDWIDTH)
+) u_permute (
+  .clk(clk),
+  .resetn(resetn),
+  .read(ctrl4_permute_read),
+  .en(ctrl4_permute_en),
+  .row_col_op(ctrl4_permute_op),
+  .row_col_num(permute_row_col_vec),
+  .load(ctrl4_permute_store),
+  .a(vr_src1[FU_PERMUTE][NUMLANES*LANEWIDTH-1:0]),
+  .in_dst(dst_s4[FU_PERMUTE]),
+  .in_dst_we(dst_we_s4[FU_PERMUTE]),
+  .in_dst_mask(vmask[FU_PERMUTE]),
+  .out_dst(permute_dst),
+  .out_dst_we(permute_dst_we),
+  .out_dst_mask(permute_mask),
+  .out(permute_out)
+); 
+
+//wire squash_permute_dstpipe_NC;
+//wire squash_permute_dstmask_NC;
+//
+//pipe #(REGIDWIDTH,1) permute_dstpipe (
+//  .d( dst_s4[FU_PERMUTE] ),  
+//  .clk(clk),
+//  .resetn(resetn),
+//  .en(pipe_advance[4]),
+//  .squash(squash_permute_dstpipe_NC),
+//  .q({dst[FU_PERMUTE][5],
+//      dst[FU_PERMUTE][4]}));
+//
+//pipe #(1,1) permute_dstwepipe (
+//  .d( dst_we_s4[FU_PERMUTE]),  
+//  .clk(clk),
+//  .resetn(resetn),
+////  .en(pipe_advance[11:4]),
+//  .en(pipe_advance[4]),
+////  .squash( pipe_squash[11:4] ),
+//  .squash(0),
+//  .q({dst_we[FU_PERMUTE][5],
+//      dst_we[FU_PERMUTE][4]}));
+//
+//pipe #(NUMLANES,1) permute_dstmaskpipe (
+//  .d(vmask[FU_PERMUTE]),  
+//  .clk(clk),
+//  .resetn(resetn),
+//  .en(pipe_advance[4]),
+//  .squash(squash_permute_dstmask_NC),
+//  .q({dst_mask[FU_PERMUTE][5],
+//      dst_mask[FU_PERMUTE][4]}));
+//
+trp_unit #(.WIDTH(LANEWIDTH)) u_trp (
 .clk(clk),
 .resetn(resetn),
 .en(ctrl4_trp_en),
@@ -3036,21 +3434,21 @@ trp_unit #(LANEWIDTH) u_trp (
  wire squash_trp_dstpipe_NC;
  wire squash_trp_dstmask_NC;
 
-pipe #(REGIDWIDTH,1) trp_dstpipe (
+pipe #(REGIDWIDTH,2) trp_dstpipe (
   .d( dst_s4[FU_TRP] ),  
   .clk(clk),
   .resetn(resetn),
   .en(~trp_busy ),
   .squash(squash_trp_dstpipe_NC),
-  .q({dst[FU_TRP][5],dst[FU_TRP][4]}));
+  .q({dst[FU_TRP][6],dst[FU_TRP][5],dst[FU_TRP][4]}));
 
-pipe #(1,1) trp_dstwepipe (
+pipe #(1,2) trp_dstwepipe (
   .d( dst_we_s4[FU_TRP]),  
   .clk(clk),
   .resetn(resetn),
   .en(~trp_busy ),
   .squash( pipe_squash[4] ),
-  .q({dst_we[FU_TRP][5],dst_we[FU_TRP][4]}));
+  .q({dst_we[FU_TRP][6],dst_we[FU_TRP][5],dst_we[FU_TRP][4]}));
 
 pipe #(NUMLANES,1) trp_dstmaskpipe (
   .d( vmask[FU_TRP]),  
@@ -3252,6 +3650,21 @@ pipe #(NUMLANES,3) bfmultdstmaskpipe (
   assign wb_dst_mask[FU_ACT] = dst_mask[FU_ACT][5];
   assign D_wb_last_subvector[FU_ACT] = D_last_subvector_s5[FU_ACT];
 
+  assign wb_dst[FU_TRANSPOSE] = dst[FU_TRANSPOSE][13];
+  assign wb_dst_we[FU_TRANSPOSE] = dst_we[FU_TRANSPOSE][13];
+  assign wb_dst_mask[FU_TRANSPOSE] = dst_mask[FU_TRANSPOSE][13];
+  assign D_wb_last_subvector[FU_TRANSPOSE] = D_last_subvector_s5[FU_TRANSPOSE];
+
+  assign wb_dst[FU_PERMUTE] = permute_dst;
+  assign wb_dst_we[FU_PERMUTE] = permute_dst_we;
+  assign wb_dst_mask[FU_PERMUTE] = permute_mask;
+  assign D_wb_last_subvector[FU_PERMUTE] = D_last_subvector_s5[FU_PERMUTE];
+
+  assign wb_dst[FU_AXI] = axi_dst;
+  assign wb_dst_we[FU_AXI] = axi_dst_we;
+  assign wb_dst_mask[FU_AXI] = axi_mask;
+  assign D_wb_last_subvector[FU_AXI] = D_last_subvector_s5[FU_AXI];
+
   assign wb_dst[FU_TRP] = dst[FU_TRP][5];
   assign wb_dst_we[FU_TRP] = dst_we[FU_TRP][5] && trp_valid;
   assign wb_dst_mask[FU_TRP] = dst_mask[FU_TRP][5];
@@ -3272,7 +3685,11 @@ pipe #(NUMLANES,3) bfmultdstmaskpipe (
                   (wb_dst_we[FU_MATMUL] && `LO(wb_dst[FU_MATMUL],LOG2NUMBANKS)==bw) ||
                   (wb_dst_we[FU_BFADDER] && `LO(wb_dst[FU_BFADDER],LOG2NUMBANKS)==bw) ||
                   (wb_dst_we[FU_BFMULT] && `LO(wb_dst[FU_BFMULT],LOG2NUMBANKS)==bw) ||
+                  (wb_dst_we[FU_AXI] && `LO(wb_dst[FU_AXI],LOG2NUMBANKS)==bw) ||
                   (wb_dst_we[FU_ACT] && `LO(wb_dst[FU_ACT],LOG2NUMBANKS)==bw) ||
+                  (wb_dst_we[FU_TRP] && `LO(wb_dst[FU_TRP],LOG2NUMBANKS)==bw) ||
+                  (wb_dst_we[FU_PERMUTE] && `LO(wb_dst[FU_PERMUTE],LOG2NUMBANKS)==bw) ||
+                  (wb_dst_we[FU_TRANSPOSE] && `LO(wb_dst[FU_TRANSPOSE],LOG2NUMBANKS)==bw) ||
                   (wb_dst_we[FU_MEM] && `LO(wb_dst[FU_MEM],LOG2NUMBANKS)==bw) ||
                   (wb_dst_we[FU_ALU] && `LO(wb_dst[FU_ALU],LOG2NUMBANKS)==bw && ALUPERBANK==0) ||
                   (wb_dst_we[FU_ALU+bw] && ALUPERBANK!=0);
@@ -3295,7 +3712,28 @@ pipe #(NUMLANES,3) bfmultdstmaskpipe (
         vr_c_reg[bw]= wb_dst[FU_MATMUL];
         vr_c_writedatain[bw]= matmul_out;
         D_last_subvector_done[bw]=D_wb_last_subvector[FU_MATMUL];
-      end      
+      end
+      // Transpose Block writeback      
+      else if (wb_dst_we[FU_TRANSPOSE] && `LO(wb_dst[FU_TRANSPOSE],LOG2NUMBANKS)==bw)
+      begin
+        vmask_final[bw]=wb_dst_mask[FU_TRANSPOSE];
+        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_TRANSPOSE]>>LOG2NUMBANKS;
+        vr_c_reg[bw]= wb_dst[FU_TRANSPOSE];
+        vr_c_writedatain[bw]= transpose_out;
+        //Do ALU and FALU for last subvector
+        D_last_subvector_done[bw]=D_wb_last_subvector[FU_TRANSPOSE];
+      end
+      // permute block writeback
+      else if (wb_dst_we[FU_PERMUTE] && `LO(wb_dst[FU_PERMUTE],LOG2NUMBANKS)==bw)
+      begin
+        vmask_final[bw]=wb_dst_mask[FU_PERMUTE];
+        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_PERMUTE]>>LOG2NUMBANKS;
+        vr_c_reg[bw]= wb_dst[FU_PERMUTE];
+        vr_c_writedatain[bw]= permute_out;
+        //Do ALU and FALU for last subvector
+        D_last_subvector_done[bw]=D_wb_last_subvector[FU_PERMUTE];
+      end
+      // trp block  writeback
       else if (wb_dst_we[FU_TRP] && `LO(wb_dst[FU_TRP],LOG2NUMBANKS)==bw)
       begin
         vmask_final[bw]=wb_dst_mask[FU_TRP];
@@ -3306,6 +3744,14 @@ pipe #(NUMLANES,3) bfmultdstmaskpipe (
         D_last_subvector_done[bw]=D_wb_last_subvector[FU_TRP];
       end
       //Take bfadder output
+      else if (wb_dst_we[FU_AXI] && `LO(wb_dst[FU_AXI],LOG2NUMBANKS)==bw)
+      begin
+        vmask_final[bw]=wb_dst_mask[FU_AXI];
+        _vr_c_reg[bw*BANKREGIDWIDTH +: BANKREGIDWIDTH]=wb_dst[FU_AXI]>>LOG2NUMBANKS;
+        vr_c_reg[bw]= wb_dst[FU_AXI];
+        vr_c_writedatain[bw]= axi_out;
+        D_last_subvector_done[bw]=D_wb_last_subvector[FU_AXI];
+      end
       else if (wb_dst_we[FU_BFADDER] && `LO(wb_dst[FU_BFADDER],LOG2NUMBANKS)==bw)
       begin
         vmask_final[bw]=wb_dst_mask[FU_BFADDER];
