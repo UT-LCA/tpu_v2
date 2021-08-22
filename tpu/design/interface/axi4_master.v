@@ -12,6 +12,13 @@ module axi4_master #
     input       req_type,
     output reg [P_DATA_WIDTH - 1:0]     req_read_data,
     output      axi_busy,
+    input [7:0] in_dst,
+    input   in_dst_we,
+    input [7:0]  in_dst_mask, 
+
+    output [7:0] out_dst,
+    output   out_dst_we,
+    output [7:0]  out_dst_mask, 
 
     input  wire CLOCK,                                                          //Global Clock Signal.
     input  wire RESET,                                                          //Global Reset Signal. This Signal is Active Low
@@ -113,6 +120,7 @@ reg [P_ADDR_WIDTH - 1:0] q_req_addr;
 reg [P_DATA_WIDTH - 1:0] q_req_data;
 reg [P_DATA_WIDTH - 1:0] q2_req_data;
 reg q_req_type;
+reg [2:0] count;
 //reg [P_WRITE_TRANSACTIONS_NUM:0] write_index;                                   //write beat count in a burst
 //reg [P_WRITE_TRANSACTIONS_NUM:0] read_index;                                    //read beat count in a burst
 //wire [P_WRITE_TRANSACTIONS_NUM + 2: 0] burst_size_bytes;                        //size of P_WRITE_BURSTS length burst in bytes
@@ -208,7 +216,7 @@ end
 always @(posedge CLOCK) begin
     if (RESET == 0) begin
         m_awaddr <= 0;
-    end else if ((master_state ==IDLE) & req_en & q_req_type) begin
+    end else if ((master_state ==IDLE) & req_en & req_type) begin
         m_awaddr <= req_addr;
     end else if (AWREADY && m_awvalid) begin
         m_awaddr <= 0;
@@ -219,10 +227,22 @@ end
 
 always @(posedge CLOCK) begin
     if (RESET == 0) begin
+        m_araddr <= 0;
+    end else if ((master_state ==IDLE) & req_en & req_type) begin
+        m_araddr <= req_addr;
+    end else if (AWREADY && m_awvalid) begin
+        m_araddr <= 0;
+    end else begin
+        m_araddr <= m_awaddr;
+    end
+end
+
+always @(posedge CLOCK) begin
+    if (RESET == 0) begin
         m_wvalid <= 0;
     end else if ((master_state == REQ_STATE) & q_req_type) begin
         m_wvalid <= 1;
-    end else if (WREADY && m_wvalid) begin
+    end else if ((count==7) & WREADY && m_wvalid) begin
         m_wvalid <= 0;
     end else begin
         m_wvalid <= m_wvalid;
@@ -232,7 +252,7 @@ end
 always @(posedge CLOCK) begin
     if (RESET == 0) begin
         m_wlast <= 0;
-    end else if ((master_state == WRDATA_STATE)) begin
+    end else if ((master_state == WRDATA_STATE) & (count == 7)) begin
         m_wlast <= 1;
     end else if (WREADY && m_wvalid) begin
         m_wlast <= 0;
@@ -245,8 +265,10 @@ end
 always @(posedge CLOCK) begin
     if (RESET == 0) begin
         m_wdata <= 0;
-    end else if (master_state == WRDATA_STATE) begin
-        m_wdata <= q2_req_data;
+    end else if (((master_state == REQ_STATE) & q_req_type) | (master_state == WRDATA_STATE)) begin
+        m_wdata <= q_req_data;
+    end else if(master_state == IDLE)begin
+        m_wdata <= 0;
     end else begin 
         m_wdata <= m_wdata;
     end
@@ -267,7 +289,7 @@ always @(posedge CLOCK) begin
     if (RESET == 0) begin
         m_arvalid <= 0;
     end
-    else if(REQ_STATE & (~q_req_type))begin
+    else if((master_state == IDLE) & req_en & (~req_type))begin
         m_arvalid <= 1'b1;
     end
     else if(ARVALID && ARREADY)begin
@@ -304,18 +326,15 @@ always@(posedge CLOCK)begin
     q2_req_data <= 128'h0;
   end
   else begin
-    if((master_state == IDLE) & req_en)begin
       q_req_type <= req_type;
       q_req_addr <= req_addr;
       q_req_data <= req_data;
       q2_req_data <= q_req_data;
-    end
   end
 end
 
 assign axi_busy = (master_state == IDLE)? 1'b1:1'b0;
 
-reg [2:0] count;
 
 //implement master command interface state machine
 always @ (posedge CLOCK) begin

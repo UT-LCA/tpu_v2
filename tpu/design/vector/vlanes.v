@@ -1178,6 +1178,10 @@ assign internal_pipe_advance[13:6] = {(14-5){1'b1}};
          begin
            ctrl1_vr_b_en=1;
          end
+      COP2_VAXIRD:
+         begin
+           ctrl1_vr_c_en=1;
+         end
       COP2_VSTX_B,
       COP2_VSTX_H,
       //COP2_VSTX_W,
@@ -1512,6 +1516,10 @@ assign internal_pipe_advance[13:6] = {(14-5){1'b1}};
            ctrl1_ismasked = 1'b1;
          end
       COP2_VAXIWR:
+         begin
+           ctrl1_ismasked = 1'b1;
+         end
+      COP2_VAXIRD:
          begin
            ctrl1_ismasked = 1'b1;
          end
@@ -2000,7 +2008,7 @@ assign internal_pipe_advance[13:6] = {(14-5){1'b1}};
       .d( (!pipe_advance_s2_r) ? vbase_in_saved : vbase_in ),
       .clk(clk),
       .resetn(resetn),
-      .en( pipe_advance[6:2] & {4'b1,ctrl2_memunit_en} ),
+      .en( pipe_advance[6:2] & {4'b1,(ctrl2_memunit_en|ctrl2_axi_en)} ),
       .squash(squash_vbasepipe_NC),
       .q( {vbase[6],vbase[5],vbase[4],vbase[3],vbase[2]} ));
 
@@ -2821,7 +2829,7 @@ wire axi_dst_we;
 
 axi4_master #(
     .P_TARGET_SLAVE_BASE_ADDR(0),                           
-    .P_ADDR_WIDTH(32),                                      
+    .P_ADDR_WIDTH(11),                                      
     .P_DATA_WIDTH(128)                                      
 )inst_axi_master
 (
@@ -2837,8 +2845,8 @@ axi4_master #(
     .out_dst       (axi_dst),
     .out_dst_we    (axi_dst_we),
     .out_dst_mask  (axi_mask),
-    .CLOCK         (M_CLOCK    ),                                                          
-    .RESET         (M_RESET    ),                                                          
+    .CLOCK         (clk    ),                                                          
+    .RESET         (resetn    ),                                                          
     .AWID          (M_AWID     ),                                                           
     .AWADDR        (M_AWADDR   ),                                                         
     .AWLEN         (M_AWLEN    ),                                                          
@@ -2884,7 +2892,7 @@ wire axi_req_en;
 wire axi_req_type;
 
 axi4_slave #(
-    .P_ADDR_WIDTH(16),
+    .P_ADDR_WIDTH(11),
     .P_DATA_WIDTH(128)
 )
 inst_axi_slave
@@ -2895,8 +2903,8 @@ inst_axi_slave
     .req_type      (axi_req_type),
     .req_read_data (axi_readata),
     .axi_busy      (),
-    .CLOCK         (S_CLOCK    ),                                                          
-    .RESET         (S_RESET    ),                                                          
+    .CLOCK         (clk),                                                          
+    .RESET         (resetn),                                                          
     .AWID          (S_AWID     ),                                                           
     .AWADDR        (S_AWADDR   ),                                                         
     .AWLEN         (S_AWLEN    ),                                                          

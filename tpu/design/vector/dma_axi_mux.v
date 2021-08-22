@@ -10,10 +10,10 @@ module dma_axi_mux #(
   
   output reg [NUMLANES*WIDTH-1:0]  dma_out,   
  
-  input [NUMLANES*ADDRWIDTH-1:0]   axi_addr,   
+  input [ADDRWIDTH-1:0]            axi_addr,   
   input [NUMLANES*WIDTH-1:0]       axi_data,    
-  input  [NUMLANES-1:0]            axi_req_en,  
-  input  [NUMLANES-1:0]            axi_req_type,
+  input                            axi_req_en,  
+  input                            axi_req_type,
   
   output reg [NUMLANES*WIDTH-1:0]  axi_read_data,
   
@@ -25,6 +25,18 @@ module dma_axi_mux #(
 );
 
 reg [NUMLANES-1:0] axi_rden, axi_wren;
+reg [NUMLANES*ADDRWIDTH-1:0] axi_lane_addr;
+
+always@(*)begin
+  axi_lane_addr[(1*ADDRWIDTH)-1 : 0*ADDRWIDTH ] = axi_addr + 11'h0;
+  axi_lane_addr[2*ADDRWIDTH-1:1*ADDRWIDTH] = axi_addr + 11'h1;
+  axi_lane_addr[3*ADDRWIDTH-1:2*ADDRWIDTH] = axi_addr + 11'h2;
+  axi_lane_addr[4*ADDRWIDTH-1:3*ADDRWIDTH] = axi_addr + 11'h3;
+  axi_lane_addr[5*ADDRWIDTH-1:4*ADDRWIDTH] = axi_addr + 11'h4;
+  axi_lane_addr[6*ADDRWIDTH-1:5*ADDRWIDTH] = axi_addr + 11'h5;
+  axi_lane_addr[7*ADDRWIDTH-1:6*ADDRWIDTH] = axi_addr + 11'h6;
+  axi_lane_addr[8*ADDRWIDTH-1:7*ADDRWIDTH] = axi_addr + 11'h7;
+end
 
 always@(*)begin
   axi_rden = 0;
@@ -41,7 +53,7 @@ end
 
 always@(*)begin
    if(axi_req_en)begin
-     mem_addr = axi_addr;
+     mem_addr = axi_lane_addr;
      mem_data = axi_data;
      mem_rden = axi_rden;
      mem_wren = axi_wren;

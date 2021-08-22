@@ -362,6 +362,46 @@ module de3 (
   wire                          dma_dbus_wait;      
   wire                          dma_dbus_data_valid;
 
+   
+wire  [6 - 1:0]                    S_M_AWID;                                                 
+wire  [11- 1:0]             S_M_AWADDR;                                    
+wire  [7:0]                        S_M_AWLEN;                                                    
+wire  [2:0]                        S_M_AWSIZE;                                                   
+wire  [1:0]                        S_M_AWBURST;                                                  
+wire                               S_M_AWLOCK;                                                         
+wire  [3:0]                        S_M_AWCACHE;                                                  
+wire  [2:0]                        S_M_AWPROT;                                                   
+wire  [3:0]                        S_M_AWQOS;                                                    
+wire                               S_M_AWVALID;                                                        
+wire                                S_M_AWREADY;                                                        
+wire  [(8*16)-1 : 0]   S_M_WDATA;                                     
+wire  [(8*16)/8-1 : 0] S_M_WSTRB;                                   
+wire                               S_M_WLAST;                                                          
+wire                               S_M_WVALID;                                                         
+wire                                S_M_WREADY;                                                         
+
+wire  [6-1 : 0]                    S_M_ARID;                                                 
+wire  [11-1 : 0]            S_M_ARADDR;                                    
+wire  [7 : 0]                      S_M_ARLEN;                                                  
+wire  [2 : 0]                      S_M_ARSIZE;                                                 
+wire  [1 : 0]                      S_M_ARBURST;                                                
+wire                               S_M_ARLOCK;                                                         
+wire  [3 : 0]                      S_M_ARCACHE;                                                
+wire  [2 : 0]                      S_M_ARPROT;                                                 
+wire  [3 : 0]                      S_M_ARQOS;                                                  
+wire                               S_M_ARVALID;                                                        
+wire                                S_M_ARREADY;                                                        
+wire   [6-1 : 0]                    S_M_RID;                                         	    
+wire   [(8*16)-1 : 0]   S_M_RDATA;                                     
+wire   [1 : 0]                      S_M_RRESP;                                                  
+wire                                S_M_RLAST;                                                          
+wire                                S_M_RVALID;                                                         
+wire                               S_M_RREADY;                                                         
+
+wire                               S_M_BREADY;                                                         
+wire                                S_M_BVALID;                                                         
+wire   [1 : 0]                      S_M_BRESP;                                                  
+wire   [6-1 : 0]                    S_M_BID;                                                   
 
   processor p (
     .clk(clk),
@@ -391,81 +431,81 @@ module de3 (
     .dbus_wait(dbus_wait),
     
     // AXI interface
-    .M_AWID    (),
-    .M_AWADDR  (),
-    .M_AWLEN   (),
-    .M_AWSIZE  (),
-    .M_AWBURST (),
-    .M_AWLOCK  (),
-    .M_AWCACHE (),
-    .M_AWPROT  (),
-    .M_AWQOS   (),
-    .M_AWVALID (),
-    .M_AWREADY (0),
-    .M_WDATA   (),
-    .M_WSTRB   (),
-    .M_WLAST   (),
-    .M_WVALID  (),
-    .M_WREADY  (0),
-    .M_ARID    (),
-    .M_ARADDR  (),
-    .M_ARLEN   (),
-    .M_ARSIZE  (),
-    .M_ARBURST (),
-    .M_ARLOCK  (),
-    .M_ARCACHE (),
-    .M_ARPROT  (),
-    .M_ARQOS   (),
-    .M_ARVALID (),
-    .M_ARREADY (0),
-    .M_RID     (0),
-    .M_RDATA   (0),
-    .M_RRESP   (0),
-    .M_RLAST   (0),
-    .M_RVALID  (0),
-    .M_RREADY  (),
-    .M_BREADY  (),
-    .M_BVALID  (0),
-    .M_BRESP   (0),
-    .M_BID     (0),
+    .M_AWID    (S_M_AWID),
+    .M_AWADDR  (S_M_AWADDR),
+    .M_AWLEN   (S_M_AWLEN),
+    .M_AWSIZE  (S_M_AWSIZE),
+    .M_AWBURST (S_M_AWBURST),
+    .M_AWLOCK  (S_M_AWLOCK),
+    .M_AWCACHE (S_M_LOCK),
+    .M_AWPROT  (S_M_AWPROT ),
+    .M_AWQOS   (S_M_AWQOS  ),
+    .M_AWVALID (S_M_AWVALID),
+    .M_AWREADY (S_M_AWREADY),
+    .M_WDATA   (S_M_WDATA  ),
+    .M_WSTRB   (S_M_WSTRB  ),
+    .M_WLAST   (S_M_WLAST  ),
+    .M_WVALID  (S_M_WVALID ),
+    .M_WREADY  (S_M_WREADY ),
+    .M_ARID    (S_M_ARID   ),
+    .M_ARADDR  (S_M_ARADDR ),
+    .M_ARLEN   (S_M_ARLEN  ),
+    .M_ARSIZE  (S_M_ARSIZE ),
+    .M_ARBURST (S_M_ARBURST),
+    .M_ARLOCK  (S_M_ARLOCK ),
+    .M_ARCACHE (S_M_ARCACHE),
+    .M_ARPROT  (S_M_ARPROT ),
+    .M_ARQOS   (S_M_ARQOS  ),
+    .M_ARVALID (S_M_ARVALID),
+    .M_ARREADY (S_M_ARREADY),
+    .M_RID     (S_M_RID    ),
+    .M_RDATA   (S_M_RDATA  ),
+    .M_RRESP   (S_M_RRESP  ),
+    .M_RLAST   (S_M_RLAST  ),
+    .M_RVALID  (S_M_RVALID ),
+    .M_RREADY  (S_M_RREADY ),
+    .M_BREADY  (S_M_BREADY ),
+    .M_BVALID  (S_M_BVALID ),
+    .M_BRESP   (S_M_BRESP  ),
+    .M_BID     (S_M_BID    ),
 
-    .S_AWID   (0), 
-    .S_AWADDR (0), 
-    .S_AWLEN  (0), 
-    .S_AWSIZE (0), 
-    .S_AWBURST(0), 
-    .S_AWLOCK (0), 
-    .S_AWCACHE(0), 
-    .S_AWPROT (0), 
-    .S_AWQOS  (0), 
-    .S_AWVALID(0), 
-    .S_AWREADY(), 
-    .S_WDATA  (0), 
-    .S_WSTRB  (0), 
-    .S_WLAST  (0), 
-    .S_WVALID (0), 
-    .S_WREADY (), 
-    .S_ARID   (0), 
-    .S_ARADDR (0), 
-    .S_ARLEN  (0), 
-    .S_ARSIZE (0), 
-    .S_ARBURST(0), 
-    .S_ARLOCK (0), 
-    .S_ARCACHE(0), 
-    .S_ARPROT (0), 
-    .S_ARQOS  (0), 
-    .S_ARVALID(0), 
-    .S_ARREADY(), 
-    .S_RID    (), 
-    .S_RDATA  (), 
-    .S_RRESP  (), 
-    .S_RLAST  (), 
-    .S_RVALID (), 
-    .S_RREADY (0), 
-    .S_BREADY (0), 
-    .S_BVALID (), 
-    .S_BRESP  (), 
-    .S_BID    (),
+    .S_AWID   (S_M_AWID   ), 
+    .S_AWADDR (S_M_AWADDR ), 
+    .S_AWLEN  (S_M_AWLEN  ), 
+    .S_AWSIZE (S_M_AWSIZE ), 
+    .S_AWBURST(S_M_AWBURST), 
+    .S_AWLOCK (S_M_AWLOCK ), 
+    .S_AWCACHE(S_M_AWCACHE), 
+    .S_AWPROT (S_M_AWPROT ), 
+    .S_AWQOS  (S_M_AWQOS  ), 
+    .S_AWVALID(S_M_AWVALID), 
+    .S_AWREADY(S_M_AWREADY), 
+    .S_WDATA  (S_M_WDATA  ), 
+    .S_WSTRB  (S_M_WSTRB  ), 
+    .S_WLAST  (S_M_WLAST  ), 
+    .S_WVALID (S_M_WVALID ), 
+    .S_WREADY (S_M_WREADY ), 
+    .S_ARID   (S_M_ARID   ), 
+    .S_ARADDR (S_M_ARADDR ), 
+    .S_ARLEN  (S_M_ARLEN  ), 
+    .S_ARSIZE (S_M_ARSIZE ), 
+    .S_ARBURST(S_M_ARBURST), 
+    .S_ARLOCK (S_M_ARLOCK ), 
+    .S_ARCACHE(S_M_ARCACHE), 
+    .S_ARPROT (S_M_ARPROT ), 
+    .S_ARQOS  (S_M_ARQOS  ), 
+    .S_ARVALID(S_M_ARVALID), 
+    .S_ARREADY(S_M_ARREADY), 
+    .S_RID    (S_M_RID    ), 
+    .S_RDATA  (S_M_RDATA  ), 
+    .S_RRESP  (S_M_RRESP  ), 
+    .S_RLAST  (S_M_RLAST  ), 
+    .S_RVALID (S_M_RVALID ), 
+    .S_RREADY (S_M_RREADY ), 
+    .S_BREADY (S_M_BREADY ), 
+    .S_BVALID (S_M_BVALID ), 
+    .S_BRESP  (S_M_BRESP  ), 
+    .S_BID    (S_M_BID    ),
 
     // PETES CHANGE for tracing
     .trc_addr(reg_file_addr),
