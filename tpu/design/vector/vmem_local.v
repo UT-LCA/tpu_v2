@@ -125,6 +125,7 @@ generate
 	    .data_b(data_b[g_mem*DATAWORDSIZE +: DATAWORDSIZE]),
 	    .out_a(out_a[g_mem*DATAWORDSIZE +: DATAWORDSIZE]),
 	    .out_b(out_b[g_mem*DATAWORDSIZE +: DATAWORDSIZE])
+	    //.out_b()
         );
     end
 endgenerate

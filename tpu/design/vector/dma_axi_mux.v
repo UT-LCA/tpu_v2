@@ -21,7 +21,7 @@ module dma_axi_mux #(
   output reg [NUMLANES*WIDTH-1:0]  mem_data,     
   output reg [NUMLANES-1:0]        mem_rden,     
   output reg [NUMLANES-1:0]        mem_wren,     
-  output reg [NUMLANES*WIDTH-1:0]  mem_readdata    
+  input reg [NUMLANES*WIDTH-1:0]  mem_readdata    
 );
 
 reg [NUMLANES-1:0] axi_rden, axi_wren;
