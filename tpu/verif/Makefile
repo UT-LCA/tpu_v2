@@ -9,7 +9,8 @@ BFLOAT_SRC = ../design/bfloat/FPAddSub.v \
              ../design/bfloat/FPMult_16.v \
              ../design/bfloat/activation.v \
              ../design/bfloat/reduction_unit.v \
-	     ../design/bfloat/transpose.v \
+	           ../design/bfloat/transpose.v \
+	           ../design/bfloat/permute.v \
              ../design/bfloat/trp_unit.v 
 
 TESTBENCH_SRC= de3_test_bench.v
@@ -26,6 +27,7 @@ LOCAL_SRC= ../design/local/local_add_sub.v \
            ../design/local/local_fifo.v \
            ../design/local/dpram1.v \
            ../design/vector/dma.v \
+           ../design/vector/dma_axi_mux.v \
            ../design/vector/vmem_local.v \
            ../design/local/local_shifter.v
 compile: plifs.sl virtualtype.do filesystem_standalone compilelib compilework
