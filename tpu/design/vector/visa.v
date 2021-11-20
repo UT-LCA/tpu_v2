@@ -14,6 +14,8 @@ parameter COP2_VDIV_U         = 'b10zz000111;
 //parameter COP2_VMOD           = 'b10zz001000;
 parameter COP2_VBFADD           = 'b10zz001000;  // USING bfloat add Instr: vmod.vv vrdest, vrsrc1,vrsrc2
 
+//parameter COP2_VMOD_U         = 'b10zz001001;
+parameter COP2_VBFMULT         = 'b10zz001001;  // Using bfloat mult Instr: vmod.u.vv vrdest, vrsrc1,vrsrc2
 parameter COP2_VMOD_U         = 'b10zz001001;
 parameter COP2_VCMP_EQ        = 'b10zz001010;
 parameter COP2_VCMP_NE        = 'b10zz001100;
@@ -124,7 +126,7 @@ parameter COP2_VLDS_U_B       = 'b1100100100;
 parameter COP2_VLDS_U_H       = 'b1101100100;
 
 //parameter COP2_VLDS_U_W       = 'b1110100100;
-parameter COP2_VBFMULT         = 'b1110100100;   // adding bfmult Instr: vlds.u.w
+//parameter COP2_VBFMULT         = 'b1110100100;   // adding bfmult Instr: vlds.u.w
 
 parameter COP2_VLDX_B         = 'b1100100101;
 parameter COP2_VLDX_H         = 'b1101100101;

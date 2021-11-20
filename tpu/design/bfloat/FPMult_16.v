@@ -86,7 +86,7 @@ module FPMult_16(
 	assign result = pipe_4[`DWIDTH+4:5] ;
 	assign flags = pipe_4[4:0] ;
 	
-        assign stage_1 = {a,b};
+        assign stage_0 = {a,b};
         assign valid = q3_valid;
 	// Prepare the operands for alignment and check for exceptions
 	FPMult_PrepModule PrepModule(clk, rst, stage_0[2*`DWIDTH-1:`DWIDTH], stage_0[`DWIDTH-1:0], Sa, Sb, Ea[`EXPONENT-1:0], Eb[`EXPONENT-1:0], Mp[2*`MANTISSA+1:0], InputExc[4:0]) ;

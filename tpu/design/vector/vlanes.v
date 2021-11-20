@@ -963,6 +963,7 @@ assign internal_pipe_advance[13:6] = {(14-5){1'b1}};
       COP2_VDIV,
       COP2_VDIV_U,
       COP2_VBFADD,
+      COP2_VBFMULT,
       COP2_VMIN,
       COP2_VMIN_U,
       COP2_VMAX,
@@ -1140,8 +1141,8 @@ assign internal_pipe_advance[13:6] = {(14-5){1'b1}};
       COP2_VBFSUB,
       COP2_VLDS_L,
       COP2_VLDS_U_B,
-      COP2_VLDS_U_H,
-      COP2_VBFMULT:
+      COP2_VLDS_U_H:
+      //COP2_VBFMULT:
         begin
           ctrl1_vf_a_en=1;
         end
@@ -1232,6 +1233,7 @@ assign internal_pipe_advance[13:6] = {(14-5){1'b1}};
       COP2_VDIV,
       COP2_VDIV_U,
       COP2_VBFADD,
+      COP2_VBFMULT,
     //  COP2_VMOD,
       COP2_VMOD_U:
         begin
@@ -1446,7 +1448,7 @@ assign internal_pipe_advance[13:6] = {(14-5){1'b1}};
       //COP2_VFLD,
       COP2_VLD_B,
       COP2_VLD_H,
-      COP2_VBFADD,
+      //COP2_VBFADD,
       COP2_VLD_L,
       COP2_VLD_U_B,
       COP2_VLD_U_H,
@@ -1456,8 +1458,8 @@ assign internal_pipe_advance[13:6] = {(14-5){1'b1}};
       COP2_VBFSUB,
       COP2_VLDS_L,
       COP2_VLDS_U_B,
-      COP2_VLDS_U_H,
-      COP2_VBFMULT:
+      COP2_VLDS_U_H:
+      //COP2_VBFMULT:
         begin
           ctrl1_vr_d_we=1;
           ctrl1_vrdest_sel=1;
@@ -1685,7 +1687,7 @@ assign internal_pipe_advance[13:6] = {(14-5){1'b1}};
       //COP2_VLDS_L:
       COP2_VLDS_U_B: ctrl1_memunit_op=MEMOP_LDSUB;
       COP2_VLDS_U_H: ctrl1_memunit_op=MEMOP_LDSUH;
-      COP2_VBFMULT: ctrl1_memunit_op=MEMOP_LDSUW;
+      //COP2_VBFMULT: ctrl1_memunit_op=MEMOP_LDSUW;
       COP2_VLDX_B: ctrl1_memunit_op=MEMOP_LDXB;
       COP2_VLDX_H: ctrl1_memunit_op=MEMOP_LDXH;
       //COP2_VTRP: ctrl1_memunit_op=MEMOP_LDXW;
@@ -3473,7 +3475,7 @@ genvar g_func;
 wire[5*NUMLANES-1:0] bfadd_excp;
 wire[5*NUMLANES-1:0] bfmult_excp;
 wire bfadder_output_valid;
-wire bfmult_output_valid;
+wire [NUMLANES-1:0] bfmult_output_valid;
 
 wire squash_bfadder_dstmask_NC;
 wire squash_bfadder_dstpipe_NC;
@@ -3506,6 +3508,30 @@ pipe #(NUMLANES,3) bfadddstmaskpipe (
   .en( pipe_advance[6:4] ),
   .squash(squash_bfadder_dstmask_NC),
   .q({dst[FU_BFMULT][7],dst[FU_BFMULT][6],dst_mask[FU_BFADDER][5],dst_mask[FU_BFADDER][4]}));
+
+pipe #(REGIDWIDTH,3) bfmultdstpipe (
+  .d( dst_s4[FU_BFMULT] ),  
+  .clk(clk),
+  .resetn(resetn),
+  .en( pipe_advance[6:4] ),
+  .squash(squash_per_lane_mem_NC),
+  .q({dst[FU_BFMULT][7],dst[FU_BFMULT][6],dst[FU_BFMULT][5],dst[FU_BFMULT][4]}));
+
+pipe #(1,3) bfmultdstwepipe (
+  .d( dst_we_s4[FU_BFMULT]),  
+  .clk(clk),
+  .resetn(resetn),
+  .en( pipe_advance[6:4] ),
+  .squash( pipe_squash[6:4] ),
+  .q({dst_we[FU_BFMULT][7],dst_we[FU_BFMULT][6],dst_we[FU_BFMULT][5],dst_we[FU_BFMULT][4]}));
+
+pipe #(NUMLANES,3) bfmultdstmaskpipe (
+  .d( vmask[FU_BFMULT] ),  
+  .clk(clk),
+  .resetn(resetn),
+  .en( pipe_advance[4] ),
+  .squash(squash_bfmult_dstmask_NC),
+  .q({dst_mask[FU_BFMULT][7],dst_mask[FU_BFMULT][6],dst_mask[FU_BFMULT][5],dst_mask[FU_BFMULT][4]}));
 
 pipe #(REGIDWIDTH,1) actdstpipe (
   .d( dst_s4[FU_ACT] ),  
@@ -3542,7 +3568,7 @@ FPAddSub bfloat_add(
 	.b(vr_src2[FU_BFADDER][g_func * LANEWIDTH +: LANEWIDTH]),
 	.operation(1'b0),
 	.result(bfadder_result_s5[g_func*LANEWIDTH +: LANEWIDTH]),
-        .valid(bfadder_output_valid),
+        .valid(bfadder_output_valid[g_func]),
 	.flags(bfadd_excp[5*g_func +: 5]));
 
 FPMult_16 bfloat_mult(
@@ -3552,33 +3578,9 @@ FPMult_16 bfloat_mult(
 	.a(vr_src1[FU_BFMULT][g_func * LANEWIDTH +: LANEWIDTH]),
 	.b(vr_src1[FU_BFMULT][g_func * LANEWIDTH +: LANEWIDTH]),
 	.result(bfmult_result_s5[g_func*LANEWIDTH +: LANEWIDTH]),
-        .valid(bfmult_output_valid),
+        .valid(bfmult_output_valid[g_func]),
 	.flags(bfmult_excp[5*g_func +: 5]));
 
-
-pipe #(REGIDWIDTH,3) bfmultdstpipe (
-  .d( dst_s4[FU_BFMULT+g_func] ),  
-  .clk(clk),
-  .resetn(resetn),
-  .en( pipe_advance[6:4] ),
-  .squash(squash_per_lane_mem_NC),
-  .q({dst[FU_BFMULT+g_func][7],dst[FU_BFMULT+g_func][6],dst[FU_BFMULT+g_func][5],dst[FU_BFMULT+g_func][4]}));
-
-pipe #(1,3) bfmultdstwepipe (
-  .d( dst_we_s4[FU_BFMULT+g_func] & ~ctrl4_vf_wbsel[g_func] ),  
-  .clk(clk),
-  .resetn(resetn),
-  .en( pipe_advance[6:4] ),
-  .squash( pipe_squash[6:4] ),
-  .q({dst_we[FU_BFMULT+g_func][7],dst_we[FU_BFMULT+g_func][6],dst_we[FU_BFMULT+g_func][5],dst_we[FU_BFMULT+g_func][4]}));
-
-pipe #(NUMLANES,3) bfmultdstmaskpipe (
-  .d( vmask[FU_BFMULT+g_func] ),  
-  .clk(clk),
-  .resetn(resetn),
-  .en( pipe_advance[4] ),
-  .squash(squash_bfmult_dstmask_NC),
-  .q({dst_mask[FU_BFMULT+g_func][7],dst_mask[FU_BFMULT+g_func][6],dst_mask[FU_BFMULT+g_func][5],dst_mask[FU_BFMULT+g_func][4]}));
 
 //    bfloat_adder #(REGIDWIDTH) bf_add(
 //    .clk(clk),
