@@ -102,6 +102,11 @@ def create_one_file(TOT, infile, outfile, possible_dirs):
         #`define SIMULATION_MEMORY`
         sim_mem_def_line = re.match(r'`define SIMULATION_MEMORY', line)
    
+        #for removing don't cares
+        if (('0z' in line) or ('z0' in line) or ('z1' in line) or ('1z' in line)):
+            #import pdb;pdb.set_trace()
+            line= line.replace('z','0')
+
         #A `include line. We just call this function again
         if include_line is not None:
             included_filename = include_line.group(1)
@@ -162,6 +167,7 @@ def process_case_stmt(infile, outfile):
 
         c_stmt_begin = re.search(r'((\bcase\b)|(\bcasez\b))\(.*\)', line)
         c_stmt_end = re.search(r'endcase', line)
+
 
         #Case statement handling begins. ODIN doesn't support multiple case_items
         #separated by comma. See: https://github.com/verilog-to-routing/vtr-verilog-to-routing/issues/1676
@@ -525,7 +531,7 @@ if __name__ == "__main__":
     #vector_all_fhandle.write("`define USE_INHOUSE_LOGIC\n")
     create_one_file(TOT,vector_main_fhandle, vector_all_fhandle, possible_dirs)
     vector_main_fhandle.close()
-    
+
     #####################################
     #Adding contents of local modules. These are to be added separately
     #####################################
@@ -534,7 +540,8 @@ if __name__ == "__main__":
                        "tpu/design/local/local_add_sub.v", \
                        "tpu/design/local/local_mult.v", \
                        "tpu/design/local/local_fifo.v", \
-                       "tpu/design/local/local_shifter.v"]
+                       "tpu/design/local/local_shifter.v",\
+                        "tpu/design/top/options.v"]
     
     for local_fname in local_file_list:
         local_fhandle = open(TOT+local_fname, "r")
@@ -544,14 +551,16 @@ if __name__ == "__main__":
     #####################################
     #Adding contents of components (from scalar into vector)
     #####################################
-    components_file_list = ["tpu/design/scalar/components.v"]
     
+    components_file_list = ["tpu/design/scalar/components.v"]
+    """
     for components_fname in components_file_list:
         components_fhandle = open(TOT+components_fname, "r")
         create_one_file(TOT,components_fhandle, vector_all_fhandle, possible_dirs)
         components_fhandle.close()
-
+    """
     vector_all_fhandle.close()
+    
     
     #####################################
     #Now let's post process the one file we've created
