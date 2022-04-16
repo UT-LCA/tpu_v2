@@ -1,0 +1,72 @@
+ activation #
+ axi4_master #
+ axi4_slave #
+ branch_detector
+ const 
+ dma #
+ dma_axi_mux #
+ dpram 
+ fakedelay
+ fifo#
+ hazardchecker 
+ local_add_sub
+ local_mult
+ local_shifter
+ matmul_8x8
+ matmul_unit
+ nop
+ onecyclestall
+ output_logic
+ per_lane_mem_wrapper 
+ permute #
+ permute_elm #
+ pipe
+ pipedelayreg
+ pipereg
+ pipereg_full
+ processing_element
+ qadd
+ qmult
+ ram_wrapper 
+ reduction_layer#
+ reduction_processing_element #
+ reduction_unit
+ register_sync
+ rounding
+ seq_mac
+ spram 
+ spram1 
+ systolic_data_setup
+ systolic_pe_matrix
+ transpose #
+ trp_unit #
+ vdispatcher
+ vdispatcher_add 
+ vdispatcher_shift 
+ velmrotator 
+ velmshifter 
+ velmshifter_jump 
+ velmshifter_laneunit 
+ vlane_alu
+ vlane_barrelshifter
+ vlane_flagalu 
+ vlane_mulshift
+ vlane_saturatesize
+ vlane_saturatesum
+ vlanes 
+ vload_data_translator
+ vmem_busmux 
+ vmem_crossbar 
+ vmem_local 
+ vmem_unit 
+ vmul_unit
+ vpu 
+ vregfile_base 
+ vregfile_control 
+ vregfile_flag
+ vregfile_inc 
+ vregfile_scalar 
+ vregfile_stride 
+ vregfile_vector
+ vstore_data_translator
+ zeroer
